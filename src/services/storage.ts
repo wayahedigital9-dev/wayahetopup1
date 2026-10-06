@@ -1316,7 +1316,7 @@ export const storage = {
 
   async hydrateSettingsFromBackend(): Promise<AppSettings | null> {
     try {
-      const res = await fetch('/api/sync/state', { cache: 'no-store' as any });
+      const res = await fetch('/api/sync/state', { cache: 'no-store' as any, headers: { ...getAdminHeaders() } as any });
       if (!res.ok) return null;
       const json = await res.json().catch(() => null);
       const remote: AppSettings | undefined = json?.data?.settings;

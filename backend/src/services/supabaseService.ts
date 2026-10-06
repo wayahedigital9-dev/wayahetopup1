@@ -1015,15 +1015,20 @@ ALTER TABLE public.dispatched_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_push_subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Harden RLS: hanya service_role yang boleh tulis app_settings/settings (berisi QRIS secrets).
 DO $$
 DECLARE
   tbl text;
 BEGIN
-  FOR tbl IN 
-    SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+  FOR tbl IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all on %I" ON public.%I', tbl, tbl);
-    EXECUTE format('CREATE POLICY "Allow all on %I" ON public.%I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true)', tbl, tbl);
+    IF tbl IN ('app_settings', 'settings', 'admin_push_subscriptions') THEN
+      EXECUTE format('CREATE POLICY "Allow all on %I" ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)', tbl, tbl);
+      EXECUTE format('CREATE POLICY "Allow read %I for anon" ON public.%I FOR SELECT TO anon, authenticated USING (true)', tbl, tbl);
+    ELSE
+      EXECUTE format('CREATE POLICY "Allow all on %I" ON public.%I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true)', tbl, tbl);
+    END IF;
   END LOOP;
 END $$;
 

@@ -362,15 +362,42 @@ app.get(['/api/settings/gateway-info', '/settings/gateway-info'], (req, res) => 
 
 // ── Load Settings Endpoint (Baca konfigurasi tersimpan untuk frontend) ──
 app.get(['/api/settings/load', '/settings/load'], (req, res) => {
+  // Auth: wajib ADMIN_TOKEN jika ada; tanpa token cuma kirim has* flags
+  const hdr = String(req.headers['x-admin-token'] || req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
+  const expected = String(process.env.ADMIN_TOKEN || '').trim();
+  const isAdmin = Boolean(expected && hdr && hdr === expected);
+  const mask = (v) => v ? `${String(v).slice(0,4)}***` : '';
+  if (!isAdmin && expected) {
+    // Publik tanpa token: hanya flag, bukan nilai asli
+    return res.json({
+      success: true, _sanitized: true,
+      data: {
+        activeGateway: serverConfig.activeGateway,
+        paymentGatewayProvider: serverConfig.activeGateway,
+        pakasirApiKey: '', hasPakasirApiKey: Boolean(serverConfig.pakasir.apiKey),
+        pakasirWebhookSecret: '', hasPakasirWebhookSecret: Boolean(serverConfig.pakasir.webhookSecret),
+        qiospayApiKey: '', hasQiospayApiKey: Boolean(serverConfig.qiospay.apiKey),
+        qiospaySecretKey: '', hasQiospaySecretKey: Boolean(serverConfig.qiospay.secretKey),
+        digiflazzProductionKey: '', hasDigiflazzProductionKey: Boolean(serverConfig.digiflazz.apiKey),
+        digiflazzApiKey: '', hasDigiflazzApiKey: Boolean(serverConfig.digiflazz.apiKey),
+        digiflazzSecretCode: '', hasDigiflazzSecretCode: Boolean(serverConfig.digiflazz.webhookSecret),
+        digiflazzWebhookSecret: '', hasDigiflazzWebhookSecret: Boolean(serverConfig.digiflazz.webhookSecret),
+        pakasirSlug: serverConfig.pakasir.slug,
+        pakasirBaseUrl: serverConfig.pakasir.baseUrl,
+        qiospayMerchantCode: serverConfig.qiospay.merchantCode,
+        qiospayNmid: serverConfig.qiospay.nmid,
+      }
+    });
+  }
   res.json({
-    success: true,
+    success: true, _sanitized: false,
     data: {
       activeGateway: serverConfig.activeGateway,
       paymentGatewayProvider: serverConfig.activeGateway,
       // Pakasir
       pakasirSlug: serverConfig.pakasir.slug,
-      pakasirApiKey: serverConfig.pakasir.apiKey,
-      pakasirWebhookSecret: serverConfig.pakasir.webhookSecret,
+      pakasirApiKey: isAdmin ? serverConfig.pakasir.apiKey : mask(serverConfig.pakasir.apiKey),
+      pakasirWebhookSecret: isAdmin ? serverConfig.pakasir.webhookSecret : mask(serverConfig.pakasir.webhookSecret),
       pakasirBaseUrl: serverConfig.pakasir.baseUrl,
       pakasirPaymentMethod: serverConfig.pakasir.paymentMethod,
       pakasirMerchantName: serverConfig.pakasir.merchantName,
@@ -379,8 +406,8 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
       pakasirIsSandbox: serverConfig.pakasir.isSandbox,
       // Qiospay
       qiospayMerchantCode: serverConfig.qiospay.merchantCode,
-      qiospayApiKey: serverConfig.qiospay.apiKey,
-      qiospaySecretKey: serverConfig.qiospay.secretKey,
+      qiospayApiKey: isAdmin ? serverConfig.qiospay.apiKey : mask(serverConfig.qiospay.apiKey),
+      qiospaySecretKey: isAdmin ? serverConfig.qiospay.secretKey : mask(serverConfig.qiospay.secretKey),
       qiospayNmid: serverConfig.qiospay.nmid,
       qiospayMerchantName: serverConfig.qiospay.merchantName,
       qiospayQrString: serverConfig.qiospay.qrString,
@@ -388,10 +415,10 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
       // Digiflazz
       digiflazzUser: serverConfig.digiflazz.username,
       digiflazzUsername: serverConfig.digiflazz.username,
-      digiflazzProductionKey: serverConfig.digiflazz.apiKey,
-      digiflazzApiKey: serverConfig.digiflazz.apiKey,
-      digiflazzSecretCode: serverConfig.digiflazz.webhookSecret,
-      digiflazzWebhookSecret: serverConfig.digiflazz.webhookSecret,
+      digiflazzProductionKey: isAdmin ? serverConfig.digiflazz.apiKey : mask(serverConfig.digiflazz.apiKey),
+      digiflazzApiKey: isAdmin ? serverConfig.digiflazz.apiKey : mask(serverConfig.digiflazz.apiKey),
+      digiflazzSecretCode: isAdmin ? serverConfig.digiflazz.webhookSecret : mask(serverConfig.digiflazz.webhookSecret),
+      digiflazzWebhookSecret: isAdmin ? serverConfig.digiflazz.webhookSecret : mask(serverConfig.digiflazz.webhookSecret),
       digiflazzWebhookUrl: serverConfig.digiflazz.webhookUrl,
       digiflazzMode: serverConfig.digiflazz.testing ? 'DEVELOPMENT' : 'PRODUCTION',
       // Supabase (selalu bersih tanpa akhiran /rest atau /rest/v1)
@@ -406,6 +433,9 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
 
 // ── Save Settings Endpoint (Memisahkan Pakasir & Qiospay) ──
 app.post(['/api/settings/save', '/settings/save'], (req, res) => {
+  const hdr2 = String(req.headers['x-admin-token'] || req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
+  const exp2 = String(process.env.ADMIN_TOKEN || '').trim();
+  if (exp2 && hdr2 !== exp2) return res.status(401).json({ success: false, message: 'Unauthorized' });
   try {
     const s = req.body.settings || req.body || {};
     if (s.paymentGatewayProvider) {

@@ -857,7 +857,7 @@ app.get('/api/digiflazz/ip-status', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/digiflazz/update-ip-config', async (req: Request, res: Response) => {
+app.post('/api/digiflazz/update-ip-config', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { whitelistIp, outboundProxy } = req.body || {};
     const result = await outboundIpService.updateConfig(whitelistIp, outboundProxy);
@@ -877,7 +877,7 @@ app.post('/api/digiflazz/update-ip-config', async (req: Request, res: Response) 
   }
 });
 
-app.post('/api/digiflazz/test-ip', async (req: Request, res: Response) => {
+app.post('/api/digiflazz/test-ip', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { proxy } = req.body || {};
     const status = await outboundIpService.checkDigiflazzWhitelist(proxy);
@@ -990,30 +990,31 @@ app.get('/api/system/gateway-status', (req: Request, res: Response) => {
 });
 
 // 4c2. GATEWAY INFO ENDPOINT — Frontend loads active config from backend memory
-// Ini penting agar frontend dapat mengambil config aktif dari backend saat deploy
-// tanpa bergantung pada file .env (yang mungkin read-only di production)
+// Sanitized: never expose raw QR string / secrets to public; admin gets them via /api/sync/state + token
 app.get('/api/settings/gateway-info', (req: Request, res: Response) => {
+  const isAdmin = isAdminRequest(req);
+  const maskQr = (s: string) => s ? `${s.slice(0,12)}***` : '';
   res.json({
-    success: true,
+    success: true, _sanitized: !isAdmin,
     activeGateway: detectActiveGateway(),
     pakasir: {
       configured: pakasirService.isConfigured(),
       isSandbox: PAKASIR_CONFIG.IS_SANDBOX,
       baseUrl: PAKASIR_CONFIG.BASE_URL,
-      slug: PAKASIR_CONFIG.SLUG || '',
+      slug: PAKASIR_CONFIG.SLUG ? (isAdmin ? PAKASIR_CONFIG.SLUG : `${PAKASIR_CONFIG.SLUG.substring(0, 4)}***`) : '',
       hasApiKey: Boolean(PAKASIR_CONFIG.API_KEY),
       hasWebhookSecret: Boolean(PAKASIR_CONFIG.WEBHOOK_SECRET),
       paymentMethod: PAKASIR_CONFIG.PAYMENT_METHOD || 'qris',
       merchantName: PAKASIR_CONFIG.MERCHANT_NAME || 'WAYAHE DIGITAL',
       nmid: PAKASIR_CONFIG.NMID || '',
-      qrString: PAKASIR_CONFIG.QR_STRING || '',
+      qrString: isAdmin ? (PAKASIR_CONFIG.QR_STRING || '') : maskQr(PAKASIR_CONFIG.QR_STRING || ''),
     },
     qiospay: {
       configured: Boolean(QIOSPAY_CONFIG.MERCHANT_CODE && QIOSPAY_CONFIG.API_KEY),
       merchantCode: QIOSPAY_CONFIG.MERCHANT_CODE || '',
       merchantName: QIOSPAY_CONFIG.MERCHANT_NAME || '',
       nmid: QIOSPAY_CONFIG.NMID || '',
-      qrString: QIOSPAY_CONFIG.QRIS_STRING || '',
+      qrString: isAdmin ? (QIOSPAY_CONFIG.QRIS_STRING || '') : maskQr(QIOSPAY_CONFIG.QRIS_STRING || ''),
       hasApiKey: Boolean(QIOSPAY_CONFIG.API_KEY),
       hasSecretKey: Boolean(QIOSPAY_CONFIG.SECRET_KEY),
     },
@@ -1021,7 +1022,7 @@ app.get('/api/settings/gateway-info', (req: Request, res: Response) => {
 });
 
 // 4d. REALTIME SERVER, VPS, HOSTING, CPU, RAM & DATABASE TELEMETRY
-app.get('/api/system/metrics', async (req: Request, res: Response) => {
+app.get('/api/system/metrics', requireAdmin, async (req: Request, res: Response) => {
   try {
     const cpus = os.cpus();
     const coreCount = cpus.length || 1;
@@ -2097,27 +2098,62 @@ app.post('/api/mongodb/test', async (req: Request, res: Response) => {
   res.json(result);
 });
 
-app.post('/api/mongodb/run-query', async (req: Request, res: Response) => {
+app.post('/api/mongodb/run-query', requireAdmin, async (req: Request, res: Response) => {
   const { uri, dbName, collection, query } = req.body || {};
   const result = await mongoDbService.runSampleQuery(uri, dbName, collection, query);
   res.json(result);
 });
 
 // 13. CLOUD DATABASE SYNCHRONIZATION (Cross-Device Realtime Sync)
+// Helper: sanitasi settings agar secret tidak bocor ke publik tanpa X-Admin-Token
+const SENSITIVE_SETTINGS_KEYS = new Set([
+  'qiospayApiKey', 'qiospaySecretKey',
+  'pakasirApiKey', 'pakasirWebhookSecret',
+  'digiflazzApiKey', 'digiflazzProductionKey', 'digiflazzSecretCode', 'digiflazzWebhookSecret',
+  'supabaseSecretKey', 'supabaseServiceRoleKey',
+  'telegramBotToken', 'whatsappBotApiKey',
+  'ngrokAuthtoken', 'adminPassword',
+  'mongodbUri',
+  'qiospayQrString', 'pakasirQrString',
+]);
+function isAdminRequest(req: Request): boolean {
+  const hdr = (req.headers['x-admin-token'] || req.headers['authorization'] || '').toString().replace(/^Bearer\s+/i, '').trim();
+  const expected = (CONSOLE_CONFIG.ADMIN_TOKEN || process.env.ADMIN_TOKEN || '').trim();
+  return Boolean(expected && hdr && hdr === expected);
+}
+function sanitizeSettingsForPublic(settings: any, isAdmin: boolean): any {
+  if (!settings || typeof settings !== 'object') return settings;
+  if (isAdmin) return settings; // admin boleh lihat penuh (sudah auth)
+  const out: any = { ...settings };
+  for (const k of SENSITIVE_SETTINGS_KEYS) {
+    if (k in out && typeof out[k] === 'string' && out[k]) {
+      // ganti nilai asli dengan flag hasX; frontend admin akan fetch ulang dengan token untuk edit
+      out[k] = '';
+      out[`has${k.charAt(0).toUpperCase()}${k.slice(1)}`] = true;
+    } else if (k in out) {
+      delete out[k];
+    }
+  }
+  // tetap expose has* untuk UI cek 'terkonfigurasi'
+  return out;
+}
 app.get('/api/sync/state', async (req: Request, res: Response) => {
   try {
     const data = await mongoDbService.getAllState();
-    // Sanitasi: pastikan password/URI tidak pernah bocor ke frontend
-    if (data?.settings?.mongodbUri) {
-      delete data.settings.mongodbUri;
+    const isAdmin = isAdminRequest(req);
+    if (data?.settings) {
+      data.settings = sanitizeSettingsForPublic(data.settings, isAdmin);
     }
-    res.json({ success: true, data });
+    // header no-store agar Cloudflare tidak cache settings
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
+    res.json({ success: true, data, _sanitized: !isAdmin });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-app.post('/api/sync/state', async (req: Request, res: Response) => {
+app.post('/api/sync/state', requireAdmin, async (req: Request, res: Response) => {
   try {
     const fullState = req.body;
     if (fullState?.settings?.mongodbUri) {
@@ -2130,7 +2166,7 @@ app.post('/api/sync/state', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/sync/entity', async (req: Request, res: Response) => {
+app.post('/api/sync/entity', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { entity, data } = req.body || {};
     if (!entity) return res.status(400).json({ success: false, message: 'Entity name required' });
@@ -2522,8 +2558,8 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
   }
 });
 
-// 14. ADMIN WEB PUSH NOTIFICATION (FCM HTTP v1)
-app.get('/api/admin/push/status', async (req: Request, res: Response) => {
+// 14. ADMIN WEB PUSH NOTIFICATION (FCM HTTP v1) — requireAdmin
+app.get('/api/admin/push/status', requireAdmin, async (req: Request, res: Response) => {
   try {
     const isConfigured = pushNotificationService.isConfigured();
     const subs = await pushNotificationService.getActiveSubscriptions();
@@ -2545,7 +2581,7 @@ app.get('/api/admin/push/status', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/admin/push/devices', async (req: Request, res: Response) => {
+app.get('/api/admin/push/devices', requireAdmin, async (req: Request, res: Response) => {
   try {
     const subs = await pushNotificationService.getActiveSubscriptions();
     res.json({
@@ -2566,7 +2602,7 @@ app.get('/api/admin/push/devices', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/admin/push/subscribe', async (req: Request, res: Response) => {
+app.post('/api/admin/push/subscribe', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { token, installationId, deviceName, platform, userAgent, adminUserId } = req.body || {};
     if (!token) {
@@ -2596,7 +2632,7 @@ app.post('/api/admin/push/subscribe', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/api/admin/push/unsubscribe', async (req: Request, res: Response) => {
+app.delete('/api/admin/push/unsubscribe', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { token } = req.body || {};
     if (!token) {
@@ -2613,7 +2649,7 @@ app.delete('/api/admin/push/unsubscribe', async (req: Request, res: Response) =>
   }
 });
 
-app.post('/api/admin/push/test', async (req: Request, res: Response) => {
+app.post('/api/admin/push/test', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { adminUserId } = req.body || {};
     const result = await pushNotificationService.sendTestNotification(adminUserId || 'admin');
