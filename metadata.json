@@ -1,0 +1,6 @@
+{
+  "name": "WayaheDigital",
+  "description": "Platform penjualan pulsa, kuota internet, voucher WiFi RT/RW Net, dan produk premium digital cepat, aman, dan terpercaya.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,281 @@
+// Prisma Schema untuk WayaheDigital
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum CategoryType {
+  PULSA
+  KUOTA
+  WIFI
+  PREMIUM
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum FulfillmentStatus {
+  NOT_STARTED
+  QUEUED
+  PROCESSING
+  SUCCESS
+  FAILED
+  MANUAL_REVIEW
+}
+
+enum DeliveryMethod {
+  AUTOMATIC
+  MANUAL
+}
+
+enum VoucherStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  phone     String   @unique
+  name      String
+  password  String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+model Product {
+  id              String         @id @default(uuid())
+  categoryId      CategoryType
+  provider        String         // Telkomsel, Indosat, XL, Tri, MelatiNet, Spotify, dll.
+  name            String
+  sku             String         @unique
+  supplierSku     String?        // SKU di Digiflazz / Supplier
+  nominal         Int?           // Nominal pulsa jika pulsa murni
+  description     String
+  supplierPrice   Int            // Harga modal supplier (Rp)
+  sellingPrice    Int            // Harga jual customer (Rp)
+  discountPrice   Int?
+  quotaDetails    String?
+  duration        String?
+  speed           String?
+  networkLocation String?
+  deliveryMethod  DeliveryMethod @default(AUTOMATIC)
+  isActive        Boolean        @default(true)
+  stock           Int?           @default(0)
+  badge           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  orderItems      OrderItem[]
+
+  @@index([categoryId, provider])
+  @@index([isActive])
+}
+
+model Order {
+  id                String            @id @default(uuid())
+  invoiceNumber     String            @unique // INV/YYYYMMDD/WD/XXXX
+  userId            String?
+  user              User?             @relation(fields: [userId], references: [id])
+  customerName      String?
+  customerEmail     String?
+  customerPhone     String?
+  targetDestination String            // Nomor HP atau ID akun
+  category          CategoryType
+  subtotal          Int
+  adminFee          Int               @default(0)
+  discount          Int               @default(0)
+  promoCode         String?
+  totalAmount       Int
+  paymentStatus     PaymentStatus     @default(UNPAID)
+  fulfillmentStatus FulfillmentStatus @default(NOT_STARTED)
+  paymentMethod     String?
+  deliveryMethod    DeliveryMethod    @default(AUTOMATIC)
+  guestAccessToken  String            @default(uuid()) // Token keamanan tracking order tamu
+  idempotencyKey    String?           @unique
+  midtransSnapToken String?
+  midtransOrderId   String?
+  paidAt            DateTime?
+  fulfilledAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Pakasir API v2 Fields
+  pakasirTxnId      String?           @unique
+  paymentLink       String?
+  qrString          String?
+  fee               Int?              @default(0)
+  totalPayment      Int?
+  expiredAt         DateTime?
+  completedAt       DateTime?
+
+  items             OrderItem[]
+  paymentAttempts   PaymentAttempt[]
+  wifiVouchers      WifiVoucherItem[]
+  digiflazzLogs     DigiflazzLog[]
+
+  // Hasil pemenuhan
+  supplierRefId     String?
+  serialNumber      String?
+  voucherCode       String?
+  voucherPassword   String?
+  wifiSsid          String?
+  wifiLoginUrl      String?
+  premiumNotes      String?
+  errorReason       String?
+
+  @@index([invoiceNumber])
+  @@index([targetDestination])
+  @@index([customerPhone])
+  @@index([paymentStatus, fulfillmentStatus])
+  @@index([pakasirTxnId])
+}
+
+model OrderItem {
+  id                    String         @id @default(uuid())
+  orderId               String
+  order                 Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId             String
+  product               Product        @relation(fields: [productId], references: [id])
+  productName           String
+  provider              String
+  category              CategoryType
+  sellingPrice          Int
+  deliveryMethod        DeliveryMethod
+  targetNumberOrAccount String
+  networkLocation       String?
+  customerNote          String?
+  createdAt             DateTime       @default(now())
+}
+
+model PaymentAttempt {
+  id            String        @id @default(uuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentMethod String
+  snapToken     String?
+  transactionId String?
+  amount        Int
+  status        PaymentStatus @default(PENDING)
+  rawPayload    Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model WifiVoucherBatch {
+  id           String            @id @default(uuid())
+  name         String
+  location     String
+  speedProfile String
+  duration     String
+  createdAt    DateTime          @default(now())
+  vouchers     WifiVoucherItem[]
+}
+
+model WifiVoucherItem {
+  id              String            @id @default(uuid())
+  batchId         String?
+  batch           WifiVoucherBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  location        String
+  packageDuration String
+  code            String            @unique
+  password        String?
+  status          VoucherStatus     @default(AVAILABLE)
+  orderId         String?
+  order           Order?            @relation(fields: [orderId], references: [id])
+  reservedUntil   DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([status, location, packageDuration])
+}
+
+model PromoCode {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  discountAmount Int
+  minTransaction Int
+  description    String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model DigiflazzLog {
+  id           String   @id @default(uuid())
+  orderId      String?
+  order        Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  buyerSkuCode String
+  customerNo   String
+  refId        String   @unique
+  status       String   // Pending, Sukses, Gagal
+  rc           String?  // Response Code
+  sn           String?  // Serial Number
+  message      String?
+  requestBody  Json?
+  responseBody Json?
+  createdAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  performedBy String
+  details     String
+  createdAt   DateTime @default(now())
+}
+
+model QiospayEvent {
+  nmid               String
+  refid              String
+  payload            Json
+  receivedAt         DateTime @default(now())
+  verificationStatus String   @default("unverified") // unverified, verified, failed, manual_review
+  amount             Int?
+  type               String?
+  issuer             String?
+
+  @@id([nmid, refid])
+  @@index([receivedAt])
+  @@index([verificationStatus])
+}
+
+model AdminPushSubscription {
+  id             String   @id @default(uuid())
+  adminUserId    String   @default("admin")
+  token          String   @unique
+  installationId String?
+  deviceName     String?  @default("Perangkat Admin")
+  platform       String?  @default("Web")
+  userAgent      String?
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastUsedAt     DateTime @default(now())
+
+  @@index([adminUserId])
+  @@index([enabled])
+}
+
