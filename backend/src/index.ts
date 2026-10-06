@@ -2633,7 +2633,7 @@ app.get('/api/drizzle/info', (req: Request, res: Response) => {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'wayahedigital-api' }));
 
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {
   console.log('\n══════════════════════════════════════════════════');
   console.log(`🚀 WayaheDigital Backend API running on port ${PORT}`);
   console.log(`📡 Mode: ${CONSOLE_CONFIG.NODE_ENV}`);
