@@ -21,11 +21,25 @@ export interface SupabaseTestResult {
 
 export function sanitizeSupabaseUrl(rawUrl: string): string {
   if (!rawUrl) return '';
-  let url = rawUrl.trim().replace(/\/+$/, '');
-  while (/\/rest\/v1\/?$/i.test(url)) {
-    url = url.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
+  let str = String(rawUrl).trim();
+  if (!str) return '';
+  if (!str.startsWith('http://') && !str.startsWith('https://')) {
+    str = 'https://' + str;
   }
-  return url;
+  try {
+    const parsed = new URL(str);
+    if (parsed.hostname.endsWith('.supabase.co')) {
+      return parsed.origin;
+    }
+    let cleanPath = parsed.pathname
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+    return parsed.origin + (cleanPath && cleanPath !== '/' ? cleanPath : '');
+  } catch {
+    return str
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+  }
 }
 
 const DB_FILE = path.join(process.cwd(), 'data', 'db.json');

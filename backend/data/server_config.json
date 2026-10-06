@@ -1,0 +1,40 @@
+{
+  "activeGateway": "QIOSPAY",
+  "pakasir": {
+    "slug": "waroengdigital",
+    "apiKey": "cvraC3U3lYVMCwoy4E9eLWapC7Xt9lZ5",
+    "webhookSecret": "f7e9369fa52a6c86657c55bbe30dccde",
+    "baseUrl": "https://app.pakasir.com",
+    "paymentMethod": "qris",
+    "merchantName": "WAYAHE DIGITAL",
+    "nmid": "",
+    "qrString": "",
+    "isSandbox": true,
+    "webhookUrl": "https://wayahetopup.my.id/api/payment/pakasir/webhook"
+  },
+  "qiospay": {
+    "merchantCode": "QP048797",
+    "apiKey": "1f35027cdf888c74c36063efcb93f69fc15f119419adf772e58629336c5228cf",
+    "secretKey": "312d3971811869d9f3a6c740b944f9bf841369d17479bdcaaa9080d1658ba4cb",
+    "nmid": "ID1026524496431",
+    "merchantName": "Waroeng Digital QP48797",
+    "qrString": "00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF",
+    "webhookUrl": "https://wayahetopup.my.id/api/callback/accept/312d3971811869d9f3a6c740b944f9bf841369d17479bdcaaa9080d1658ba4cb"
+  },
+  "digiflazz": {
+    "username": "cojakuD2AReo",
+    "apiKey": "7a90ab38-427a-589c-bb2c-c2ce552916a8",
+    "webhookSecret": "Wd Cell",
+    "webhookUrl": "https://wayahetopup.my.id/api/webhooks/digiflazz",
+    "baseUrl": "https://api.digiflazz.com/v1",
+    "testing": false,
+    "allowedCallbackUrls": [
+      "https://wayahetopup.my.id/api/webhooks/digiflazz"
+    ]
+  },
+  "supabase": {
+    "url": "https://tqpookbexekasvrliobf.supabase.co",
+    "publishableKey": "",
+    "secretKey": ""
+  }
+}

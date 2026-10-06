@@ -82,6 +82,29 @@ function saveServerConfig(config) {
   } catch (_) {}
 }
 
+function cleanSupabaseUrl(rawUrl) {
+  if (!rawUrl) return '';
+  let str = String(rawUrl).trim();
+  if (!str) return '';
+  if (!str.startsWith('http://') && !str.startsWith('https://')) {
+    str = 'https://' + str;
+  }
+  try {
+    const parsed = new URL(str);
+    if (parsed.hostname.endsWith('.supabase.co')) {
+      return parsed.origin;
+    }
+    let cleanPath = parsed.pathname
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+    return parsed.origin + (cleanPath && cleanPath !== '/' ? cleanPath : '');
+  } catch {
+    return str
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+  }
+}
+
 // Pastikan logo.png dan logo.svg di folder public selalu tersedia
 try {
   const logoSrc = path.resolve(__dirname, '../public/icons/icon-512x512.png');
@@ -158,6 +181,11 @@ const _defaultConfig = {
       process.env.DIGIFLAZZ_WEBHOOK_URL,
       ...(process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS ? process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS.split(',') : [])
     ].map(u => u?.trim()).filter(Boolean))),
+  },
+  supabase: {
+    url: cleanSupabaseUrl(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || ''),
+    publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    secretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   }
 };
 
@@ -169,6 +197,7 @@ const serverConfig = {
   pakasir: { ..._defaultConfig.pakasir, ...(_savedConfig.pakasir || {}) },
   qiospay: { ..._defaultConfig.qiospay, ...(_savedConfig.qiospay || {}) },
   digiflazz: { ..._defaultConfig.digiflazz, ...(_savedConfig.digiflazz || {}) },
+  supabase: { ..._defaultConfig.supabase, ...(_savedConfig.supabase || {}) },
 };
 
 // Map transaksi Digiflazz in-memory
@@ -365,6 +394,12 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
       digiflazzWebhookSecret: serverConfig.digiflazz.webhookSecret,
       digiflazzWebhookUrl: serverConfig.digiflazz.webhookUrl,
       digiflazzMode: serverConfig.digiflazz.testing ? 'DEVELOPMENT' : 'PRODUCTION',
+      // Supabase (selalu bersih tanpa akhiran /rest atau /rest/v1)
+      supabaseUrl: cleanSupabaseUrl(serverConfig.supabase?.url || ''),
+      supabasePublishableKey: serverConfig.supabase?.publishableKey || '',
+      supabaseAnonKey: serverConfig.supabase?.publishableKey || '',
+      supabaseSecretKey: serverConfig.supabase?.secretKey || '',
+      supabaseServiceRoleKey: serverConfig.supabase?.secretKey || '',
     }
   });
 });
@@ -420,12 +455,24 @@ app.post(['/api/settings/save', '/settings/save'], (req, res) => {
       serverConfig.digiflazz.testing = s.digiflazzMode !== 'PRODUCTION';
     }
 
+    // 4. Simpan Konfigurasi Supabase
+    if (s.supabaseUrl !== undefined) {
+      serverConfig.supabase.url = cleanSupabaseUrl(s.supabaseUrl);
+    }
+    if (s.supabasePublishableKey !== undefined || s.supabaseAnonKey !== undefined) {
+      serverConfig.supabase.publishableKey = String(s.supabasePublishableKey || s.supabaseAnonKey || '').trim();
+    }
+    if (s.supabaseSecretKey !== undefined || s.supabaseServiceRoleKey !== undefined) {
+      serverConfig.supabase.secretKey = String(s.supabaseSecretKey || s.supabaseServiceRoleKey || '').trim();
+    }
+
     // Simpan ke file persisten agar tidak hilang setelah reload
     saveServerConfig({
       activeGateway: serverConfig.activeGateway,
       pakasir: serverConfig.pakasir,
       qiospay: serverConfig.qiospay,
       digiflazz: serverConfig.digiflazz,
+      supabase: serverConfig.supabase,
     });
 
     res.json({

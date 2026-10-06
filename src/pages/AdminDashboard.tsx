@@ -95,7 +95,7 @@ import { apiAdapter } from '../services/apiAdapter';
 import { triggerTopLoading } from '../components/TopProgressBar';
 import { tunnelClient, TunnelStatusResponse } from '../services/tunnelClient';
 import { mongoClient, MongoInfoResponse, MongoTestResponse, MongoQueryResponse } from '../services/mongoClientService';
-import { supabaseClient, SupabaseInfoResponse, SupabaseTestResponse } from '../services/supabaseClientService';
+import { supabaseClient, SupabaseInfoResponse, SupabaseTestResponse, sanitizeUrl } from '../services/supabaseClientService';
 import { pushClientService, PushStatus, DeviceInfo } from '../services/pushClientService';
 import { validateQRISPayload } from '../utils/qris';
 import { AdminApiSettingsSection } from '../components/AdminApiSettingsSection';
@@ -378,6 +378,17 @@ export function AdminDashboard({
           if (d.digiflazzWebhookUrl) merged.digiflazzWebhookUrl = d.digiflazzWebhookUrl;
           if (d.digiflazzMode) merged.digiflazzMode = d.digiflazzMode as any;
           if (d.paymentGatewayProvider) merged.paymentGatewayProvider = d.paymentGatewayProvider;
+          if (d.supabaseUrl) {
+            merged.supabaseUrl = sanitizeUrl(d.supabaseUrl);
+          }
+          if (d.supabasePublishableKey) {
+            merged.supabasePublishableKey = d.supabasePublishableKey;
+            merged.supabaseAnonKey = d.supabasePublishableKey;
+          }
+          if (d.supabaseSecretKey) {
+            merged.supabaseSecretKey = d.supabaseSecretKey;
+            merged.supabaseServiceRoleKey = d.supabaseSecretKey;
+          }
           return merged;
         });
 
@@ -2245,11 +2256,12 @@ export function AdminDashboard({
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
+    const cleanUrl = sanitizeUrl(settings.supabaseUrl || '');
     const pubKey = settings.supabasePublishableKey || settings.supabaseAnonKey || '';
     const secKey = settings.supabaseSecretKey || settings.supabaseServiceRoleKey || '';
     const updated: AppSettings = {
       ...settings,
-      supabaseUrl: settings.supabaseUrl || '',
+      supabaseUrl: cleanUrl,
       supabasePublishableKey: pubKey,
       supabaseSecretKey: secKey,
       supabaseAnonKey: pubKey,
@@ -2266,9 +2278,11 @@ export function AdminDashboard({
   const handleTestSupabaseConnection = async () => {
     setSupabaseTesting(true);
     try {
+      const cleanUrl = sanitizeUrl(settings.supabaseUrl || '');
+      const cleanKey = settings.supabaseSecretKey || settings.supabasePublishableKey || settings.supabaseServiceRoleKey || settings.supabaseAnonKey;
       const res = await supabaseClient.testConnection(
-        settings.supabaseUrl,
-        settings.supabaseSecretKey || settings.supabasePublishableKey || settings.supabaseServiceRoleKey || settings.supabaseAnonKey
+        cleanUrl,
+        cleanKey
       );
       setSupabaseTestResult(res);
       if (res.success) {

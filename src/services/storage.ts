@@ -829,6 +829,29 @@ export const INITIAL_AI_TOKEN_PRODUCTS: Product[] = [
   }
 ];
 
+function cleanSupabaseUrl(rawUrl?: string): string {
+  if (!rawUrl) return '';
+  let str = String(rawUrl).trim();
+  if (!str) return '';
+  if (!str.startsWith('http://') && !str.startsWith('https://')) {
+    str = 'https://' + str;
+  }
+  try {
+    const parsed = new URL(str);
+    if (parsed.hostname.endsWith('.supabase.co')) {
+      return parsed.origin;
+    }
+    let cleanPath = parsed.pathname
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+    return parsed.origin + (cleanPath && cleanPath !== '/' ? cleanPath : '');
+  } catch {
+    return str
+      .replace(/\/rest(\/v1)?\/?$/i, '')
+      .replace(/\/+$/, '');
+  }
+}
+
 export const storage = {
   // ── CLOUD SYNC INITIALIZER ──
   async initCloudSync(): Promise<void> {
@@ -1323,7 +1346,7 @@ export const storage = {
     }
     try {
       const parsed = JSON.parse(raw);
-      return {
+      const settings: AppSettings = {
         ...DEFAULT_SETTINGS,
         ...parsed,
         discountPopup: {
@@ -1331,20 +1354,28 @@ export const storage = {
           ...(parsed.discountPopup || {})
         }
       };
+      if (settings.supabaseUrl) {
+        settings.supabaseUrl = cleanSupabaseUrl(settings.supabaseUrl);
+      }
+      return settings;
     } catch {
       return DEFAULT_SETTINGS;
     }
   },
 
   saveSettings(settings: AppSettings): void {
-    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(settings));
-    pushEntityToBackend('settings', settings);
+    const sanitizedSettings = {
+      ...settings,
+      supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),
+    };
+    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(sanitizedSettings));
+    pushEntityToBackend('settings', sanitizedSettings);
     notifyStorageSynced();
     try {
       fetchWithFallback('/api/settings/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(sanitizedSettings),
       }).catch(() => {});
     } catch (_) {}
   },
