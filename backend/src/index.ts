@@ -71,8 +71,25 @@ const fulfillmentService = new FulfillmentService(prisma);
 const PORT = CONSOLE_CONFIG.PORT;
 
 // Security & Middlewares
+const allowedOrigins = new Set<string>([
+  'https://wayahedigital.com',
+  'https://www.wayahedigital.com',
+]);
+if (CONSOLE_CONFIG.SUPABASE_URL) allowedOrigins.add(CONSOLE_CONFIG.SUPABASE_URL);
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin) return cb(null, true); // curl/healthcheck
+    const host = (() => { try { return new URL(origin).hostname; } catch { return origin; } })();
+    const isAllowed = allowedOrigins.has(origin)
+      || host.endsWith('.wayahedigital.com')
+      || host.endsWith('.trycloudflare.com')
+      || host.endsWith('.tunnel.devtest.ultravocloud.com')
+      || origin.includes('localhost');
+    return cb(null, isAllowed ? true : false);
+  },
+  credentials: true,
+}));
 app.use(express.json({ 
   limit: '10mb',
   verify: (req: any, _res, buf) => {
@@ -2029,7 +2046,7 @@ app.post('/api/supabase/test', async (req: Request, res: Response) => {
   res.json(result);
 });
 
-app.post('/api/supabase/run-query', async (req: Request, res: Response) => {
+app.post('/api/supabase/run-query', requireAdmin, async (req: Request, res: Response) => {
   const { url, key, table, query } = req.body || {};
   const result = await supabaseService.runSampleQuery(url, key, table, query);
   res.json(result);
@@ -2039,7 +2056,19 @@ app.get('/api/supabase/sql-schema', (req: Request, res: Response) => {
   res.json({ schema: supabaseService.getSqlSchema() });
 });
 
-app.post('/api/supabase/exec-sql', async (req: Request, res: Response) => {
+function requireAdmin(req: Request, res: Response, next: any) {
+  const hdr = (req.headers['x-admin-token'] || req.headers['authorization'] || '').toString();
+  const token = hdr.replace(/^Bearer\s+/i, '').trim();
+  const expected = (CONSOLE_CONFIG.ADMIN_TOKEN || process.env.ADMIN_TOKEN || '').trim();
+  if (!expected) {
+    // ADMIN_TOKEN belum diset — tolak di production, izinkan hanya healthcheck localhost tanpa body
+    return res.status(503).json({ success: false, message: 'ADMIN_TOKEN belum diset di backend/.env — set lalu restart backend' });
+  }
+  if (token && token === expected) return next();
+  return res.status(401).json({ success: false, message: 'Unauthorized — admin token required (header X-Admin-Token)' });
+}
+
+app.post('/api/supabase/exec-sql', requireAdmin, async (req: Request, res: Response) => {
   const { sql } = req.body || {};
   if (!sql) {
     return res.status(400).json({ success: false, message: 'Script SQL wajib diisi' });
@@ -2133,7 +2162,7 @@ app.post('/api/sync/entity', async (req: Request, res: Response) => {
 });
 
 // Save Settings and persist to backend/.env + Supabase
-app.post('/api/settings/save', async (req: Request, res: Response) => {
+app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response) => {
   try {
     const settings = req.body.settings || req.body || {};
     // Jika ada SUPABASE Config yang dikirim oleh Admin, simpan ke backend/.env
@@ -2476,20 +2505,9 @@ app.post('/api/settings/save', async (req: Request, res: Response) => {
       console.warn('Could not write .env file:', e.message);
     }
 
-    // Buat salinan sanitized settings untuk disimpan di database/client
-    const sanitizedSettings = { ...settings };
-    delete sanitizedSettings.supabaseSecretKey;
-    delete sanitizedSettings.supabaseServiceRoleKey;
-    delete sanitizedSettings.pakasirApiKey;
-    delete sanitizedSettings.pakasirWebhookSecret;
-    delete sanitizedSettings.qiospayApiKey;
-    delete sanitizedSettings.qiospaySecretKey;
-    delete sanitizedSettings.digiflazzApiKey;
-    delete sanitizedSettings.digiflazzProductionKey;
-    delete sanitizedSettings.digiflazzSecretCode;
-    delete sanitizedSettings.digiflazzWebhookSecret;
-
-    const syncResult = await supabaseService.syncEntity('settings', sanitizedSettings);
+    // Persist full settings (termasuk API secrets) ke Supabase & local cache
+    // — merge di supabaseService.syncEntity menjaga secret lama bila frontend kirim ""/undefined
+    const syncResult = await supabaseService.syncEntity('settings', settings);
 
     res.json({ 
       success: true, 

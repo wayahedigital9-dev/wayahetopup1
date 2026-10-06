@@ -169,6 +169,14 @@ export function AdminDashboard({
 
   // Local settings state & Sub-tab navigation
   const [settings, setSettings] = useState<AppSettings>(storage.getSettings());
+  // Hydrate from backend on mount — fixes hilangnya config setelah reload/pindah browser
+  React.useEffect(() => {
+    let cancelled = false;
+    storage.hydrateSettingsFromBackend().then((merged) => {
+      if (!cancelled && merged) setSettings(merged);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleToggleCategoryStatus = (categoryKey: string, categoryLabel: string) => {
     const currentStatus = settings.categoryStatus || {

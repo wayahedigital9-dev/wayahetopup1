@@ -42,6 +42,9 @@ export const CONSOLE_CONFIG = {
   MONGODB_DBNAME: process.env.MONGODB_DBNAME || '',
   MONGODB_DBNAME_TRANS: process.env.MONGODB_DBNAME_TRANS || '',
 
+  /** Token admin untuk proteksi /api/supabase/exec-sql & endpoint sensitif */
+  ADMIN_TOKEN: process.env.ADMIN_TOKEN || '',
+
   /** Apakah mode production? */
   get isProduction(): boolean {
     return this.NODE_ENV === 'production';

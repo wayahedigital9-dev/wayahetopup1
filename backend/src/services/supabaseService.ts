@@ -707,8 +707,19 @@ export class SupabaseService {
   async syncEntity(collectionName: string, data: any): Promise<{ success: boolean; supabasePersisted: boolean; error?: string }> {
     const local = this.loadLocalFile();
     if (collectionName === 'settings' || collectionName === 'app_settings') {
-      local.settings = { ...(local.settings || {}), ...data };
+      // MERGE: preserve existing secrets when incoming data has empty/undefined
+      const SECRET_KEYS = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
+      const mergedLocal: any = { ...(local.settings || {}) };
+      for (const [k, v] of Object.entries(data || {})) {
+        const isSecret = SECRET_KEYS.includes(k);
+        const strVal = typeof v === 'string' ? v.trim() : v;
+        if (isSecret && (strVal === '' || strVal === undefined || strVal === null)) continue;
+        (mergedLocal as any)[k] = v;
+      }
+      local.settings = mergedLocal;
       this.saveLocalFile(local);
+      // data for supabase is mergedLocal (full, including secrets) — will be re-merged with existing supabase row below
+      data = mergedLocal;
     } else if (Array.isArray(data)) {
       local[collectionName] = data;
       this.saveLocalFile(local);
@@ -721,7 +732,22 @@ export class SupabaseService {
     if (client) {
       try {
         if (collectionName === 'settings' || collectionName === 'app_settings') {
-          const payload = { key: 'main_settings', value: data, updatedAt: new Date().toISOString() };
+          // MERGE with existing Supabase row (avoid wipe when frontend sends partial)
+          let existingVal: any = {};
+          try {
+            const existing = await client.from('app_settings').select('value').eq('key', 'main_settings').maybeSingle();
+            if (existing?.data?.value && !existing.error) existingVal = existing.data.value as any;
+            if (typeof existingVal === 'string') existingVal = JSON.parse(existingVal);
+          } catch (_) {}
+          const SECRET_KEYS2 = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
+          const mergedSupabase: any = { ...(existingVal || {}) };
+          for (const [k, v] of Object.entries(data || {})) {
+            const isSecret = SECRET_KEYS2.includes(k);
+            const strVal = typeof v === 'string' ? v.trim() : v;
+            if (isSecret && (strVal === '' || strVal === undefined || strVal === null)) continue;
+            (mergedSupabase as any)[k] = v;
+          }
+          const payload = { key: 'main_settings', value: mergedSupabase, updatedAt: new Date().toISOString() };
 
           // Try app_settings first
           const res1 = await client.from('app_settings').upsert(payload, { onConflict: 'key' });
@@ -729,7 +755,7 @@ export class SupabaseService {
             supabasePersisted = true;
           } else {
             // Try fallback settings table
-            const res2 = await client.from('settings').upsert({ key: 'main_settings', value: data, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+            const res2 = await client.from('settings').upsert({ key: 'main_settings', value: mergedSupabase, updated_at: new Date().toISOString() }, { onConflict: 'key' });
             if (!res2.error) {
               supabasePersisted = true;
             } else {

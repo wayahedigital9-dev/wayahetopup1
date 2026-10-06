@@ -35,6 +35,11 @@ export function sanitizeUrl(rawUrl?: string): string {
   return url;
 }
 
+function adminJsonHeaders(): Record<string, string> {
+  const tok = (import.meta as any)?.env?.VITE_ADMIN_TOKEN as string | undefined;
+  return tok ? { 'Content-Type': 'application/json', 'X-Admin-Token': tok.trim() } : { 'Content-Type': 'application/json' };
+}
+
 export class SupabaseClientService {
   private getEffectiveConfig(customUrl?: string, customKey?: string) {
     const settings = storage.getSettings();
@@ -214,7 +219,7 @@ export class SupabaseClientService {
       try {
         const res = await fetch('/api/supabase/run-query', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: adminJsonHeaders(),
           body: JSON.stringify({ url, key, table, query }),
         });
 
@@ -262,7 +267,7 @@ export class SupabaseClientService {
     try {
       const res = await fetch('/api/supabase/exec-sql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify({ sql }),
       });
       return await res.json();

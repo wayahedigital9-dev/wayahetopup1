@@ -266,10 +266,24 @@ async function fetchWithTimeout(url: string, options?: RequestInit, timeoutMs = 
   }
 }
 
+function getAdminHeaders(): Record<string, string> {
+  const tok = (import.meta as any)?.env?.VITE_ADMIN_TOKEN as string | undefined;
+  return tok ? { 'X-Admin-Token': tok.trim() } : {};
+}
+
+function withAdminHeaders(opts?: RequestInit): RequestInit | undefined {
+  if (!opts) return undefined;
+  const h = getAdminHeaders();
+  if (!Object.keys(h).length) return opts;
+  const cur = (opts.headers || {}) as Record<string, string>;
+  return { ...opts, headers: { ...cur, ...h } };
+}
+
 async function fetchWithFallback(endpoint: string, options?: RequestInit): Promise<Response> {
+  const opts = withAdminHeaders(options);
   // 1. Try relative path (Vite proxy / standard deployment / Vercel Serverless) with short 2.5s timeout
   try {
-    const res = await fetchWithTimeout(endpoint, options, 2500);
+    const res = await fetchWithTimeout(endpoint, opts, 2500);
     const contentType = res.headers.get('content-type') || '';
     // Jika response HTML (misal index.html dari rewrite Vercel), jangan gunakan sebagai response API
     if (!contentType.includes('text/html') && (res.ok || res.status < 500)) {
@@ -281,7 +295,7 @@ async function fetchWithFallback(endpoint: string, options?: RequestInit): Promi
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     try {
       const directUrl = `${window.location.protocol}//${window.location.hostname}:4000${endpoint}`;
-      const res = await fetchWithTimeout(directUrl, options, 2000);
+      const res = await fetchWithTimeout(directUrl, opts, 2000);
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('text/html') && (res.ok || res.status < 500)) {
         return res;
@@ -292,7 +306,7 @@ async function fetchWithFallback(endpoint: string, options?: RequestInit): Promi
   // 3. Fallback to localhost:4000 with 1.5s timeout (hanya jika di local machine)
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     try {
-      return await fetchWithTimeout(`http://localhost:4000${endpoint}`, options, 1500);
+      return await fetchWithTimeout(`http://localhost:4000${endpoint}`, opts, 1500);
     } catch (_) {}
   }
 
@@ -308,7 +322,7 @@ function pushEntityToBackend(entity: string, data: any) {
     try {
       fetchWithFallback('/api/sync/entity', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify({ entity, data }),
       }).catch(() => {});
     } catch (_) {}
@@ -1275,6 +1289,30 @@ export const storage = {
     }
 
     return undefined;
+  },
+
+  async hydrateSettingsFromBackend(): Promise<AppSettings | null> {
+    try {
+      const res = await fetch('/api/sync/state', { cache: 'no-store' as any });
+      if (!res.ok) return null;
+      const json = await res.json().catch(() => null);
+      const remote: AppSettings | undefined = json?.data?.settings;
+      if (!remote || typeof remote !== 'object') return null;
+      const local = this.getSettings();
+      const merged: AppSettings = {
+        ...DEFAULT_SETTINGS,
+        ...local,
+        ...remote,
+        discountPopup: {
+          ...DEFAULT_DISCOUNT_POPUP,
+          ...(local.discountPopup || {}),
+          ...(remote.discountPopup || {}),
+        },
+      } as AppSettings;
+      // Silently repair localStorage so next reload tidak butuh fetch lagi
+      try { localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(merged)); } catch (_) {}
+      return merged;
+    } catch { return null; }
   },
 
   getSettings(): AppSettings {
