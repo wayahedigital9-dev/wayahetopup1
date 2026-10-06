@@ -335,6 +335,69 @@ export function AdminDashboard({
     return () => clearInterval(interval);
   }, []);
 
+  // ── Sync konfigurasi dari server saat mount (agar tidak hilang setelah reload) ──
+  useEffect(() => {
+    const loadServerSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/load');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const d = json.data;
+
+        // Merge ke settings state (gabungkan dengan localStorage yang sudah ada)
+        setSettings(prev => {
+          const merged = { ...prev };
+          // Hanya update field yang benar-benar ada di server (bukan default kosong)
+          if (d.pakasirSlug) merged.pakasirSlug = d.pakasirSlug;
+          if (d.pakasirApiKey) merged.pakasirApiKey = d.pakasirApiKey;
+          if (d.pakasirWebhookSecret) merged.pakasirWebhookSecret = d.pakasirWebhookSecret;
+          if (d.pakasirBaseUrl) merged.pakasirBaseUrl = d.pakasirBaseUrl;
+          if (d.pakasirPaymentMethod) merged.pakasirPaymentMethod = d.pakasirPaymentMethod;
+          if (d.pakasirMerchantName) merged.pakasirMerchantName = d.pakasirMerchantName;
+          if (d.pakasirNmid) merged.pakasirNmid = d.pakasirNmid;
+          if (d.pakasirQrString) merged.pakasirQrString = d.pakasirQrString;
+          if (d.pakasirIsSandbox !== undefined) merged.pakasirIsSandbox = d.pakasirIsSandbox;
+          if (d.qiospayMerchantCode) merged.qiospayMerchantCode = d.qiospayMerchantCode;
+          if (d.qiospayApiKey) merged.qiospayApiKey = d.qiospayApiKey;
+          if (d.qiospaySecretKey) merged.qiospaySecretKey = d.qiospaySecretKey;
+          if (d.qiospayNmid) merged.qiospayNmid = d.qiospayNmid;
+          if (d.qiospayMerchantName) merged.qiospayMerchantName = d.qiospayMerchantName;
+          if (d.qiospayQrString) { merged.qiospayQrString = d.qiospayQrString; merged.staticQrisString = d.qiospayQrString; }
+          if (d.digiflazzUser) { merged.digiflazzUser = d.digiflazzUser; merged.digiflazzUsername = d.digiflazzUser; }
+          if (d.digiflazzProductionKey) { merged.digiflazzProductionKey = d.digiflazzProductionKey; merged.digiflazzApiKey = d.digiflazzProductionKey; }
+          if (d.digiflazzSecretCode) { merged.digiflazzSecretCode = d.digiflazzSecretCode; merged.digiflazzWebhookSecret = d.digiflazzSecretCode; }
+          if (d.digiflazzWebhookUrl) merged.digiflazzWebhookUrl = d.digiflazzWebhookUrl;
+          if (d.digiflazzMode) merged.digiflazzMode = d.digiflazzMode as any;
+          if (d.paymentGatewayProvider) merged.paymentGatewayProvider = d.paymentGatewayProvider;
+          return merged;
+        });
+
+        // Sync ke form state individual
+        if (d.qiospayMerchantCode) setQiospayMerchantCode(d.qiospayMerchantCode);
+        if (d.qiospayApiKey) setQiospayApiKey(d.qiospayApiKey);
+        if (d.qiospaySecretKey) setQiospaySecretKey(d.qiospaySecretKey);
+        if (d.qiospayNmid) setQiospayNmid(d.qiospayNmid);
+        if (d.qiospayMerchantName) setQiospayMerchantName(d.qiospayMerchantName);
+        if (d.qiospayQrString) setQiospayQrString(d.qiospayQrString);
+        if (d.pakasirSlug) setPakasirSlug(d.pakasirSlug);
+        if (d.pakasirApiKey) setPakasirApiKey(d.pakasirApiKey);
+        if (d.pakasirWebhookSecret) setPakasirWebhookSecret(d.pakasirWebhookSecret);
+        if (d.pakasirBaseUrl) setPakasirBaseUrl(d.pakasirBaseUrl);
+        if (d.pakasirPaymentMethod) setPakasirPaymentMethod(d.pakasirPaymentMethod);
+        if (d.pakasirMerchantName) setPakasirMerchantName(d.pakasirMerchantName);
+        if (d.pakasirNmid) setPakasirNmid(d.pakasirNmid);
+        if (d.pakasirQrString) setPakasirQrString(d.pakasirQrString);
+        if (d.pakasirIsSandbox !== undefined) setPakasirIsSandbox(Boolean(d.pakasirIsSandbox));
+        if (d.paymentGatewayProvider) setSelectedGatewayProvider(d.paymentGatewayProvider as any);
+
+        // Simpan juga ke localStorage agar sinkron
+        storage.saveSettings({ ...storage.getSettings(), ...d });
+      } catch (_) {}
+    };
+    loadServerSettings();
+  }, []);
+
   const handleSubscribePush = async () => {
     setPushLoading(true);
     setPushFeedback(null);

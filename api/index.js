@@ -8,6 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DB_PATH = path.resolve(__dirname, '../backend/data/db.json');
 const TMP_DB_PATH = '/tmp/wayahe_db.json';
+const CONFIG_PATH = path.resolve(__dirname, '../backend/data/server_config.json');
+const TMP_CONFIG_PATH = '/tmp/wayahe_server_config.json';
 let memoryDb = null;
 
 // Multi-tier Database Reader (In-Memory -> /tmp Serverless -> backend/data/db.json)
@@ -50,6 +52,36 @@ function writeDatabase(updater) {
   return updated;
 }
 
+// ── Persistent Server Config (server_config.json) ──
+function loadServerConfig() {
+  // Coba baca dari /tmp dulu (serverless), lalu dari file lokal
+  const paths = [TMP_CONFIG_PATH, CONFIG_PATH];
+  for (const p of paths) {
+    try {
+      if (fs.existsSync(p)) {
+        const raw = fs.readFileSync(p, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (_) {}
+  }
+  return {};
+}
+
+function saveServerConfig(config) {
+  const data = JSON.stringify(config, null, 2);
+  // Tulis ke file lokal
+  try {
+    const dir = path.dirname(CONFIG_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(CONFIG_PATH, data, 'utf-8');
+  } catch (_) {}
+  // Tulis ke /tmp (untuk serverless)
+  try {
+    fs.writeFileSync(TMP_CONFIG_PATH, data, 'utf-8');
+  } catch (_) {}
+}
+
 // Pastikan logo.png dan logo.svg di folder public selalu tersedia
 try {
   const logoSrc = path.resolve(__dirname, '../public/icons/icon-512x512.png');
@@ -90,7 +122,8 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── In-Memory Configuration & Webhook Transaction Cache ──
-const serverConfig = {
+// Default config dari environment variables
+const _defaultConfig = {
   activeGateway: 'QIOSPAY',
   pakasir: {
     slug: process.env.PAKASIR_SLUG || 'waroengdigital',
@@ -126,6 +159,16 @@ const serverConfig = {
       ...(process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS ? process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS.split(',') : [])
     ].map(u => u?.trim()).filter(Boolean))),
   }
+};
+
+// Muat konfigurasi tersimpan dari file (jika ada), merge dengan default
+const _savedConfig = loadServerConfig();
+const serverConfig = {
+  ..._defaultConfig,
+  activeGateway: _savedConfig.activeGateway || _defaultConfig.activeGateway,
+  pakasir: { ..._defaultConfig.pakasir, ...(_savedConfig.pakasir || {}) },
+  qiospay: { ..._defaultConfig.qiospay, ...(_savedConfig.qiospay || {}) },
+  digiflazz: { ..._defaultConfig.digiflazz, ...(_savedConfig.digiflazz || {}) },
 };
 
 // Map transaksi Digiflazz in-memory
@@ -288,6 +331,44 @@ app.get(['/api/settings/gateway-info', '/settings/gateway-info'], (req, res) => 
   });
 });
 
+// ── Load Settings Endpoint (Baca konfigurasi tersimpan untuk frontend) ──
+app.get(['/api/settings/load', '/settings/load'], (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      activeGateway: serverConfig.activeGateway,
+      paymentGatewayProvider: serverConfig.activeGateway,
+      // Pakasir
+      pakasirSlug: serverConfig.pakasir.slug,
+      pakasirApiKey: serverConfig.pakasir.apiKey,
+      pakasirWebhookSecret: serverConfig.pakasir.webhookSecret,
+      pakasirBaseUrl: serverConfig.pakasir.baseUrl,
+      pakasirPaymentMethod: serverConfig.pakasir.paymentMethod,
+      pakasirMerchantName: serverConfig.pakasir.merchantName,
+      pakasirNmid: serverConfig.pakasir.nmid,
+      pakasirQrString: serverConfig.pakasir.qrString,
+      pakasirIsSandbox: serverConfig.pakasir.isSandbox,
+      // Qiospay
+      qiospayMerchantCode: serverConfig.qiospay.merchantCode,
+      qiospayApiKey: serverConfig.qiospay.apiKey,
+      qiospaySecretKey: serverConfig.qiospay.secretKey,
+      qiospayNmid: serverConfig.qiospay.nmid,
+      qiospayMerchantName: serverConfig.qiospay.merchantName,
+      qiospayQrString: serverConfig.qiospay.qrString,
+      staticQrisString: serverConfig.qiospay.qrString,
+      // Digiflazz
+      digiflazzUser: serverConfig.digiflazz.username,
+      digiflazzUsername: serverConfig.digiflazz.username,
+      digiflazzProductionKey: serverConfig.digiflazz.apiKey,
+      digiflazzApiKey: serverConfig.digiflazz.apiKey,
+      digiflazzSecretCode: serverConfig.digiflazz.webhookSecret,
+      digiflazzWebhookSecret: serverConfig.digiflazz.webhookSecret,
+      digiflazzWebhookUrl: serverConfig.digiflazz.webhookUrl,
+      digiflazzMode: serverConfig.digiflazz.testing ? 'DEVELOPMENT' : 'PRODUCTION',
+    }
+  });
+});
+
 // ── Save Settings Endpoint (Memisahkan Pakasir & Qiospay) ──
 app.post(['/api/settings/save', '/settings/save'], (req, res) => {
   try {
@@ -321,6 +402,31 @@ app.post(['/api/settings/save', '/settings/save'], (req, res) => {
     if (s.qiospayMerchantName !== undefined) serverConfig.qiospay.merchantName = String(s.qiospayMerchantName).trim();
     const qris = (s.qiospayQrString || s.staticQrisString || '').trim();
     if (qris) serverConfig.qiospay.qrString = qris;
+
+    // 3. Simpan Konfigurasi Digiflazz
+    if (s.digiflazzUser !== undefined || s.digiflazzUsername !== undefined) {
+      serverConfig.digiflazz.username = String(s.digiflazzUser || s.digiflazzUsername || '').trim();
+    }
+    if (s.digiflazzProductionKey !== undefined || s.digiflazzApiKey !== undefined) {
+      serverConfig.digiflazz.apiKey = String(s.digiflazzProductionKey || s.digiflazzApiKey || '').trim();
+    }
+    if (s.digiflazzSecretCode !== undefined || s.digiflazzWebhookSecret !== undefined) {
+      serverConfig.digiflazz.webhookSecret = String(s.digiflazzSecretCode || s.digiflazzWebhookSecret || '').trim();
+    }
+    if (s.digiflazzWebhookUrl !== undefined) {
+      serverConfig.digiflazz.webhookUrl = String(s.digiflazzWebhookUrl).trim();
+    }
+    if (s.digiflazzMode !== undefined) {
+      serverConfig.digiflazz.testing = s.digiflazzMode !== 'PRODUCTION';
+    }
+
+    // Simpan ke file persisten agar tidak hilang setelah reload
+    saveServerConfig({
+      activeGateway: serverConfig.activeGateway,
+      pakasir: serverConfig.pakasir,
+      qiospay: serverConfig.qiospay,
+      digiflazz: serverConfig.digiflazz,
+    });
 
     res.json({
       success: true,
