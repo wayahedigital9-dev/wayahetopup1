@@ -33,18 +33,22 @@ import { AdminLoginPage } from './pages/AdminLoginPage';
 
 // Helper to parse route from browser URL or hash
 const getRouteFromUrl = (): string => {
-  if (typeof window === 'undefined') return 'home';
-  const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
-  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
+    const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
 
-  if (path === 'owner' || path === 'admin' || hash === 'owner' || hash === 'admin') {
-    return 'admin';
-  }
-  if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(path)) {
-    return path;
-  }
-  if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(hash)) {
-    return hash;
+    if (path === 'owner' || path === 'admin' || hash === 'owner' || hash === 'admin') {
+      return 'admin';
+    }
+    if (path === 'daftar' || path === 'register' || hash === 'daftar' || hash === 'register') {
+      return 'akun';
+    }
+    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(path)) {
+      return path;
+    }
+    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(hash)) {
+      return hash;
+    }
   }
   return 'home';
 };
@@ -52,6 +56,16 @@ const getRouteFromUrl = (): string => {
 export default function App() {
   // Navigation with URL synchronization
   const [activeTab, setActiveTab] = useState<string>(() => getRouteFromUrl());
+  const [akunAuthRole, setAkunAuthRole] = useState<'LOGIN' | 'REGISTER'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      if (p.includes('daftar') || p.includes('register') || h.includes('daftar') || h.includes('register')) {
+        return 'REGISTER';
+      }
+    }
+    return 'LOGIN';
+  });
 
   // Dedicated Auth Loading overlay (Login & Logout only)
   const [authLoader, setAuthLoader] = useState<{
@@ -82,6 +96,24 @@ export default function App() {
   // Central Navigation Handler with History API and smooth TopProgressBar
   const handleNavigate = (tab: string) => {
     triggerTopLoading.start();
+
+    if (tab === 'daftar' || tab === 'register') {
+      setAkunAuthRole('REGISTER');
+      setActiveTab('akun');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.pushState({ tab: 'daftar' }, '', '/daftar');
+      }
+      setTimeout(() => {
+        triggerTopLoading.done();
+      }, 280);
+      return;
+    }
+
+    if (tab === 'akun') {
+      setAkunAuthRole('LOGIN');
+    }
+
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -450,6 +482,7 @@ export default function App() {
             <AkunPage
               currentUser={currentUser}
               orders={orders}
+              initialAuthRole={akunAuthRole}
               onUserChange={(usr) => {
                 const wasLoggedIn = !!currentUser;
                 const isLoggingOut = !usr && wasLoggedIn;

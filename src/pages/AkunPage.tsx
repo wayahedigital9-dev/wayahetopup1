@@ -40,6 +40,7 @@ import { ProductLogo } from '../components/ProductLogo';
 interface AkunPageProps {
   currentUser: User | null;
   orders: Order[];
+  initialAuthRole?: 'LOGIN' | 'REGISTER';
   onUserChange: (user: User | null) => void;
   onOpenInvoice: (order: Order) => void;
   onCopyText: (text: string, label: string) => void;
@@ -49,13 +50,30 @@ interface AkunPageProps {
 export function AkunPage({
   currentUser,
   orders,
+  initialAuthRole,
   onUserChange,
   onOpenInvoice,
   onCopyText,
   onShowToast,
 }: AkunPageProps) {
   // Auth Role: 'LOGIN' vs 'REGISTER'
-  const [authRole, setAuthRole] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
+  const [authRole, setAuthRole] = useState<'LOGIN' | 'REGISTER'>(() => {
+    if (initialAuthRole) return initialAuthRole;
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      if (hash.includes('daftar') || hash.includes('register') || path.includes('daftar') || path.includes('register')) {
+        return 'REGISTER';
+      }
+    }
+    return 'LOGIN';
+  });
+
+  useEffect(() => {
+    if (initialAuthRole) {
+      setAuthRole(initialAuthRole);
+    }
+  }, [initialAuthRole]);
 
   // Form Fields
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -106,19 +124,25 @@ export function AkunPage({
       return;
     }
 
-    // Cek duplikasi akun
-    const existing = storage.findRegisteredMember(cleanUsername) || 
-                     storage.findRegisteredMember(cleanEmail) ||
-                     (cleanPhone ? storage.findRegisteredMember(cleanPhone) : undefined);
-    if (existing) {
-      if (existing.username.toLowerCase() === cleanUsername) {
-        onShowToast('Username Terpakai', 'Username tersebut sudah terdaftar. Silakan pilih username lain atau login.', 'warning');
-      } else if (existing.email.toLowerCase() === cleanEmail) {
-        onShowToast('Email Terdaftar', 'Email tersebut sudah terdaftar. Silakan langsung masuk di tab Login.', 'warning');
-      } else {
-        onShowToast('Nomor HP Terdaftar', 'Nomor handphone tersebut sudah terdaftar. Silakan login dengan nomor tersebut.', 'warning');
-      }
+    // Cek duplikasi akun secara spesifik
+    const existingUsername = storage.findRegisteredMemberByUsername(cleanUsername);
+    if (existingUsername) {
+      onShowToast('Username Terpakai', 'Username tersebut sudah terdaftar. Silakan pilih username lain atau login.', 'warning');
       return;
+    }
+
+    const existingEmail = storage.findRegisteredMemberByEmail(cleanEmail);
+    if (existingEmail) {
+      onShowToast('Email Terdaftar', 'Email tersebut sudah terdaftar. Silakan langsung masuk di tab Login.', 'warning');
+      return;
+    }
+
+    if (cleanPhone) {
+      const existingPhone = storage.findRegisteredMemberByPhone(cleanPhone);
+      if (existingPhone) {
+        onShowToast('Nomor HP Terdaftar', 'Nomor handphone tersebut sudah terdaftar. Silakan login dengan nomor tersebut.', 'warning');
+        return;
+      }
     }
 
     const newMember: RegisteredMemberAccount = {
@@ -136,8 +160,6 @@ export function AkunPage({
       createdAt: new Date().toISOString(),
     };
 
-    storage.saveRegisteredMember(newMember);
-
     const userSession: User = {
       id: newMember.id,
       name: newMember.name,
@@ -153,7 +175,10 @@ export function AkunPage({
       avatar: newMember.avatar,
     };
 
+    // Simpan user session sebelum memicu storage sync agar data session selalu konsisten
     storage.saveUser(userSession);
+    storage.saveRegisteredMember(newMember);
+
     onUserChange(userSession);
     setProfileName(userSession.name);
     setProfilePhone(userSession.phone);

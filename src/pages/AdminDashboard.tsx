@@ -2809,9 +2809,13 @@ export function AdminDashboard({
   const customerMap = new Map<string, {
     id: string;
     name: string;
+    username?: string;
     phone: string;
     email?: string;
     isRegistered: boolean;
+    balance?: number;
+    rewardPoints?: number;
+    memberTier?: string;
     totalOrders: number;
     successOrders: number;
     totalSpent: number;
@@ -2821,58 +2825,70 @@ export function AdminDashboard({
     orders: Order[];
   }>();
 
-  // 1. Add current active user if registered
-  const activeUser = storage.getUser();
-  if (activeUser && activeUser.role !== 'ADMIN') {
-    const key = activeUser.phone || activeUser.email || activeUser.id;
+  // 1. Muat seluruh akun member terdaftar dari storage lokal / backend
+  const registeredMemberList = storage.getRegisteredMembers();
+  registeredMemberList.forEach((u) => {
+    const rawPhone = u.phone || '';
+    const normPhone = rawPhone.replace(/[^0-9]/g, '');
+    const key = normPhone || u.email || u.username || u.id;
     customerMap.set(key, {
-      id: activeUser.id,
-      name: activeUser.name,
-      phone: activeUser.phone || '-',
-      email: activeUser.email,
+      id: u.id,
+      name: u.name || u.username,
+      username: u.username,
+      phone: rawPhone || '-',
+      email: u.email,
       isRegistered: true,
+      balance: u.balance ?? 0,
+      rewardPoints: u.rewardPoints ?? 0,
+      memberTier: u.memberTier || 'VIP_GOLD',
       totalOrders: 0,
       successOrders: 0,
       totalSpent: 0,
-      lastOrderDate: activeUser.createdAt || new Date().toISOString(),
+      lastOrderDate: u.createdAt || new Date().toISOString(),
       lastOrderInvoice: '-',
       categories: new Set<string>(),
       orders: [],
     });
-  }
+  });
 
-  // 2. Demo registered user accounts for rich display
-  const demoRegisteredMembers = [
-    { id: 'usr-reg-01', name: 'Rian Pratama', phone: '081234567890', email: 'rian.pratama@gmail.com', createdAt: '2026-09-10T08:20:00Z' },
-    { id: 'usr-reg-02', name: 'Dewi Anggraini', phone: '085712345678', email: 'dewi.ang@yahoo.com', createdAt: '2026-09-12T11:45:00Z' },
-    { id: 'usr-reg-03', name: 'Ahmad Fauzi', phone: '08889998889', email: 'ahmad.fauzi@outlook.com', createdAt: '2026-09-14T15:10:00Z' },
-  ];
-
-  demoRegisteredMembers.forEach((u) => {
-    const key = u.phone;
+  // 1b. Tambahkan active user jika belum ada di map
+  const activeUser = storage.getUser();
+  if (activeUser && activeUser.role !== 'ADMIN') {
+    const rawPhone = activeUser.phone || '';
+    const normPhone = rawPhone.replace(/[^0-9]/g, '');
+    const key = normPhone || activeUser.email || activeUser.id;
     if (!customerMap.has(key)) {
       customerMap.set(key, {
-        id: u.id,
-        name: u.name,
-        phone: u.phone,
-        email: u.email,
+        id: activeUser.id,
+        name: activeUser.name,
+        username: activeUser.username,
+        phone: rawPhone || '-',
+        email: activeUser.email,
         isRegistered: true,
+        balance: activeUser.balance ?? 0,
+        rewardPoints: activeUser.rewardPoints ?? 0,
+        memberTier: activeUser.memberTier || 'VIP_GOLD',
         totalOrders: 0,
         successOrders: 0,
         totalSpent: 0,
-        lastOrderDate: u.createdAt,
+        lastOrderDate: activeUser.createdAt || new Date().toISOString(),
         lastOrderInvoice: '-',
         categories: new Set<string>(),
         orders: [],
       });
     }
-  });
+  }
 
   // 3. Aggregate all transactions from orders
   orders.forEach((order) => {
     const phone = order.customerPhone || order.targetDestination || '081200000000';
     const name = order.customerName || `Pelanggan #${phone.slice(-4)}`;
-    const key = phone;
+    const normPhone = phone.replace(/[^0-9]/g, '');
+    const key = (normPhone && customerMap.has(normPhone))
+      ? normPhone
+      : (order.customerEmail && customerMap.has(order.customerEmail))
+        ? order.customerEmail
+        : (normPhone || phone);
 
     let existing = customerMap.get(key);
     if (!existing) {

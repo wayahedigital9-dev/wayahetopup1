@@ -550,7 +550,7 @@ export function HomePage({
         'Semua pembeli wajib mendaftar akun untuk melakukan pembelian dan mengakses brankas saldo Anda.',
         'warning'
       );
-      onNavigate('akun');
+      onNavigate('daftar');
       return;
     }
 
@@ -1061,7 +1061,7 @@ export function HomePage({
                   <span>Masuk Akun</span>
                 </button>
                 <button
-                  onClick={() => onNavigate('akun')}
+                  onClick={() => onNavigate('daftar')}
                   className={`px-3.5 py-2 rounded-xl ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'} border font-space font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer`}
                 >
                   <UserPlus size={13} />
@@ -1661,7 +1661,7 @@ export function HomePage({
                               'Semua pembeli wajib mendaftar akun untuk melakukan pembelian dan mengakses brankas saldo Anda.',
                               'warning'
                             );
-                            onNavigate('akun');
+                            onNavigate('daftar');
                             return;
                           }
                           onSelectProductToCheckout(app);
@@ -2001,7 +2001,7 @@ export function HomePage({
                           'Semua pembeli wajib mendaftar akun untuk membeli Token API Key AI dan mengakses brankas saldo Anda.',
                           'warning'
                         );
-                        onNavigate('akun');
+                        onNavigate('daftar');
                         return;
                       }
                       onSelectProductToCheckout(aiProd);

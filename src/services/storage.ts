@@ -1150,6 +1150,7 @@ export const storage = {
     } else {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     }
+    notifyStorageSynced();
   },
 
   getRegisteredMembers(): RegisteredMemberAccount[] {
@@ -1229,15 +1230,51 @@ export const storage = {
     return members;
   },
 
+  findRegisteredMemberByUsername(username: string): RegisteredMemberAccount | undefined {
+    const clean = (username || '').trim().toLowerCase();
+    if (!clean) return undefined;
+    return this.getRegisteredMembers().find(m => (m.username || '').toLowerCase() === clean);
+  },
+
+  findRegisteredMemberByEmail(email: string): RegisteredMemberAccount | undefined {
+    const clean = (email || '').trim().toLowerCase();
+    if (!clean) return undefined;
+    return this.getRegisteredMembers().find(m => (m.email || '').toLowerCase() === clean);
+  },
+
+  findRegisteredMemberByPhone(phone: string): RegisteredMemberAccount | undefined {
+    const digits = (phone || '').replace(/[^0-9]/g, '');
+    if (digits.length < 8) return undefined;
+    const norm = digits.startsWith('62') ? '0' + digits.slice(2) : digits;
+    return this.getRegisteredMembers().find(m => {
+      const mDigits = (m.phone || '').replace(/[^0-9]/g, '');
+      const mNorm = mDigits.startsWith('62') ? '0' + mDigits.slice(2) : mDigits;
+      return mNorm === norm;
+    });
+  },
+
   findRegisteredMember(identifier: string): RegisteredMemberAccount | undefined {
-    const cleanId = identifier.trim().toLowerCase();
-    const cleanDigits = cleanId.replace(/[^0-9]/g, '');
-    const members = this.getRegisteredMembers();
-    return members.find(
-      m => m.username.toLowerCase() === cleanId || 
-           m.email.toLowerCase() === cleanId ||
-           (cleanDigits.length >= 8 && !!m.phone && m.phone.replace(/[^0-9]/g, '') === cleanDigits)
-    );
+    const cleanId = (identifier || '').trim().toLowerCase();
+    if (!cleanId) return undefined;
+
+    // 1. Cek Username
+    const byUsername = this.findRegisteredMemberByUsername(cleanId);
+    if (byUsername) return byUsername;
+
+    // 2. Cek Email
+    if (cleanId.includes('@')) {
+      const byEmail = this.findRegisteredMemberByEmail(cleanId);
+      if (byEmail) return byEmail;
+    }
+
+    // 3. Cek No. HP jika pola input adalah digit/nomor telepon
+    const digits = cleanId.replace(/[^0-9]/g, '');
+    if (digits.length >= 8 && (/^(08|628|\+628|[0-9]{9,})/.test(cleanId) || !cleanId.includes('@'))) {
+      const byPhone = this.findRegisteredMemberByPhone(cleanId);
+      if (byPhone) return byPhone;
+    }
+
+    return undefined;
   },
 
   getSettings(): AppSettings {
