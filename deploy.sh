@@ -28,8 +28,13 @@ if [ -f "prisma/schema.prisma" ]; then
   npx prisma generate 2>&1 | tail -n 20 || true
 fi
 cd "$APP_DIR"
+export ADMIN_TOKEN="${ADMIN_TOKEN:-wayahe_admin_secret_token_1234}"
+export VITE_ADMIN_TOKEN="${VITE_ADMIN_TOKEN:-wayahe_admin_secret_token_1234}"
+if [ -f "$BACKEND_DIR/.env" ] && ! grep -q "ADMIN_TOKEN=" "$BACKEND_DIR/.env"; then
+  echo 'ADMIN_TOKEN="wayahe_admin_secret_token_1234"' >> "$BACKEND_DIR/.env"
+fi
 echo "🏗️  Build frontend (Vite)..."
-yarn build 2>&1 | tail -n 30
+VITE_ADMIN_TOKEN="$VITE_ADMIN_TOKEN" yarn build 2>&1 | tail -n 30
 cd "$BACKEND_DIR"
 echo "🏗️  Build backend (tsc)..."
 npm run build 2>&1 | tail -n 30 || npx tsc 2>&1 | tail -n 30

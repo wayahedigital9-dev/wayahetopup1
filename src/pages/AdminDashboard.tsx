@@ -90,7 +90,7 @@ import { AdminRealtimeRevenueCards } from '../components/AdminRealtimeRevenueCar
 import { DiscountPopupModal } from '../components/DiscountPopupModal';
 import { AdminDigiflazzIpCard } from '../components/AdminDigiflazzIpCard';
 import { AdminSecurityCard } from '../components/AdminSecurityCard';
-import { storage, DEFAULT_DISCOUNT_POPUP } from '../services/storage';
+import { storage, DEFAULT_DISCOUNT_POPUP, getAdminHeaders } from '../services/storage';
 import { apiAdapter } from '../services/apiAdapter';
 import { triggerTopLoading } from '../components/TopProgressBar';
 import { tunnelClient, TunnelStatusResponse } from '../services/tunnelClient';
@@ -397,7 +397,7 @@ export function AdminDashboard({
         try {
           fetch('/api/settings/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
             body: JSON.stringify(mergedAll),
           }).catch(() => {});
         } catch (_) {}
@@ -1562,7 +1562,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
@@ -1582,7 +1582,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
@@ -1611,7 +1611,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
@@ -1640,7 +1640,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
@@ -1841,7 +1841,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
@@ -1934,7 +1934,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updatedSettings),
       });
     } catch (_) {}
@@ -2289,7 +2289,7 @@ export function AdminDashboard({
     try {
       await fetch('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(updated),
       });
     } catch (_) {}
