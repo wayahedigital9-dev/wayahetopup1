@@ -23,7 +23,7 @@ export default defineConfig(() => {
               url.startsWith('/callback') ||
               url.startsWith('/webhook')
             ) {
-              return apiApp(req, res, next);
+              return (apiApp as any)(req, res, next);
             }
             next();
           });
