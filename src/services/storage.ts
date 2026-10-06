@@ -1322,16 +1322,26 @@ export const storage = {
       const remote: AppSettings | undefined = json?.data?.settings;
       if (!remote || typeof remote !== 'object') return null;
       const local = this.getSettings();
+      // Hanya merge field dari remote yang TIDAK kosong agar tidak menghapus data tersimpan
+      const validRemote: Record<string, any> = {};
+      for (const [k, v] of Object.entries(remote)) {
+        if (v !== '' && v !== null && v !== undefined) {
+          validRemote[k] = v;
+        }
+      }
       const merged: AppSettings = {
         ...DEFAULT_SETTINGS,
         ...local,
-        ...remote,
+        ...validRemote,
         discountPopup: {
           ...DEFAULT_DISCOUNT_POPUP,
           ...(local.discountPopup || {}),
           ...(remote.discountPopup || {}),
         },
       } as AppSettings;
+      if (merged.supabaseUrl) {
+        merged.supabaseUrl = cleanSupabaseUrl(merged.supabaseUrl);
+      }
       // Silently repair localStorage so next reload tidak butuh fetch lagi
       try { localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(merged)); } catch (_) {}
       return merged;
@@ -1364,18 +1374,37 @@ export const storage = {
   },
 
   saveSettings(settings: AppSettings): void {
-    const sanitizedSettings = {
+    const prev = this.getSettings();
+    // Non-destructive merge: jangan hilangkan konfigurasi penting yang sudah tersimpan sebelumnya
+    const merged: AppSettings = {
+      ...prev,
       ...settings,
-      supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),
+      supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl || prev.supabaseUrl),
+      supabasePublishableKey: settings.supabasePublishableKey || prev.supabasePublishableKey || '',
+      supabaseSecretKey: settings.supabaseSecretKey || prev.supabaseSecretKey || '',
+      supabaseAnonKey: settings.supabasePublishableKey || prev.supabasePublishableKey || '',
+      supabaseServiceRoleKey: settings.supabaseSecretKey || prev.supabaseSecretKey || '',
+      pakasirSlug: settings.pakasirSlug || prev.pakasirSlug || '',
+      pakasirApiKey: settings.pakasirApiKey || prev.pakasirApiKey || '',
+      pakasirWebhookSecret: settings.pakasirWebhookSecret || prev.pakasirWebhookSecret || '',
+      qiospayMerchantCode: settings.qiospayMerchantCode || prev.qiospayMerchantCode || '',
+      qiospayApiKey: settings.qiospayApiKey || prev.qiospayApiKey || '',
+      qiospaySecretKey: settings.qiospaySecretKey || prev.qiospaySecretKey || '',
+      digiflazzUser: settings.digiflazzUser || prev.digiflazzUser || '',
+      digiflazzUsername: settings.digiflazzUsername || prev.digiflazzUsername || '',
+      digiflazzProductionKey: settings.digiflazzProductionKey || prev.digiflazzProductionKey || '',
+      digiflazzApiKey: settings.digiflazzApiKey || prev.digiflazzApiKey || '',
+      digiflazzSecretCode: settings.digiflazzSecretCode || prev.digiflazzSecretCode || '',
+      digiflazzWebhookSecret: settings.digiflazzWebhookSecret || prev.digiflazzWebhookSecret || '',
     };
-    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(sanitizedSettings));
-    pushEntityToBackend('settings', sanitizedSettings);
+    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(merged));
+    pushEntityToBackend('settings', merged);
     notifyStorageSynced();
     try {
       fetchWithFallback('/api/settings/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sanitizedSettings),
+        body: JSON.stringify(merged),
       }).catch(() => {});
     } catch (_) {}
   },

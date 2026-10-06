@@ -442,59 +442,49 @@ app.post(['/api/settings/save', '/settings/save'], (req, res) => {
       serverConfig.activeGateway = s.paymentGatewayProvider;
     }
 
-    // 1. Simpan Konfigurasi Pakasir Murni
-    if (s.pakasirSlug !== undefined) serverConfig.pakasir.slug = String(s.pakasirSlug).trim();
-    if (s.pakasirApiKey !== undefined) serverConfig.pakasir.apiKey = String(s.pakasirApiKey).trim();
-    if (s.pakasirWebhookSecret !== undefined) serverConfig.pakasir.webhookSecret = String(s.pakasirWebhookSecret).trim();
-    if (s.pakasirBaseUrl !== undefined) serverConfig.pakasir.baseUrl = String(s.pakasirBaseUrl).trim();
-    if (s.pakasirPaymentMethod !== undefined) serverConfig.pakasir.paymentMethod = String(s.pakasirPaymentMethod).trim();
-    if (s.pakasirMerchantName !== undefined) serverConfig.pakasir.merchantName = String(s.pakasirMerchantName).trim();
-    if (s.pakasirNmid !== undefined) serverConfig.pakasir.nmid = String(s.pakasirNmid).trim();
-    if (s.pakasirQrString !== undefined) serverConfig.pakasir.qrString = String(s.pakasirQrString).trim();
+    // 1. Simpan Konfigurasi Pakasir Murni (hanya update jika bernilai)
+    if (s.pakasirSlug && String(s.pakasirSlug).trim()) serverConfig.pakasir.slug = String(s.pakasirSlug).trim();
+    if (s.pakasirApiKey && String(s.pakasirApiKey).trim()) serverConfig.pakasir.apiKey = String(s.pakasirApiKey).trim();
+    if (s.pakasirWebhookSecret && String(s.pakasirWebhookSecret).trim()) serverConfig.pakasir.webhookSecret = String(s.pakasirWebhookSecret).trim();
+    if (s.pakasirBaseUrl && String(s.pakasirBaseUrl).trim()) serverConfig.pakasir.baseUrl = String(s.pakasirBaseUrl).trim();
+    if (s.pakasirPaymentMethod && String(s.pakasirPaymentMethod).trim()) serverConfig.pakasir.paymentMethod = String(s.pakasirPaymentMethod).trim();
+    if (s.pakasirMerchantName && String(s.pakasirMerchantName).trim()) serverConfig.pakasir.merchantName = String(s.pakasirMerchantName).trim();
+    if (s.pakasirNmid && String(s.pakasirNmid).trim()) serverConfig.pakasir.nmid = String(s.pakasirNmid).trim();
+    if (s.pakasirQrString && String(s.pakasirQrString).trim()) serverConfig.pakasir.qrString = String(s.pakasirQrString).trim();
     if (s.pakasirIsSandbox !== undefined) serverConfig.pakasir.isSandbox = Boolean(s.pakasirIsSandbox);
 
-    // 2. Simpan Konfigurasi Qiospay Murni
-    if (s.qiospayMerchantCode !== undefined) {
+    // 2. Simpan Konfigurasi Qiospay Murni (hanya update jika bernilai)
+    if (s.qiospayMerchantCode && String(s.qiospayMerchantCode).trim()) {
       let code = String(s.qiospayMerchantCode).trim();
       if (code.toUpperCase().startsWith('QP') && code.length === 7) {
         code = 'QP0' + code.slice(2).toUpperCase();
       }
       serverConfig.qiospay.merchantCode = code;
     }
-    if (s.qiospayApiKey !== undefined) serverConfig.qiospay.apiKey = String(s.qiospayApiKey).trim();
-    if (s.qiospaySecretKey !== undefined) serverConfig.qiospay.secretKey = String(s.qiospaySecretKey).trim();
-    if (s.qiospayNmid !== undefined) serverConfig.qiospay.nmid = String(s.qiospayNmid).trim();
-    if (s.qiospayMerchantName !== undefined) serverConfig.qiospay.merchantName = String(s.qiospayMerchantName).trim();
+    if (s.qiospayApiKey && String(s.qiospayApiKey).trim()) serverConfig.qiospay.apiKey = String(s.qiospayApiKey).trim();
+    if (s.qiospaySecretKey && String(s.qiospaySecretKey).trim()) serverConfig.qiospay.secretKey = String(s.qiospaySecretKey).trim();
+    if (s.qiospayNmid && String(s.qiospayNmid).trim()) serverConfig.qiospay.nmid = String(s.qiospayNmid).trim();
+    if (s.qiospayMerchantName && String(s.qiospayMerchantName).trim()) serverConfig.qiospay.merchantName = String(s.qiospayMerchantName).trim();
     const qris = (s.qiospayQrString || s.staticQrisString || '').trim();
     if (qris) serverConfig.qiospay.qrString = qris;
 
-    // 3. Simpan Konfigurasi Digiflazz
-    if (s.digiflazzUser !== undefined || s.digiflazzUsername !== undefined) {
-      serverConfig.digiflazz.username = String(s.digiflazzUser || s.digiflazzUsername || '').trim();
-    }
-    if (s.digiflazzProductionKey !== undefined || s.digiflazzApiKey !== undefined) {
-      serverConfig.digiflazz.apiKey = String(s.digiflazzProductionKey || s.digiflazzApiKey || '').trim();
-    }
-    if (s.digiflazzSecretCode !== undefined || s.digiflazzWebhookSecret !== undefined) {
-      serverConfig.digiflazz.webhookSecret = String(s.digiflazzSecretCode || s.digiflazzWebhookSecret || '').trim();
-    }
-    if (s.digiflazzWebhookUrl !== undefined) {
-      serverConfig.digiflazz.webhookUrl = String(s.digiflazzWebhookUrl).trim();
-    }
-    if (s.digiflazzMode !== undefined) {
-      serverConfig.digiflazz.testing = s.digiflazzMode !== 'PRODUCTION';
-    }
+    // 3. Simpan Konfigurasi Digiflazz (hanya update jika bernilai)
+    const dfUser = String(s.digiflazzUser || s.digiflazzUsername || '').trim();
+    if (dfUser) serverConfig.digiflazz.username = dfUser;
+    const dfKey = String(s.digiflazzProductionKey || s.digiflazzApiKey || '').trim();
+    if (dfKey) serverConfig.digiflazz.apiKey = dfKey;
+    const dfSec = String(s.digiflazzSecretCode || s.digiflazzWebhookSecret || '').trim();
+    if (dfSec) serverConfig.digiflazz.webhookSecret = dfSec;
+    if (s.digiflazzWebhookUrl && String(s.digiflazzWebhookUrl).trim()) serverConfig.digiflazz.webhookUrl = String(s.digiflazzWebhookUrl).trim();
+    if (s.digiflazzMode !== undefined) serverConfig.digiflazz.testing = s.digiflazzMode !== 'PRODUCTION';
 
-    // 4. Simpan Konfigurasi Supabase
-    if (s.supabaseUrl !== undefined) {
-      serverConfig.supabase.url = cleanSupabaseUrl(s.supabaseUrl);
-    }
-    if (s.supabasePublishableKey !== undefined || s.supabaseAnonKey !== undefined) {
-      serverConfig.supabase.publishableKey = String(s.supabasePublishableKey || s.supabaseAnonKey || '').trim();
-    }
-    if (s.supabaseSecretKey !== undefined || s.supabaseServiceRoleKey !== undefined) {
-      serverConfig.supabase.secretKey = String(s.supabaseSecretKey || s.supabaseServiceRoleKey || '').trim();
-    }
+    // 4. Simpan Konfigurasi Supabase (hanya update jika bernilai)
+    const sbUrl = cleanSupabaseUrl(s.supabaseUrl);
+    if (sbUrl) serverConfig.supabase.url = sbUrl;
+    const sbPub = String(s.supabasePublishableKey || s.supabaseAnonKey || '').trim();
+    if (sbPub) serverConfig.supabase.publishableKey = sbPub;
+    const sbSec = String(s.supabaseSecretKey || s.supabaseServiceRoleKey || '').trim();
+    if (sbSec) serverConfig.supabase.secretKey = sbSec;
 
     // Simpan ke file persisten agar tidak hilang setelah reload
     saveServerConfig({

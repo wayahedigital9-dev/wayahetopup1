@@ -353,65 +353,54 @@ export function AdminDashboard({
         if (!json.success || !json.data) return;
         const d = json.data;
 
-        // Merge ke settings state (gabungkan dengan localStorage yang sudah ada)
-        setSettings(prev => {
-          const merged = { ...prev };
-          // Hanya update field yang benar-benar ada di server (bukan default kosong)
-          if (d.pakasirSlug) merged.pakasirSlug = d.pakasirSlug;
-          if (d.pakasirApiKey) merged.pakasirApiKey = d.pakasirApiKey;
-          if (d.pakasirWebhookSecret) merged.pakasirWebhookSecret = d.pakasirWebhookSecret;
-          if (d.pakasirBaseUrl) merged.pakasirBaseUrl = d.pakasirBaseUrl;
-          if (d.pakasirPaymentMethod) merged.pakasirPaymentMethod = d.pakasirPaymentMethod;
-          if (d.pakasirMerchantName) merged.pakasirMerchantName = d.pakasirMerchantName;
-          if (d.pakasirNmid) merged.pakasirNmid = d.pakasirNmid;
-          if (d.pakasirQrString) merged.pakasirQrString = d.pakasirQrString;
-          if (d.pakasirIsSandbox !== undefined) merged.pakasirIsSandbox = d.pakasirIsSandbox;
-          if (d.qiospayMerchantCode) merged.qiospayMerchantCode = d.qiospayMerchantCode;
-          if (d.qiospayApiKey) merged.qiospayApiKey = d.qiospayApiKey;
-          if (d.qiospaySecretKey) merged.qiospaySecretKey = d.qiospaySecretKey;
-          if (d.qiospayNmid) merged.qiospayNmid = d.qiospayNmid;
-          if (d.qiospayMerchantName) merged.qiospayMerchantName = d.qiospayMerchantName;
-          if (d.qiospayQrString) { merged.qiospayQrString = d.qiospayQrString; merged.staticQrisString = d.qiospayQrString; }
-          if (d.digiflazzUser) { merged.digiflazzUser = d.digiflazzUser; merged.digiflazzUsername = d.digiflazzUser; }
-          if (d.digiflazzProductionKey) { merged.digiflazzProductionKey = d.digiflazzProductionKey; merged.digiflazzApiKey = d.digiflazzProductionKey; }
-          if (d.digiflazzSecretCode) { merged.digiflazzSecretCode = d.digiflazzSecretCode; merged.digiflazzWebhookSecret = d.digiflazzSecretCode; }
-          if (d.digiflazzWebhookUrl) merged.digiflazzWebhookUrl = d.digiflazzWebhookUrl;
-          if (d.digiflazzMode) merged.digiflazzMode = d.digiflazzMode as any;
-          if (d.paymentGatewayProvider) merged.paymentGatewayProvider = d.paymentGatewayProvider;
-          if (d.supabaseUrl) {
-            merged.supabaseUrl = sanitizeUrl(d.supabaseUrl);
+        const currentLocal = storage.getSettings();
+        // Hanya ambil nilai yang TIDAK kosong dari server agar tidak menghapus konfigurasi yang ada di lokal
+        const validServerData: Partial<AppSettings> = {};
+        for (const [k, v] of Object.entries(d)) {
+          if (v !== '' && v !== null && v !== undefined) {
+            (validServerData as any)[k] = v;
           }
-          if (d.supabasePublishableKey) {
-            merged.supabasePublishableKey = d.supabasePublishableKey;
-            merged.supabaseAnonKey = d.supabasePublishableKey;
-          }
-          if (d.supabaseSecretKey) {
-            merged.supabaseSecretKey = d.supabaseSecretKey;
-            merged.supabaseServiceRoleKey = d.supabaseSecretKey;
-          }
-          return merged;
-        });
+        }
 
-        // Sync ke form state individual
-        if (d.qiospayMerchantCode) setQiospayMerchantCode(d.qiospayMerchantCode);
-        if (d.qiospayApiKey) setQiospayApiKey(d.qiospayApiKey);
-        if (d.qiospaySecretKey) setQiospaySecretKey(d.qiospaySecretKey);
-        if (d.qiospayNmid) setQiospayNmid(d.qiospayNmid);
-        if (d.qiospayMerchantName) setQiospayMerchantName(d.qiospayMerchantName);
-        if (d.qiospayQrString) setQiospayQrString(d.qiospayQrString);
-        if (d.pakasirSlug) setPakasirSlug(d.pakasirSlug);
-        if (d.pakasirApiKey) setPakasirApiKey(d.pakasirApiKey);
-        if (d.pakasirWebhookSecret) setPakasirWebhookSecret(d.pakasirWebhookSecret);
-        if (d.pakasirBaseUrl) setPakasirBaseUrl(d.pakasirBaseUrl);
-        if (d.pakasirPaymentMethod) setPakasirPaymentMethod(d.pakasirPaymentMethod);
-        if (d.pakasirMerchantName) setPakasirMerchantName(d.pakasirMerchantName);
-        if (d.pakasirNmid) setPakasirNmid(d.pakasirNmid);
-        if (d.pakasirQrString) setPakasirQrString(d.pakasirQrString);
-        if (d.pakasirIsSandbox !== undefined) setPakasirIsSandbox(Boolean(d.pakasirIsSandbox));
-        if (d.paymentGatewayProvider) setSelectedGatewayProvider(d.paymentGatewayProvider as any);
+        const mergedAll: AppSettings = {
+          ...currentLocal,
+          ...validServerData,
+        };
 
-        // Simpan juga ke localStorage agar sinkron
-        storage.saveSettings({ ...storage.getSettings(), ...d });
+        if (mergedAll.supabaseUrl) {
+          mergedAll.supabaseUrl = sanitizeUrl(mergedAll.supabaseUrl);
+        }
+
+        // Sync ke form state individual Pakasir & Qiospay
+        if (mergedAll.pakasirSlug) setPakasirSlug(mergedAll.pakasirSlug);
+        if (mergedAll.pakasirApiKey) setPakasirApiKey(mergedAll.pakasirApiKey);
+        if (mergedAll.pakasirWebhookSecret) setPakasirWebhookSecret(mergedAll.pakasirWebhookSecret);
+        if (mergedAll.pakasirBaseUrl) setPakasirBaseUrl(mergedAll.pakasirBaseUrl);
+        if (mergedAll.pakasirPaymentMethod) setPakasirPaymentMethod(mergedAll.pakasirPaymentMethod);
+        if (mergedAll.pakasirMerchantName) setPakasirMerchantName(mergedAll.pakasirMerchantName);
+        if (mergedAll.pakasirNmid) setPakasirNmid(mergedAll.pakasirNmid);
+        if (mergedAll.pakasirQrString) setPakasirQrString(mergedAll.pakasirQrString);
+        if (mergedAll.pakasirIsSandbox !== undefined) setPakasirIsSandbox(Boolean(mergedAll.pakasirIsSandbox));
+        if (mergedAll.paymentGatewayProvider) setSelectedGatewayProvider(mergedAll.paymentGatewayProvider as any);
+
+        if (mergedAll.qiospayMerchantCode) setQiospayMerchantCode(mergedAll.qiospayMerchantCode);
+        if (mergedAll.qiospayApiKey) setQiospayApiKey(mergedAll.qiospayApiKey);
+        if (mergedAll.qiospaySecretKey) setQiospaySecretKey(mergedAll.qiospaySecretKey);
+        if (mergedAll.qiospayNmid) setQiospayNmid(mergedAll.qiospayNmid);
+        if (mergedAll.qiospayMerchantName) setQiospayMerchantName(mergedAll.qiospayMerchantName);
+        if (mergedAll.qiospayQrString) setQiospayQrString(mergedAll.qiospayQrString);
+
+        setSettings(mergedAll);
+        storage.saveSettings(mergedAll);
+
+        // Jika local storage punya data yang belum tersimpan di server, push agar server_config.json juga lengkap
+        try {
+          fetch('/api/settings/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mergedAll),
+          }).catch(() => {});
+        } catch (_) {}
       } catch (_) {}
     };
     loadServerSettings();
@@ -1831,6 +1820,34 @@ export function AdminDashboard({
     }
   };
 
+  const handleSaveDigiflazzSettings = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    const updated: AppSettings = {
+      ...settings,
+      digiflazzUser: (settings.digiflazzUser || settings.digiflazzUsername || '').trim(),
+      digiflazzUsername: (settings.digiflazzUser || settings.digiflazzUsername || '').trim(),
+      digiflazzProductionKey: (settings.digiflazzProductionKey || settings.digiflazzApiKey || '').trim(),
+      digiflazzApiKey: (settings.digiflazzProductionKey || settings.digiflazzApiKey || '').trim(),
+      digiflazzSecretCode: (settings.digiflazzSecretCode || settings.digiflazzWebhookSecret || '').trim(),
+      digiflazzWebhookSecret: (settings.digiflazzSecretCode || settings.digiflazzWebhookSecret || '').trim(),
+      digiflazzWebhookUrl: (settings.digiflazzWebhookUrl || 'https://wayahetopup.my.id/api/webhooks/digiflazz').trim(),
+      digiflazzMode: settings.digiflazzMode || 'DEVELOPMENT',
+      digiflazzAutoFulfill: Boolean(settings.digiflazzAutoFulfill),
+    };
+    setSettings(updated);
+    storage.saveSettings(updated);
+    try {
+      await fetch('/api/settings/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+    } catch (_) {}
+    onShowToast('Konfigurasi Digiflazz Tersimpan', 'Kredensial Digiflazz H2H berhasil disimpan permanen ke server backend.', 'success');
+  };
+
   const handleTestDigiflazz = async () => {
     setDigiflazzTestLoading(true);
     setDigiflazzBalanceResult(null);
@@ -2252,13 +2269,13 @@ export function AdminDashboard({
   };
 
   // Supabase Handlers
-  const handleSaveSupabaseSettings = (e?: React.FormEvent | React.MouseEvent) => {
+  const handleSaveSupabaseSettings = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
     const cleanUrl = sanitizeUrl(settings.supabaseUrl || '');
-    const pubKey = settings.supabasePublishableKey || settings.supabaseAnonKey || '';
-    const secKey = settings.supabaseSecretKey || settings.supabaseServiceRoleKey || '';
+    const pubKey = (settings.supabasePublishableKey || settings.supabaseAnonKey || '').trim();
+    const secKey = (settings.supabaseSecretKey || settings.supabaseServiceRoleKey || '').trim();
     const updated: AppSettings = {
       ...settings,
       supabaseUrl: cleanUrl,
@@ -2267,8 +2284,15 @@ export function AdminDashboard({
       supabaseAnonKey: pubKey,
       supabaseServiceRoleKey: secKey,
     };
-    storage.saveSettings(updated);
     setSettings(updated);
+    storage.saveSettings(updated);
+    try {
+      await fetch('/api/settings/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+    } catch (_) {}
     setActiveTab('SETTINGS');
     setSettingsSubTab('BOT_API');
     setEnvSystemTab('DATABASE');
@@ -7485,6 +7509,30 @@ export function AdminDashboard({
                               <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
                                 settings.digiflazzAutoFulfill ? 'left-6' : 'left-1'
                               }`} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons: Simpan & Test Digiflazz */}
+                        <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={handleSaveDigiflazzSettings}
+                              className="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-slate-950 font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-teal-500/20 transition-all cursor-pointer active:scale-95"
+                            >
+                              <Save size={14} />
+                              <span>Simpan Konfigurasi Digiflazz</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleTestDigiflazz}
+                              disabled={digiflazzTestLoading}
+                              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                            >
+                              <RefreshCw size={13} className={digiflazzTestLoading ? 'animate-spin text-teal-400' : ''} />
+                              <span>{digiflazzTestLoading ? 'Testing...' : 'Test Koneksi Digiflazz'}</span>
                             </button>
                           </div>
                         </div>
