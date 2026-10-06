@@ -3,8 +3,10 @@ set -e
 export PATH="/www/server/nodejs/v26.10.0/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 if [ "$(id -u)" -eq 0 ]; then
   echo "=========================================="
-  echo "⚠️  Terdeteksi root — berpindah ke ubuntu..."
+  echo "⚠️  Terdeteksi root — merapikan permission & berpindah ke ubuntu..."
   echo "=========================================="
+  chown -R ubuntu:ubuntu /home/ubuntu/wayahetopup1 2>/dev/null || true
+  chmod -R u+rwX /home/ubuntu/wayahetopup1/.git 2>/dev/null || true
   exec sudo -H -u ubuntu bash "$0" "$@"
 fi
 APP_DIR="/home/ubuntu/wayahetopup1"
