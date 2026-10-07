@@ -229,7 +229,7 @@ export class MongoDbService {
         promos: promos.length > 0 ? promos : local.promos || [],
         auditLogs: auditLogs.length > 0 ? auditLogs : local.auditLogs || [],
         // Settings saves use the server file as the durable authority; Mongo may be an older mirror.
-        settings: mergeSettings(settingsDoc?.data, this.loadLocalFile().settings),
+        settings: mergeSettings(this.loadLocalFile().settings, settingsDoc?.data),
         banners: banners.length > 0 ? banners : local.banners || [],
         catalogs: catalogs.length > 0 ? catalogs : local.catalogs || [],
         pushSubscriptions: pushSubscriptions.length > 0 ? pushSubscriptions : local.pushSubscriptions || [],
