@@ -267,7 +267,7 @@ async function fetchWithTimeout(url: string, options?: RequestInit, timeoutMs = 
 }
 
 export function getAdminHeaders(): Record<string, string> {
-  const tok = (import.meta as any)?.env?.VITE_ADMIN_TOKEN as string | undefined;
+  const tok = (import.meta as any).env.VITE_ADMIN_TOKEN as string | undefined;
   return tok ? { 'X-Admin-Token': tok.trim() } : {};
 }
 
