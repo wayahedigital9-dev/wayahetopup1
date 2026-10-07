@@ -1,4 +1,5 @@
 import express from 'express';
+import { toPublicState } from '../backend/src/security/stateDto.js';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -432,89 +433,10 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
 });
 
 // ── Save Settings Endpoint (Memisahkan Pakasir & Qiospay) ──
-app.post(['/api/settings/save', '/settings/save'], (req, res) => {
-  const hdr2 = String(req.headers['x-admin-token'] || req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
-  const exp2 = String(process.env.ADMIN_TOKEN || '').trim();
-  if (exp2 && hdr2 !== exp2) return res.status(401).json({ success: false, message: 'Unauthorized' });
-  try {
-    const s = req.body.settings || req.body || {};
-    if (s.paymentGatewayProvider) {
-      serverConfig.activeGateway = s.paymentGatewayProvider;
-    }
-
-    // 1. Simpan Konfigurasi Pakasir Murni
-    if (s.pakasirSlug !== undefined) serverConfig.pakasir.slug = String(s.pakasirSlug).trim();
-    if (s.pakasirApiKey !== undefined) serverConfig.pakasir.apiKey = String(s.pakasirApiKey).trim();
-    if (s.pakasirWebhookSecret !== undefined) serverConfig.pakasir.webhookSecret = String(s.pakasirWebhookSecret).trim();
-    if (s.pakasirBaseUrl !== undefined) serverConfig.pakasir.baseUrl = String(s.pakasirBaseUrl).trim();
-    if (s.pakasirPaymentMethod !== undefined) serverConfig.pakasir.paymentMethod = String(s.pakasirPaymentMethod).trim();
-    if (s.pakasirMerchantName !== undefined) serverConfig.pakasir.merchantName = String(s.pakasirMerchantName).trim();
-    if (s.pakasirNmid !== undefined) serverConfig.pakasir.nmid = String(s.pakasirNmid).trim();
-    if (s.pakasirQrString !== undefined) serverConfig.pakasir.qrString = String(s.pakasirQrString).trim();
-    if (s.pakasirIsSandbox !== undefined) serverConfig.pakasir.isSandbox = Boolean(s.pakasirIsSandbox);
-
-    // 2. Simpan Konfigurasi Qiospay Murni
-    if (s.qiospayMerchantCode !== undefined) {
-      let code = String(s.qiospayMerchantCode).trim();
-      if (code.toUpperCase().startsWith('QP') && code.length === 7) {
-        code = 'QP0' + code.slice(2).toUpperCase();
-      }
-      serverConfig.qiospay.merchantCode = code;
-    }
-    if (s.qiospayApiKey !== undefined) serverConfig.qiospay.apiKey = String(s.qiospayApiKey).trim();
-    if (s.qiospaySecretKey !== undefined) serverConfig.qiospay.secretKey = String(s.qiospaySecretKey).trim();
-    if (s.qiospayNmid !== undefined) serverConfig.qiospay.nmid = String(s.qiospayNmid).trim();
-    if (s.qiospayMerchantName !== undefined) serverConfig.qiospay.merchantName = String(s.qiospayMerchantName).trim();
-    const qris = (s.qiospayQrString || s.staticQrisString || '').trim();
-    if (qris) serverConfig.qiospay.qrString = qris;
-
-    // 3. Simpan Konfigurasi Digiflazz
-    if (s.digiflazzUser !== undefined || s.digiflazzUsername !== undefined) {
-      serverConfig.digiflazz.username = String(s.digiflazzUser || s.digiflazzUsername || '').trim();
-    }
-    if (s.digiflazzProductionKey !== undefined || s.digiflazzApiKey !== undefined) {
-      serverConfig.digiflazz.apiKey = String(s.digiflazzProductionKey || s.digiflazzApiKey || '').trim();
-    }
-    if (s.digiflazzSecretCode !== undefined || s.digiflazzWebhookSecret !== undefined) {
-      serverConfig.digiflazz.webhookSecret = String(s.digiflazzSecretCode || s.digiflazzWebhookSecret || '').trim();
-    }
-    if (s.digiflazzWebhookUrl !== undefined) {
-      serverConfig.digiflazz.webhookUrl = String(s.digiflazzWebhookUrl).trim();
-    }
-    if (s.digiflazzMode !== undefined) {
-      serverConfig.digiflazz.testing = s.digiflazzMode !== 'PRODUCTION';
-    }
-
-    // 4. Simpan Konfigurasi Supabase
-    if (s.supabaseUrl !== undefined) {
-      serverConfig.supabase.url = cleanSupabaseUrl(s.supabaseUrl);
-    }
-    if (s.supabasePublishableKey !== undefined || s.supabaseAnonKey !== undefined) {
-      serverConfig.supabase.publishableKey = String(s.supabasePublishableKey || s.supabaseAnonKey || '').trim();
-    }
-    if (s.supabaseSecretKey !== undefined || s.supabaseServiceRoleKey !== undefined) {
-      serverConfig.supabase.secretKey = String(s.supabaseSecretKey || s.supabaseServiceRoleKey || '').trim();
-    }
-
-    // Simpan ke file persisten agar tidak hilang setelah reload
-    saveServerConfig({
-      activeGateway: serverConfig.activeGateway,
-      pakasir: serverConfig.pakasir,
-      qiospay: serverConfig.qiospay,
-      digiflazz: serverConfig.digiflazz,
-      supabase: serverConfig.supabase,
-    });
-
-    res.json({
-      success: true,
-      message: 'Konfigurasi Payment Gateway berhasil diperbarui',
-      activeGateway: serverConfig.activeGateway,
-      pakasir: { slug: serverConfig.pakasir.slug, isSandbox: serverConfig.pakasir.isSandbox },
-      qiospay: { merchantCode: serverConfig.qiospay.merchantCode },
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+// Disabled until the alternate API has server-verified authorization. Never
+// accept the browser's static token or fall back to unauthenticated disk writes.
+app.post(['/api/settings/save', '/settings/save', '/api/sync/entity', '/sync/entity', '/api/sync/state', '/sync/state'], (_req, res) => {
+  return res.status(503).json({ success: false, message: 'Administrative mutations require a verified server session' });
 });
 
 // ── Test Koneksi Gateway Masing-Masing ──
@@ -1426,47 +1348,20 @@ app.get(['/api/digiflazz/products', '/digiflazz/products'], async (req, res) => 
 
 // ── Get Sync State (Products, Orders, Promos, Settings) ──
 app.get(['/api/sync/state', '/sync/state'], async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
   try {
     try {
       const bRes = await fetch('http://127.0.0.1:4000/api/sync/state', { signal: AbortSignal.timeout(3000) });
       if (bRes.ok) {
-        return res.json(await bRes.json());
+        const upstream = await bRes.json();
+        return res.json({ success: true, data: toPublicState(upstream.data), _sanitized: true });
       }
     } catch (_) {}
 
-    const db = readDatabase();
-    return res.json({ success: true, data: db });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// ── Sync Entity (Promos, Products, Settings, Orders, WiFi Vouchers) ──
-app.post(['/api/sync/entity', '/sync/entity'], async (req, res) => {
-  try {
-    try {
-      const bRes = await fetch('http://127.0.0.1:4000/api/sync/entity', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
-        signal: AbortSignal.timeout(3000),
-      });
-      if (bRes.ok) {
-        return res.json(await bRes.json());
-      }
-    } catch (_) {}
-
-    const { entity, data } = req.body || {};
-    if (entity) {
-      writeDatabase(db => {
-        db[entity] = data;
-        return db;
-      });
-      return res.json({ success: true });
-    }
-    return res.json({ success: true });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.json({ success: true, data: toPublicState(readDatabase()), _sanitized: true });
+  } catch (_) {
+    return res.status(500).json({ success: false, message: 'Unable to load public catalog' });
   }
 });
 
@@ -2325,6 +2220,11 @@ app.get('/api/provider/order/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: 'error', message: err.message });
   }
+});
+
+// Never proxy arbitrary query execution to an older backend.
+app.all(['/api/supabase/exec-sql', '/supabase/exec-sql', '/api/supabase/run-query', '/supabase/run-query', '/api/mongodb/run-query', '/mongodb/run-query'], (_req, res) => {
+  res.status(410).json({ success: false, message: 'Database console endpoints are disabled' });
 });
 
 // Forward unhandled /api requests to backend port 4000 if available

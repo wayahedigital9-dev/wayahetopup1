@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { toPublicState } from './security/stateDto.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -67,6 +68,7 @@ function resolveEnvPath(): string {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 const fulfillmentService = new FulfillmentService(prisma);
 const PORT = CONSOLE_CONFIG.PORT;
 
@@ -2047,10 +2049,10 @@ app.post('/api/supabase/test', async (req: Request, res: Response) => {
   res.json(result);
 });
 
-app.post('/api/supabase/run-query', requireAdmin, async (req: Request, res: Response) => {
-  const { url, key, table, query } = req.body || {};
-  const result = await supabaseService.runSampleQuery(url, key, table, query);
-  res.json(result);
+// Permanently remove arbitrary database execution from the application surface.
+// A frontend-distributed token cannot authorize database console access.
+app.all(['/api/supabase/run-query', '/api/supabase/exec-sql', '/api/mongodb/run-query'], (_req: Request, res: Response) => {
+  res.status(410).json({ success: false, message: 'Database console endpoints are disabled' });
 });
 
 app.get('/api/supabase/sql-schema', (req: Request, res: Response) => {
@@ -2069,14 +2071,6 @@ function requireAdmin(req: Request, res: Response, next: any) {
   return res.status(401).json({ success: false, message: 'Unauthorized — admin token required (header X-Admin-Token)' });
 }
 
-app.post('/api/supabase/exec-sql', requireAdmin, async (req: Request, res: Response) => {
-  const { sql } = req.body || {};
-  if (!sql) {
-    return res.status(400).json({ success: false, message: 'Script SQL wajib diisi' });
-  }
-  const result = await supabaseService.execSql(sql);
-  res.json(result);
-});
 
 // 12b. MONGODB DATABASE MANAGEMENT (Legacy / Fallback)
 app.get('/api/mongodb/info', (req: Request, res: Response) => {
@@ -2098,11 +2092,6 @@ app.post('/api/mongodb/test', async (req: Request, res: Response) => {
   res.json(result);
 });
 
-app.post('/api/mongodb/run-query', requireAdmin, async (req: Request, res: Response) => {
-  const { uri, dbName, collection, query } = req.body || {};
-  const result = await mongoDbService.runSampleQuery(uri, dbName, collection, query);
-  res.json(result);
-});
 
 // 13. CLOUD DATABASE SYNCHRONIZATION (Cross-Device Realtime Sync)
 // Helper: sanitasi settings agar secret tidak bocor ke publik tanpa X-Admin-Token
@@ -2139,15 +2128,11 @@ function sanitizeSettingsForPublic(settings: any, isAdmin: boolean): any {
 }
 app.get('/api/sync/state', async (req: Request, res: Response) => {
   try {
-    const data = await mongoDbService.getAllState();
-    const isAdmin = isAdminRequest(req);
-    if (data?.settings) {
-      data.settings = sanitizeSettingsForPublic(data.settings, isAdmin);
-    }
-    // header no-store agar Cloudflare tidak cache settings
+    const rawState = await mongoDbService.getAllState();
+    const data = toPublicState(rawState);
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
-    res.json({ success: true, data, _sanitized: !isAdmin });
+    res.json({ success: true, data, _sanitized: true });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -2195,6 +2180,21 @@ app.post('/api/sync/entity', requireAdmin, async (req: Request, res: Response) =
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// Admin settings load — mirrors serverless fallback semantics (sanitized when not admin)
+app.get('/api/settings/load', async (req: Request, res: Response) => {
+  try {
+    const raw = await mongoDbService.getAllState();
+    const settings = raw.settings || {};
+    const isAdmin = isAdminRequest(req);
+    if (!isAdmin) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      return res.json({ success: true, _sanitized: true, data: sanitizeSettingsForPublic(settings, false) });
+    }
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.json({ success: true, _sanitized: false, data: settings });
+  } catch (e: any) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 // Save Settings and persist to backend/.env + Supabase
@@ -2541,17 +2541,16 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
       console.warn('Could not write .env file:', e.message);
     }
 
-    // Persist full settings (termasuk API secrets) ke Supabase & local cache
-    // — merge di supabaseService.syncEntity menjaga secret lama bila frontend kirim ""/undefined
-    const syncResult = await supabaseService.syncEntity('settings', settings);
+    // Persist full settings ke MongoDB lokal (aaPanel) & file cache — merge menjaga secret lama
+    const syncOk = await mongoDbService.syncEntity('settings', settings);
 
     res.json({ 
       success: true, 
-      supabasePersisted: syncResult.supabasePersisted,
-      message: syncResult.supabasePersisted
-        ? 'Pengaturan berhasil disimpan ke Database Cloud Supabase & .env'
-        : 'Pengaturan berhasil disimpan ke cache lokal server & .env (Supabase offline/belum disetel)',
-      error: syncResult.error,
+      mongoPersisted: syncOk,
+      supabasePersisted: syncOk,
+      message: syncOk
+        ? 'Pengaturan berhasil disimpan ke MongoDB lokal & .env'
+        : 'Pengaturan berhasil disimpan ke cache lokal server & .env (MongoDB offline)',
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });

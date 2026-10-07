@@ -169,16 +169,9 @@ export function AdminDashboard({
 
   // Local settings state & Sub-tab navigation
   const [settings, setSettings] = useState<AppSettings>(storage.getSettings());
-  // Hydrate from backend on mount — fixes hilangnya config setelah reload/pindah browser
-  React.useEffect(() => {
-    let cancelled = false;
-    storage.hydrateSettingsFromBackend().then((merged) => {
-      if (!cancelled && merged) setSettings(merged);
-    });
-    return () => { cancelled = true; };
-  }, []);
 
-  const handleToggleCategoryStatus = (categoryKey: string, categoryLabel: string) => {
+
+  const handleToggleCategoryStatus = async (categoryKey: string, categoryLabel: string) => {
     const currentStatus = settings.categoryStatus || {
       pulsa: true,
       kuota: true,
@@ -347,15 +340,12 @@ export function AdminDashboard({
   useEffect(() => {
     const loadServerSettings = async () => {
       try {
-        const res = await fetch('/api/settings/load');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!json.success || !json.data) return;
-        const d = json.data;
+        const d = await storage.hydrateSettingsFromBackend();
+        if (!d) return;
 
         // Merge ke settings state (gabungkan dengan localStorage yang sudah ada)
         setSettings(prev => {
-          const merged = { ...prev };
+          const merged = { ...prev, ...d };
           // Hanya update field yang benar-benar ada di server (bukan default kosong)
           if (d.pakasirSlug) merged.pakasirSlug = d.pakasirSlug;
           if (d.pakasirApiKey) merged.pakasirApiKey = d.pakasirApiKey;
@@ -411,7 +401,7 @@ export function AdminDashboard({
         if (d.paymentGatewayProvider) setSelectedGatewayProvider(d.paymentGatewayProvider as any);
 
         // Simpan juga ke localStorage agar sinkron
-        storage.saveSettings({ ...storage.getSettings(), ...d });
+        // Hydration must never POST settings back to the server.
       } catch (_) {}
     };
     loadServerSettings();
@@ -1537,6 +1527,17 @@ export function AdminDashboard({
     }
   };
 
+  const persistSettings = async (updated: AppSettings): Promise<boolean> => {
+    try {
+      await storage.saveSettings(updated);
+      setSettings(storage.getSettings());
+      return true;
+    } catch (_) {
+      onShowToast('Gagal Simpan', 'Pengaturan belum tersimpan di server. Periksa koneksi dan akses admin.', 'error');
+      return false;
+    }
+  };
+
   // 3. Settings Save & Connection Tests
   const handleSaveSettings = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e && typeof e.preventDefault === 'function') {
@@ -1567,16 +1568,7 @@ export function AdminDashboard({
       qiospayQrString: (qiospayQrString || settings.qiospayQrString || settings.staticQrisString || '').trim(),
       staticQrisString: (qiospayQrString || settings.staticQrisString || settings.qiospayQrString || '').trim(),
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
-
-    try {
-      await fetch('/api/settings/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      });
-    } catch (_) {}
+    if (!await persistSettings(updated)) return;
 
     setActiveTab('SETTINGS');
     onShowToast('Pengaturan Disimpan', 'Konfigurasi WayaheDigital, Pakasir & Qiospay berhasil disimpan', 'success');
@@ -1587,16 +1579,7 @@ export function AdminDashboard({
       ...settings,
       ...partial,
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
-
-    try {
-      await fetch('/api/settings/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      });
-    } catch (_) {}
+    if (!await persistSettings(updated)) return;
   };
 
   const handleSavePakasirSettings = async (e?: React.FormEvent | React.MouseEvent) => {
@@ -1616,16 +1599,7 @@ export function AdminDashboard({
       pakasirIsSandbox: Boolean(pakasirIsSandbox),
       paymentGatewayProvider: 'PAKASIR',
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
-
-    try {
-      await fetch('/api/settings/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      });
-    } catch (_) {}
+    if (!await persistSettings(updated)) return;
 
     onShowToast('Konfigurasi Pakasir Disimpan', 'Kredensial, toko, dan webhook Pakasir API v2 berhasil diperbarui', 'success');
   };
@@ -1645,21 +1619,12 @@ export function AdminDashboard({
       staticQrisString: (qiospayQrString || settings.staticQrisString || settings.qiospayQrString || '').trim(),
       paymentGatewayProvider: 'QIOSPAY',
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
-
-    try {
-      await fetch('/api/settings/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      });
-    } catch (_) {}
+    if (!await persistSettings(updated)) return;
 
     onShowToast('Konfigurasi Qiospay Disimpan', 'Kredensial, QRIS dan callback Qiospay berhasil diperbarui', 'success');
   };
 
-  const handleSaveAdminCredentials = (e?: React.FormEvent | React.MouseEvent) => {
+  const handleSaveAdminCredentials = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
@@ -1911,16 +1876,7 @@ export function AdminDashboard({
       ...settings,
       paymentGatewayProvider: gateway,
     };
-    setSettings(updatedSettings);
-    storage.saveSettings(updatedSettings);
-
-    try {
-      await fetch('/api/settings/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSettings),
-      });
-    } catch (_) {}
+    if (!await persistSettings(updatedSettings)) return;
 
     onShowToast(
       'Gateway Pembayaran Diaktifkan',
@@ -2252,7 +2208,7 @@ export function AdminDashboard({
   };
 
   // Supabase Handlers
-  const handleSaveSupabaseSettings = (e?: React.FormEvent | React.MouseEvent) => {
+  const handleSaveSupabaseSettings = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
@@ -2267,8 +2223,7 @@ export function AdminDashboard({
       supabaseAnonKey: pubKey,
       supabaseServiceRoleKey: secKey,
     };
-    storage.saveSettings(updated);
-    setSettings(updated);
+    if (!await persistSettings(updated)) return;
     setActiveTab('SETTINGS');
     setSettingsSubTab('BOT_API');
     setEnvSystemTab('DATABASE');
@@ -2359,7 +2314,7 @@ export function AdminDashboard({
     onShowToast('Supabase SQL Editor Dibuka', 'Membuka SQL Editor Supabase untuk eksekusi script.', 'info');
   };
 
-  const handleSaveMongoSettings = (e?: React.FormEvent | React.MouseEvent) => {
+  const handleSaveMongoSettings = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
@@ -2369,8 +2324,7 @@ export function AdminDashboard({
       mongodbDbName: settings.mongodbDbName || '',
       mongodbDbNameTrans: settings.mongodbDbNameTrans || '',
     };
-    storage.saveSettings(updated);
-    setSettings(updated);
+    if (!await persistSettings(updated)) return;
     setActiveTab('SETTINGS');
     setSettingsSubTab('BOT_API');
     setEnvSystemTab('DATABASE');
@@ -2690,7 +2644,7 @@ export function AdminDashboard({
     reader.readAsDataURL(file);
   };
 
-  const handleSaveLogoUrl = () => {
+  const handleSaveLogoUrl = async () => {
     const updated: AppSettings = {
       ...settings,
       logoUrl: (settings.logoUrl || '').trim(),
@@ -2701,7 +2655,7 @@ export function AdminDashboard({
     onRefreshData();
   };
 
-  const handleRemoveLogo = () => {
+  const handleRemoveLogo = async () => {
     const updated: AppSettings = {
       ...settings,
       logoUrl: '',
@@ -3487,7 +3441,7 @@ export function AdminDashboard({
               onChange={(e) => {
                 const updated = { ...settings, ngrokAuthtoken: e.target.value };
                 setSettings(updated);
-                storage.saveSettings(updated);
+                // Saved explicitly with the settings form, not on each keystroke.
               }}
               placeholder="Masukkan authtoken dari dashboard.ngrok.com"
               className="w-full px-3 py-2 text-xs rounded-xl bg-[#080c14] border border-slate-800 text-white font-mono focus:border-cyan-500 focus:outline-none"

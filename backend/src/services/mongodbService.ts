@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { mergeSettings } from './settingsMerge.js';
 import path from 'node:path';
 import { MongoClient, ServerApiVersion, Db } from 'mongodb';
 import { CONSOLE_CONFIG } from '../config/console.js';
@@ -227,7 +228,8 @@ export class MongoDbService {
         wifiBatches: wifiBatches.length > 0 ? wifiBatches : local.wifiBatches || [],
         promos: promos.length > 0 ? promos : local.promos || [],
         auditLogs: auditLogs.length > 0 ? auditLogs : local.auditLogs || [],
-        settings: settingsDoc?.data || local.settings || {},
+        // Settings saves use the server file as the durable authority; Mongo may be an older mirror.
+        settings: mergeSettings(settingsDoc?.data, this.loadLocalFile().settings),
         banners: banners.length > 0 ? banners : local.banners || [],
         catalogs: catalogs.length > 0 ? catalogs : local.catalogs || [],
         pushSubscriptions: pushSubscriptions.length > 0 ? pushSubscriptions : local.pushSubscriptions || [],
@@ -353,6 +355,7 @@ export class MongoDbService {
    */
   async syncEntity(entity: string, data: any): Promise<boolean> {
     const local = this.loadLocalFile();
+    if (entity === 'settings') data = mergeSettings(local.settings, data);
     local[entity] = data;
     this.saveLocalFile(local);
 

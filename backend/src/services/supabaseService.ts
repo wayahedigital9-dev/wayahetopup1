@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { mergeSettings } from './settingsMerge.js';
 import path from 'node:path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { CONSOLE_CONFIG } from '../config/console.js';
@@ -177,10 +178,12 @@ export class SupabaseService {
   /**
    * Simpan local file
    */
-  private saveLocalFile(data: any) {
+  private saveLocalFile(data: any, required = false) {
     try {
       fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
-    } catch (_) { }
+    } catch (_) {
+      if (required) throw new Error('Settings could not be persisted to server storage');
+    }
   }
 
   /**
@@ -722,16 +725,9 @@ export class SupabaseService {
     const local = this.loadLocalFile();
     if (collectionName === 'settings' || collectionName === 'app_settings') {
       // MERGE: preserve existing secrets when incoming data has empty/undefined
-      const SECRET_KEYS = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
-      const mergedLocal: any = { ...(local.settings || {}) };
-      for (const [k, v] of Object.entries(data || {})) {
-        const isSecret = SECRET_KEYS.includes(k);
-        const strVal = typeof v === 'string' ? v.trim() : v;
-        if (isSecret && (strVal === '' || strVal === undefined || strVal === null)) continue;
-        (mergedLocal as any)[k] = v;
-      }
+      const mergedLocal = mergeSettings(local.settings, data);
       local.settings = mergedLocal;
-      this.saveLocalFile(local);
+      this.saveLocalFile(local, true);
       // data for supabase is mergedLocal (full, including secrets) — will be re-merged with existing supabase row below
       data = mergedLocal;
     } else if (Array.isArray(data)) {
@@ -753,14 +749,7 @@ export class SupabaseService {
             if (existing?.data?.value && !existing.error) existingVal = existing.data.value as any;
             if (typeof existingVal === 'string') existingVal = JSON.parse(existingVal);
           } catch (_) {}
-          const SECRET_KEYS2 = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
-          const mergedSupabase: any = { ...(existingVal || {}) };
-          for (const [k, v] of Object.entries(data || {})) {
-            const isSecret = SECRET_KEYS2.includes(k);
-            const strVal = typeof v === 'string' ? v.trim() : v;
-            if (isSecret && (strVal === '' || strVal === undefined || strVal === null)) continue;
-            (mergedSupabase as any)[k] = v;
-          }
+          const mergedSupabase = mergeSettings(existingVal, data);
           const payload = { key: 'main_settings', value: mergedSupabase, updatedAt: new Date().toISOString() };
 
           // Try app_settings first

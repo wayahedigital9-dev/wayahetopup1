@@ -857,7 +857,7 @@ export const storage = {
   async initCloudSync(): Promise<void> {
     const performSync = async () => {
       try {
-        const res = await fetchWithFallback('/api/sync/state');
+        const res = await fetchWithFallback('/api/sync/state', { headers: getAdminHeaders() } as any);
         if (!res.ok) return;
         const json = await res.json();
         if (!json.success || !json.data) return;
@@ -1363,21 +1363,55 @@ export const storage = {
     }
   },
 
-  saveSettings(settings: AppSettings): void {
+  async saveSettings(settings: AppSettings): Promise<void> {
     const sanitizedSettings = {
       ...settings,
       supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),
     };
-    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(sanitizedSettings));
-    pushEntityToBackend('settings', sanitizedSettings);
-    notifyStorageSynced();
-    try {
-      fetchWithFallback('/api/settings/save', {
+    for (const [key, value] of Object.entries(sanitizedSettings)) {
+      if (/^has[A-Z]/.test(key) || (/key|secret|token|password|mongodbUri|supabaseDbUrl/i.test(key) &&
+          (value == null || (typeof value === 'string' && (!value.trim() || /\*{3,}|•{3,}|\.{3}|…|^\[?redacted\]?$/i.test(value)))))) {
+        delete (sanitizedSettings as any)[key];
+      }
+    }
+    const response = await fetchWithFallback('/api/settings/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(sanitizedSettings),
-      }).catch(() => {});
-    } catch (_) {}
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.success !== true) {
+      throw new Error('Pengaturan gagal disimpan ke server. Periksa koneksi dan akses admin.');
+    }
+    // Verify via admin-only load endpoint; public sync/state is always sanitized by design.
+    let remote: any = null;
+    try {
+      const rb = await fetchWithFallback('/api/settings/load', { cache: 'no-store', headers: getAdminHeaders() } as any);
+      if (rb.ok) {
+        const cj = await rb.json().catch(() => null);
+        if (cj?._sanitized === true) throw new Error('Token admin tidak valid atau belum disetel. Periksa VITE_ADMIN_TOKEN di .env frontend.');
+        if (cj?.success === true && cj?.data) remote = (cj.data as any).settings ?? cj.data;
+      }
+    } catch (e: any) {
+      if (String(e?.message || '').includes('Token admin')) throw e;
+    }
+    if (!remote) {
+      const readback = await fetchWithFallback('/api/sync/state', { cache: 'no-store', headers: getAdminHeaders() } as any);
+      const confirmed = await readback.json().catch(() => null);
+      remote = confirmed?.data?.settings;
+      if (!readback.ok || confirmed?.success !== true || !remote) {
+        throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
+      }
+    }
+    // Bandingkan hanya field yang dikirim (field secret kosong/redacted sudah dihapus sanitasi & dijaga mergeSettings)
+    const mismatched = Object.entries(sanitizedSettings).filter(
+      ([key, value]) => JSON.stringify(remote[key]) !== JSON.stringify(value)
+    );
+    if (mismatched.length > 0) {
+      throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
+    }
+    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify({ ...DEFAULT_SETTINGS, ...remote }));
+    notifyStorageSynced();
   },
 
   getVoucherBatches(): WifiVoucherBatch[] {
