@@ -2043,7 +2043,13 @@ app.get('/api/supabase/info', (req: Request, res: Response) => {
   });
 });
 
-app.post('/api/supabase/test', async (req: Request, res: Response) => {
+// === SUPABASE DISABLED (MongoDB active) ===
+// Semua /api/supabase/* dinonaktifkan sementara — hubungi admin untuk enable kembali.
+app.use('/api/supabase', (_req: Request, res: Response, _next: any) => {
+  return res.status(503).json({ success: false, message: 'Supabase dinonaktifkan sementara — MongoDB aktif.', hint: 'Data ada di MongoDB wayahetopup1; untuk aktifkan Supabase restore backend/src/services/supabaseService.ts' });
+});
+
+app.post('/api/supabase/test_DISABLED_PLACEHOLDER', async (req: Request, res: Response) => {
   const { url, key } = req.body || {};
   const result = await supabaseService.testConnection(url, key);
   res.json(result);
@@ -2213,53 +2219,15 @@ app.get('/api/settings/load', async (req: Request, res: Response) => {
 app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response) => {
   try {
     const settings = req.body.settings || req.body || {};
-    // Jika ada SUPABASE Config yang dikirim oleh Admin, simpan ke backend/.env
+    // SUPABASE DISABLED — tidak lagi simpan SUPABASE_* ke .env (MongoDB aktif)
     let envUpdated = false;
     try {
       const envPath = resolveEnvPath();
       if (fs.existsSync(envPath)) {
         let envContent = fs.readFileSync(envPath, 'utf8');
+        void envContent; // supabase write disabled
 
-        if (settings.supabaseUrl !== undefined && typeof settings.supabaseUrl === 'string') {
-          const cleanUrl = sanitizeSupabaseUrl(settings.supabaseUrl);
-          CONSOLE_CONFIG.SUPABASE_URL = cleanUrl;
-          if (envContent.includes('SUPABASE_URL=')) {
-            envContent = envContent.replace(/SUPABASE_URL=.*/, `SUPABASE_URL="${cleanUrl}"`);
-          } else {
-            envContent += `\nSUPABASE_URL="${cleanUrl}"`;
-          }
-          envUpdated = true;
-        }
-
-        const pubKey = settings.supabasePublishableKey || settings.supabaseAnonKey;
-        if (pubKey !== undefined && typeof pubKey === 'string') {
-          CONSOLE_CONFIG.SUPABASE_PUBLISHABLE_KEY = pubKey.trim();
-          CONSOLE_CONFIG.SUPABASE_ANON_KEY = pubKey.trim();
-          if (envContent.includes('SUPABASE_PUBLISHABLE_KEY=')) {
-            envContent = envContent.replace(/SUPABASE_PUBLISHABLE_KEY=.*/, `SUPABASE_PUBLISHABLE_KEY="${pubKey.trim()}"`);
-          } else if (envContent.includes('SUPABASE_ANON_KEY=')) {
-            envContent = envContent.replace(/SUPABASE_ANON_KEY=.*/, `SUPABASE_PUBLISHABLE_KEY="${pubKey.trim()}"`);
-          } else {
-            envContent += `\nSUPABASE_PUBLISHABLE_KEY="${pubKey.trim()}"`;
-          }
-          envUpdated = true;
-        }
-
-        const secKey = settings.supabaseSecretKey || settings.supabaseServiceRoleKey;
-        if (secKey !== undefined && typeof secKey === 'string') {
-          CONSOLE_CONFIG.SUPABASE_SECRET_KEY = secKey.trim();
-          CONSOLE_CONFIG.SUPABASE_SERVICE_ROLE_KEY = secKey.trim();
-          if (envContent.includes('SUPABASE_SECRET_KEY=')) {
-            envContent = envContent.replace(/SUPABASE_SECRET_KEY=.*/, `SUPABASE_SECRET_KEY="${secKey.trim()}"`);
-          } else if (envContent.includes('SUPABASE_SERVICE_ROLE_KEY=')) {
-            envContent = envContent.replace(/SUPABASE_SERVICE_ROLE_KEY=.*/, `SUPABASE_SECRET_KEY="${secKey.trim()}"`);
-          } else {
-            envContent += `\nSUPABASE_SECRET_KEY="${secKey.trim()}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.supabaseDbUrl !== undefined && typeof settings.supabaseDbUrl === 'string') {
+        if (false && settings.supabaseDbUrl !== undefined && typeof settings.supabaseDbUrl === 'string') { // SUPABASE DISABLED
           CONSOLE_CONFIG.SUPABASE_DB_URL = settings.supabaseDbUrl.trim();
           if (envContent.includes('SUPABASE_DB_URL=')) {
             envContent = envContent.replace(/SUPABASE_DB_URL=.*/, `SUPABASE_DB_URL="${settings.supabaseDbUrl.trim()}"`);
