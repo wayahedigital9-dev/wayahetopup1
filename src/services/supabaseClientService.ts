@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { storage } from './storage';
+import { storage, getAdminHeaders } from './storage';
 
 export interface SupabaseInfoResponse {
   status: string;
@@ -50,8 +50,7 @@ export function sanitizeUrl(rawUrl?: string): string {
 }
 
 function adminJsonHeaders(): Record<string, string> {
-  const tok = (import.meta as any)?.env?.VITE_ADMIN_TOKEN as string | undefined;
-  return tok ? { 'Content-Type': 'application/json', 'X-Admin-Token': tok.trim() } : { 'Content-Type': 'application/json' };
+  return { 'Content-Type': 'application/json', ...getAdminHeaders() };
 }
 
 export class SupabaseClientService {

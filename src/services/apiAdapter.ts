@@ -1,4 +1,4 @@
-import { storage } from './storage';
+import { storage, getAdminHeaders } from './storage';
 import { convertStaticToDynamicQRIS } from '../utils/qris';
 import { providerIntegrationService } from './providerIntegrationService';
 import { 
@@ -1495,7 +1495,7 @@ export const apiAdapter = {
       try {
         const res = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
           body: JSON.stringify(params),
         });
         if (res.ok) {
@@ -1515,7 +1515,7 @@ export const apiAdapter = {
       try {
         const res = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
           body: JSON.stringify({ proxy }),
         });
         if (res.ok) {
