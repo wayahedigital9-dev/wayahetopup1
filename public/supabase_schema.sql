@@ -564,50 +564,48 @@ ALTER TABLE public.qiospay_events REPLICA IDENTITY FULL;
 -- =========================================================================
 -- 13. ROW LEVEL SECURITY (RLS) & UNIFIED ACCESS POLICIES
 -- =========================================================================
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.payment_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.wifi_voucher_batches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.wifi_voucher_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.promo_codes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.promo_banners ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.warranties ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.claims ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.monitoring ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.dispatched_accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.digiflazz_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.qiospay_events ENABLE ROW LEVEL SECURITY;
-
--- Allow public / anonymous / authenticated full access
 DO $$
 DECLARE
+    pol record;
     tbl text;
 BEGIN
-    FOR tbl IN 
-        SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    -- 1. Bersihkan semua policy lama di public schema agar tidak ada konflik/penolakan
+    FOR pol IN SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public'
     LOOP
-        EXECUTE format('DROP POLICY IF EXISTS "Allow all on %I" ON public.%I', tbl, tbl);
-        EXECUTE format('CREATE POLICY "Allow all on %I" ON public.%I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true)', tbl, tbl);
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
+    END LOOP;
+
+    -- 2. Pastikan RLS aktif dan berikan hak akses penuh kepada anon, authenticated, dan service_role
+    FOR tbl IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    LOOP
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', tbl);
+        EXECUTE format('CREATE POLICY "Allow all on %I" ON public.%I FOR ALL TO anon, authenticated, service_role USING (true) WITH CHECK (true)', tbl, tbl);
     END LOOP;
 END $$;
 
 -- =========================================================================
--- 14. STORAGE BUCKETS SETUP
+-- 14. STORAGE BUCKETS SETUP (Public Uploads & Assets)
 -- =========================================================================
-INSERT INTO storage.buckets (id, name, public) 
-VALUES 
-    ('proof-uploads', 'proof-uploads', true),
-    ('store-assets', 'store-assets', true),
-    ('banners', 'banners', true)
-ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'buckets') THEN
+    INSERT INTO storage.buckets (id, name, public) 
+    VALUES 
+        ('proof-uploads', 'proof-uploads', true),
+        ('store-assets', 'store-assets', true),
+        ('banners', 'banners', true)
+    ON CONFLICT (id) DO UPDATE SET public = true;
+  END IF;
 
-DROP POLICY IF EXISTS "Public Access Bucket Proofs" ON storage.objects;
-CREATE POLICY "Public Access Bucket Proofs" ON storage.objects FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'objects') THEN
+    EXECUTE 'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS "Public Access Bucket Proofs" ON storage.objects';
+    EXECUTE 'DROP POLICY IF EXISTS "Public Access Bucket Objects" ON storage.objects';
+    EXECUTE 'DROP POLICY IF EXISTS "Public Access Objects" ON storage.objects';
+    EXECUTE 'CREATE POLICY "Public Access Objects" ON storage.objects FOR ALL TO anon, authenticated, service_role USING (true) WITH CHECK (true)';
+  END IF;
+EXCEPTION WHEN others THEN null;
+END $$;
 
 -- =========================================================================
 -- 15. PUBLIKASI REALTIME SUPABASE
@@ -619,19 +617,7 @@ BEGIN
   END IF;
 END $$;
 
--- Enable REPLICA IDENTITY FULL for complete Realtime update/delete payloads
-ALTER TABLE IF EXISTS public.products REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.orders REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.warranties REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.claims REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.monitoring REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.dispatched_accounts REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.notifications REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.app_settings REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.settings REPLICA IDENTITY FULL;
-ALTER TABLE IF EXISTS public.promo_banners REPLICA IDENTITY FULL;
-
--- Safely add tables to supabase_realtime publication
+-- Enable REPLICA IDENTITY FULL & Add to Publication
 DO $$
 DECLARE
   tbl text;
@@ -639,14 +625,16 @@ BEGIN
   FOR tbl IN 
     SELECT unnest(ARRAY[
       'products', 'orders', 'order_items', 'payment_attempts',
-      'wifi_voucher_batches', 'wifi_voucher_items', 'promo_codes',
+      'wifi_voucher_batches', 'wifi_batches', 'wifi_voucher_items', 'promo_codes',
       'promo_banners', 'warranties', 'claims', 'monitoring',
       'dispatched_accounts', 'notifications', 'app_settings',
-      'settings', 'users'
+      'settings', 'users', 'admin_push_subscriptions',
+      'audit_logs', 'digiflazz_logs', 'qiospay_events'
     ])
   LOOP
     IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = tbl) THEN
       BEGIN
+        EXECUTE format('ALTER TABLE public.%I REPLICA IDENTITY FULL', tbl);
         EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', tbl);
       EXCEPTION 
         WHEN duplicate_object THEN NULL;
@@ -656,29 +644,17 @@ BEGIN
   END LOOP;
 END $$;
 
--- 15b. PENGATURAN STATUS KATEGORI & SETTINGS COLUMNS
+-- 15b. PENGATURAN STATUS KATEGORI & SEED DEFAULT SETTINGS
 ALTER TABLE public.app_settings ADD COLUMN IF NOT EXISTS "categoryStatus" JSONB DEFAULT '{"pulsa":true,"kuota":true,"game":true,"premium":true,"wifi":true,"smm":true,"gateway_tambahan":true,"pln":true}'::jsonb;
 ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS "categoryStatus" JSONB DEFAULT '{"pulsa":true,"kuota":true,"game":true,"premium":true,"wifi":true,"smm":true,"gateway_tambahan":true,"pln":true}'::jsonb;
 
+INSERT INTO public.app_settings (key, value, "updatedAt")
+VALUES ('main_settings', '{"siteName":"WayaheDigital","activeGateway":"QIOSPAY"}'::jsonb, NOW())
+ON CONFLICT (key) DO NOTHING;
 
--- 15c. TABEL WEB PUSH NOTIFICATIONS ADMIN (admin_push_subscriptions)
-CREATE TABLE IF NOT EXISTS public.admin_push_subscriptions (
-    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    admin_user_id TEXT DEFAULT 'admin',
-    token TEXT UNIQUE NOT NULL,
-    installation_id TEXT,
-    device_name TEXT DEFAULT 'Perangkat Admin',
-    platform TEXT DEFAULT 'Web',
-    user_agent TEXT,
-    enabled BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    last_used_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.admin_push_subscriptions ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all on admin_push_subscriptions" ON public.admin_push_subscriptions;
-CREATE POLICY "Allow all on admin_push_subscriptions" ON public.admin_push_subscriptions FOR ALL TO anon, authenticated, service_role USING (true) WITH CHECK (true);
+INSERT INTO public.settings (key, value, updated_at)
+VALUES ('main_settings', '{"siteName":"WayaheDigital","activeGateway":"QIOSPAY"}'::jsonb, NOW())
+ON CONFLICT (key) DO NOTHING;
 
 -- 16. RELOAD SCHEMA CACHE SUPABASE POSTGREST
 NOTIFY pgrst, 'reload schema';
