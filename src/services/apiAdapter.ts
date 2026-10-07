@@ -250,7 +250,23 @@ export const apiAdapter = {
             newOrder.snapToken = backendData.snapToken;
           }
           if (backendData?.payment?.qr_string || backendData?.data?.qrString || backendData?.qrString) {
-            newOrder.qrString = backendData?.payment?.qr_string || backendData?.data?.qrString || backendData?.qrString;
+            let receivedQr = (backendData?.payment?.qr_string || backendData?.data?.qrString || backendData?.qrString || '').trim();
+            if (receivedQr && receivedQr.startsWith('000201')) {
+              try {
+                receivedQr = convertStaticToDynamicQRIS(
+                  receivedQr,
+                  totalAmount,
+                  newOrder.invoiceNumber,
+                  {
+                    preserveTag62: true,
+                    forceDynamicPOI: true,
+                    gateway: responseGateway,
+                  }
+                );
+              } catch (_) {}
+            }
+            newOrder.qrString = receivedQr;
+            newOrder.isDynamic = true;
           }
           if (backendData?.payment?.payment_link || backendData?.paymentLink) {
             newOrder.paymentLink = backendData?.payment?.payment_link || backendData?.paymentLink;

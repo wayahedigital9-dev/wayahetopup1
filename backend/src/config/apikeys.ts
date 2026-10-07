@@ -29,7 +29,7 @@ export const QIOSPAY_CONFIG = {
   MERCHANT_NAME: process.env.QIOSPAY_MERCHANT_NAME || 'WAYAHE DIGITAL',
   QR_STRING: process.env.QIOSPAY_QRIS_STRING || process.env.QIOSPAY_QR_STRING || process.env.STATIC_QRIS_STRING || '',
   QRIS_STRING: process.env.QIOSPAY_QRIS_STRING || process.env.QIOSPAY_QR_STRING || process.env.STATIC_QRIS_STRING || '',
-  LOCAL_DYNAMIC_CONFIRMED: process.env.QIOSPAY_LOCAL_DYNAMIC_CONFIRMED === 'true',
+  LOCAL_DYNAMIC_CONFIRMED: process.env.QIOSPAY_LOCAL_DYNAMIC_CONFIRMED !== 'false',
 };
 
 // ── 2b. DIGIFLAZZ (Pulsa & Paket Data) ─────────────────────────

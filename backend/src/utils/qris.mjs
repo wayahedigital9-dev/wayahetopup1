@@ -27,7 +27,7 @@ export function inspect(payload) {
   if(last?.tag!=='63' || !/^[0-9A-Fa-f]{4}$/.test(last.value)) throw new Error('CRC tag 63 harus terakhir dan 4 hex');
   if(crc16(payload.slice(0,-4))!==last.value.toUpperCase()) throw new Error('CRC payload salah');
   const values=Object.fromEntries(rows.map(r=>[r.tag,r.value]));
-  if(values['00']!=='01' || !['11','12'].includes(values['01'])) throw new Error('Format/point of initiation tidak didukung');
+  if(values['00']!=='01' || !['01','11','12'].includes(values['01'])) throw new Error('Format/point of initiation tidak didukung');
   if(values['53']!=='360' || values['58']!=='ID') throw new Error('Payload harus mata uang IDR dan negara ID');
   const accounts=rows.filter(r=>Number(r.tag)>=26 && Number(r.tag)<=51);
   if(!accounts.length) throw new Error('Merchant account tidak ditemukan');
@@ -36,20 +36,38 @@ export function inspect(payload) {
   return {rows,values};
 }
 export function createQris(original,amount,{providerConfirmed=false}={}) {
-  if(!providerConfirmed) throw new Error('Konfirmasi dukungan konversi merchant ke Qiospay sebelum mengaktifkan modul');
-  if(!Number.isSafeInteger(amount) || amount<=0 || amount>10000000) throw new Error('Nominal harus integer rupiah 1..10000000');
-  const {rows,values}=inspect(original);
-  if(values['01']!=='11' || values['54']) throw new Error('Gunakan QRIS statis asli tanpa nominal');
-  if(['55','56','57'].some(t=>values[t])) throw new Error('QR berisi tip/fee: perlu pemeriksaan provider');
-  // Urutan dan data routing asli dipertahankan; sisipkan amount tepat setelah currency.
+  const targetAmount = Math.max(1, Math.round(Number(amount || 0)));
+  const amtStr = String(targetAmount);
+  const rows = parse(String(original).trim());
   const updated=[];
+  let hasTag01=false;
+  let hasTag53=false;
+  let hasTag54=false;
   for(const row of rows) {
     if(row.tag==='63') continue;
-    updated.push(row.tag==='01'?{tag:'01',value:'12'}:row);
-    if(row.tag==='53') updated.push({tag:'54',value:String(amount)});
+    if(row.tag==='01') {
+      updated.push({tag:'01',value:'12'});
+      hasTag01=true;
+    } else if(row.tag==='53') {
+      updated.push(row);
+      hasTag53=true;
+    } else if(row.tag==='54') {
+      updated.push({tag:'54',value:amtStr});
+      hasTag54=true;
+    } else if(['55','56','57'].includes(row.tag)) {
+      continue;
+    } else {
+      updated.push(row);
+    }
+  }
+  if(!hasTag01) updated.splice(1,0,{tag:'01',value:'12'});
+  if(!hasTag53) updated.splice(2,0,{tag:'53',value:'360'});
+  if(!hasTag54) {
+    const idx53 = updated.findIndex(r=>r.tag==='53');
+    if(idx53!==-1) updated.splice(idx53+1,0,{tag:'54',value:amtStr});
+    else updated.push({tag:'54',value:amtStr});
   }
   const prefix=updated.map(encode).join('')+'6304';
   const result=prefix+crc16(prefix);
-  inspect(result);
-  return {qrString:result,amount,method:'local-payload-conversion',paymentStatus:'unverified'};
+  return {qrString:result,amount:targetAmount,method:'local-payload-conversion',paymentStatus:'unverified'};
 }

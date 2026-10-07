@@ -118,12 +118,19 @@ export async function createPaymentSession(params: {
 
         let finalQR = isLiveEMVCo ? p.qr_string : undefined;
 
+        // Pastikan finalQR selalu menyematkan Tag 54 dengan nominal dinamis
+        if (finalQR) {
+          try {
+            finalQR = convertStaticToDynamicQRIS(finalQR, dynamicAmount, params.orderId, { gateway: 'PAKASIR' });
+          } catch (_) {}
+        }
+
         // Pakasir QRIS Statis MANDIRI (Tidak pernah memakai Qiospay)
         if (!finalQR) {
           const registeredStatic = (PAKASIR_CONFIG.QR_STRING || process.env.PAKASIR_QR_STRING || '').trim();
           if (registeredStatic && registeredStatic.startsWith('000201')) {
             try {
-              finalQR = convertStaticToDynamicQRIS(registeredStatic, dynamicAmount, params.orderId);
+              finalQR = convertStaticToDynamicQRIS(registeredStatic, dynamicAmount, params.orderId, { gateway: 'PAKASIR' });
             } catch (_) {}
           }
         }

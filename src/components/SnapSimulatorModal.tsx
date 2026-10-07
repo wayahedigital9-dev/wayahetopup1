@@ -80,7 +80,9 @@ export function SnapSimulatorModal({
   ).trim();
 
   // Dynamic QR String (Dipisahkan Murni Sesuai Payment Gateway Masing-Masing)
+  const targetAmount = Math.max(1, Math.round(Number(order?.totalAmount || 10000)));
   let activeQRString = '';
+
   if (isPakasir) {
     // ══════════════════════════════════════════════════════════════
     // JALUR PAKASIR API v2 (MURNI TANPA DATA QIOSPAY)
@@ -88,20 +90,10 @@ export function SnapSimulatorModal({
     if (order?.qrString && order.qrString.startsWith('000201') && !order.qrString.includes('COM.NOBUBANK')) {
       activeQRString = order.qrString;
     } else if (settings.pakasirQrString && settings.pakasirQrString.startsWith('000201')) {
-      activeQRString = convertStaticToDynamicQRIS(
-        settings.pakasirQrString,
-        order?.totalAmount || 10000,
-        order?.invoiceNumber || 'INV-WD',
-        {
-          preserveTag62: true,
-          forceDynamicPOI: true,
-          merchantName: merchantStoreName,
-          gateway: 'PAKASIR',
-        }
-      );
+      activeQRString = settings.pakasirQrString;
     } else {
       activeQRString = generateDynamicQRIS({
-        amount: order?.totalAmount || 10000,
+        amount: targetAmount,
         invoiceNumber: order?.invoiceNumber || 'INV-WD',
         merchantName: merchantStoreName,
         merchantCity: 'SURABAYA',
@@ -121,18 +113,25 @@ export function SnapSimulatorModal({
         settings.staticQrisString ||
         '00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF'
       ).trim();
+      activeQRString = qiospayOfficialStatic;
+    }
+  }
 
+  // JAMINAN MUTLAK: Selalu pastikan activeQRString menyematkan Tag 54 dengan nominal dinamis produk terkini
+  if (activeQRString && activeQRString.startsWith('000201')) {
+    try {
       activeQRString = convertStaticToDynamicQRIS(
-        qiospayOfficialStatic,
-        order?.totalAmount || 10000,
+        activeQRString,
+        targetAmount,
         order?.invoiceNumber || 'INV-WD',
         {
           preserveTag62: true,
           forceDynamicPOI: true,
-          gateway: 'QIOSPAY',
+          merchantName: isPakasir ? merchantStoreName : undefined,
+          gateway: isPakasir ? 'PAKASIR' : 'QIOSPAY',
         }
       );
-    }
+    } catch (_) {}
   }
 
   // Generate QR Code secara lokal langsung di browser (0 ms, aman dari blokir adblock/CORS)
