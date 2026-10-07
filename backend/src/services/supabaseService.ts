@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { CONSOLE_CONFIG } from '../config/console.js';
+import { mergeSettings } from './settingsMerge.js';
 
 export interface SupabaseTestResult {
   success: boolean;
@@ -178,9 +179,7 @@ export class SupabaseService {
    * Simpan local file
    */
   private saveLocalFile(data: any) {
-    try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
-    } catch (_) { }
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
   }
 
   /**
@@ -721,19 +720,9 @@ export class SupabaseService {
   async syncEntity(collectionName: string, data: any): Promise<{ success: boolean; supabasePersisted: boolean; error?: string }> {
     const local = this.loadLocalFile();
     if (collectionName === 'settings' || collectionName === 'app_settings') {
-      // MERGE: preserve existing secrets when incoming data has empty/undefined
-      const SECRET_KEYS = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
-      const mergedLocal: any = { ...(local.settings || {}) };
-      for (const [k, v] of Object.entries(data || {})) {
-        const isSecret = SECRET_KEYS.includes(k);
-        const strVal = typeof v === 'string' ? v.trim() : v;
-        if (isSecret && (strVal === '' || strVal === undefined || strVal === null)) continue;
-        (mergedLocal as any)[k] = v;
-      }
-      local.settings = mergedLocal;
+      data = mergeSettings(local.settings, data);
+      local.settings = data;
       this.saveLocalFile(local);
-      // data for supabase is mergedLocal (full, including secrets) — will be re-merged with existing supabase row below
-      data = mergedLocal;
     } else if (Array.isArray(data)) {
       local[collectionName] = data;
       this.saveLocalFile(local);
