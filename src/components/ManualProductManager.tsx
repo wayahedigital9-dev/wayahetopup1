@@ -504,7 +504,7 @@ export function ManualProductManager({
   };
 
   // Edit product handler
-  const handleUpdateProduct = (e: React.FormEvent) => {
+  const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct || !editingProduct.name.trim()) return;
     const allProducts = storage.getProducts();
@@ -513,16 +513,19 @@ export function ManualProductManager({
       allProducts[idx].name = editingProduct.name.trim();
       allProducts[idx].provider = editingProduct.name.trim();
       allProducts[idx].description = editingProduct.description.trim();
-      storage.saveProducts(allProducts);
-      setReloadKey(prev => prev + 1);
-      if (onRefreshData) onRefreshData();
+      try {
+        await persistManualInventory(allProducts, storage.getVoucherBatches());
+      } catch (error: any) {
+        onShowToast('Gagal', error?.message || 'Perubahan produk belum tersimpan di database.', 'error');
+        return;
+      }
       onShowToast('Berhasil', `Produk ${editingProduct.name} berhasil diperbarui!`, 'success');
       setEditingProduct(null);
     }
   };
 
   // Edit variant handler
-  const handleUpdateVariant = (e: React.FormEvent) => {
+  const handleUpdateVariant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingVariant || !editingVariant.name.trim()) return;
     const allProducts = storage.getProducts();
@@ -540,9 +543,12 @@ export function ManualProductManager({
         }
         prod.variants = variants;
         allProducts[prodIdx] = prod;
-        storage.saveProducts(allProducts);
-        setReloadKey(prev => prev + 1);
-        if (onRefreshData) onRefreshData();
+        try {
+          await persistManualInventory(allProducts, storage.getVoucherBatches());
+        } catch (error: any) {
+          onShowToast('Gagal', error?.message || 'Perubahan varian belum tersimpan di database.', 'error');
+          return;
+        }
         onShowToast('Berhasil', `Varian ${editingVariant.name} berhasil diperbarui!`, 'success');
         setEditingVariant(null);
       }

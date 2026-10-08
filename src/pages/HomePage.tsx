@@ -931,8 +931,8 @@ export function HomePage({
 
         {/* 1.1 MEMBER ACCESS & STATUS BAR */}
         <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-          isDark 
-            ? 'bg-gradient-to-r from-[#1B1F1C] via-[#1E251F] to-[#141815] border-[#2E3A31]' 
+          isDark
+            ? 'bg-gradient-to-r from-[#1B1F1C] via-[#1E251F] to-[#141815] border-[#2E3A31]'
             : 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/50 border-amber-200/80 shadow-xs'
         } flex flex-col sm:flex-row sm:items-center justify-between gap-3.5`}>
           {currentUser ? (
@@ -1040,11 +1040,11 @@ export function HomePage({
                 badge: 'POPULER',
                 glow: 'bg-amber-500/20',
                 accentText: 'group-hover:text-amber-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-amber-500/25 via-amber-600/10 to-amber-950/20 border-amber-500/35 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-amber-500/25 via-amber-600/10 to-amber-950/20 border-amber-500/35 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
                   : 'bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200 text-amber-600 shadow-xs',
-                badgeStyle: isDark 
-                  ? 'bg-amber-500/15 border-amber-500/35 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]' 
+                badgeStyle: isDark
+                  ? 'bg-amber-500/15 border-amber-500/35 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
                   : 'bg-amber-100/80 border-amber-300 text-amber-800',
                 hoverBorder: isDark ? 'group-hover:border-amber-500/50' : 'group-hover:border-amber-400',
                 action: () => {
@@ -1065,11 +1065,11 @@ export function HomePage({
                 badge: 'AUTO 5S',
                 glow: 'bg-emerald-500/20',
                 accentText: 'group-hover:text-emerald-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-emerald-500/25 via-emerald-600/10 to-emerald-950/20 border-emerald-500/35 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-emerald-500/25 via-emerald-600/10 to-emerald-950/20 border-emerald-500/35 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
                   : 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-600 shadow-xs',
-                badgeStyle: isDark 
-                  ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]' 
+                badgeStyle: isDark
+                  ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]'
                   : 'bg-emerald-100/80 border-emerald-300 text-emerald-800',
                 hoverBorder: isDark ? 'group-hover:border-emerald-500/50' : 'group-hover:border-emerald-400',
                 action: () => {
@@ -1089,8 +1089,8 @@ export function HomePage({
                 icon: Zap,
                 glow: 'bg-yellow-500/20',
                 accentText: 'group-hover:text-yellow-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-600/10 to-yellow-950/20 border-yellow-500/35 text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-600/10 to-yellow-950/20 border-yellow-500/35 text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]'
                   : 'bg-gradient-to-br from-yellow-100 to-yellow-50 border-yellow-200 text-yellow-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-yellow-500/50' : 'group-hover:border-yellow-400',
                 action: () => {
@@ -1109,8 +1109,8 @@ export function HomePage({
                 icon: Radio,
                 glow: 'bg-blue-500/20',
                 accentText: 'group-hover:text-blue-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-600/10 to-blue-950/20 border-blue-500/35 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-600/10 to-blue-950/20 border-blue-500/35 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
                   : 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-200 text-blue-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-blue-500/50' : 'group-hover:border-blue-400',
                 action: () => {
@@ -1130,11 +1130,11 @@ export function HomePage({
                 badge: 'GARANSI',
                 glow: 'bg-purple-500/20',
                 accentText: 'group-hover:text-purple-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-purple-500/25 via-purple-600/10 to-purple-950/20 border-purple-500/35 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-purple-500/25 via-purple-600/10 to-purple-950/20 border-purple-500/35 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]'
                   : 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 text-purple-600 shadow-xs',
-                badgeStyle: isDark 
-                  ? 'bg-purple-500/15 border-purple-500/35 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]' 
+                badgeStyle: isDark
+                  ? 'bg-purple-500/15 border-purple-500/35 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]'
                   : 'bg-purple-100/80 border-purple-300 text-purple-800',
                 hoverBorder: isDark ? 'group-hover:border-purple-500/50' : 'group-hover:border-purple-400',
                 action: () => {
@@ -1154,8 +1154,8 @@ export function HomePage({
                 icon: Share2,
                 glow: 'bg-rose-500/20',
                 accentText: 'group-hover:text-rose-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-rose-500/25 via-rose-600/10 to-rose-950/20 border-rose-500/35 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-rose-500/25 via-rose-600/10 to-rose-950/20 border-rose-500/35 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]'
                   : 'bg-gradient-to-br from-rose-100 to-rose-50 border-rose-200 text-rose-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-rose-500/50' : 'group-hover:border-rose-400',
                 action: () => {
@@ -1173,8 +1173,8 @@ export function HomePage({
                 icon: Boxes,
                 glow: 'bg-indigo-500/20',
                 accentText: 'group-hover:text-indigo-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-indigo-500/25 via-indigo-600/10 to-indigo-950/20 border-indigo-500/35 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-indigo-500/25 via-indigo-600/10 to-indigo-950/20 border-indigo-500/35 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
                   : 'bg-gradient-to-br from-indigo-100 to-indigo-50 border-indigo-200 text-indigo-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-indigo-500/50' : 'group-hover:border-indigo-400',
                 action: () => {
@@ -1189,8 +1189,8 @@ export function HomePage({
                 icon: Flame,
                 glow: 'bg-orange-500/20',
                 accentText: 'group-hover:text-orange-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-orange-500/25 via-orange-600/10 to-orange-950/20 border-orange-500/35 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-orange-500/25 via-orange-600/10 to-orange-950/20 border-orange-500/35 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]'
                   : 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-200 text-orange-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-orange-500/50' : 'group-hover:border-orange-400',
                 action: () => onShowToast('Steam Wallet', 'Voucher Steam Wallet IDR terkirim otomatis', 'info')
@@ -1202,8 +1202,8 @@ export function HomePage({
                 icon: ReceiptText,
                 glow: 'bg-teal-500/20',
                 accentText: 'group-hover:text-teal-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-teal-500/25 via-teal-600/10 to-teal-950/20 border-teal-500/35 text-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-teal-500/25 via-teal-600/10 to-teal-950/20 border-teal-500/35 text-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)]'
                   : 'bg-gradient-to-br from-teal-100 to-teal-50 border-teal-200 text-teal-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-teal-500/50' : 'group-hover:border-teal-400',
                 action: () => onShowToast('Pascabayar', 'Pascabayar siap diproses secara real-time', 'info')
@@ -1215,8 +1215,8 @@ export function HomePage({
                 icon: ShieldCheck,
                 glow: 'bg-cyan-500/20',
                 accentText: 'group-hover:text-cyan-400',
-                iconStyle: isDark 
-                  ? 'bg-gradient-to-br from-cyan-500/25 via-cyan-600/10 to-cyan-950/20 border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]' 
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-cyan-500/25 via-cyan-600/10 to-cyan-950/20 border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
                   : 'bg-gradient-to-br from-cyan-100 to-cyan-50 border-cyan-200 text-cyan-600 shadow-xs',
                 hoverBorder: isDark ? 'group-hover:border-cyan-500/50' : 'group-hover:border-cyan-400',
                 action: () => onShowToast('Jasa Sosmed', 'Hubungi CS WhatsApp kami untuk bantuan optimasi', 'info')
@@ -1258,8 +1258,8 @@ export function HomePage({
                   <div className="flex-1 min-w-0 relative z-10">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`font-space font-extrabold text-xs sm:text-[13px] tracking-tight transition-colors duration-200 truncate ${
-                        isDark 
-                          ? `text-[#F5F7F2] ${cat.accentText}` 
+                        isDark
+                          ? `text-[#F5F7F2] ${cat.accentText}`
                           : `text-slate-900 ${cat.accentText}`
                       }`}>
                         {cat.label}
@@ -1276,10 +1276,10 @@ export function HomePage({
                       ) : null}
                     </div>
                     <p className={`text-[10px] mt-0.5 truncate font-jakarta transition-colors ${
-                      isMaintenance 
-                        ? 'text-amber-500 font-bold' 
-                        : isDark 
-                        ? 'text-[#9DA69F] group-hover:text-[#CBD5CD]' 
+                      isMaintenance
+                        ? 'text-amber-500 font-bold'
+                        : isDark
+                        ? 'text-[#9DA69F] group-hover:text-[#CBD5CD]'
                         : 'text-slate-500 group-hover:text-slate-700'
                     }`}>
                       {isMaintenance ? 'Maintenance akan segera kembali' : cat.desc}

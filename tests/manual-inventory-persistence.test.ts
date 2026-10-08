@@ -58,3 +58,19 @@ test('manual inventory save fails closed when database persistence is rejected',
   assert.equal(result.status, 503);
   assert.equal(result.body.success, false);
 });
+
+test('manual product and variant edits await authoritative inventory persistence', () => {
+  const manager = fs.readFileSync(new URL('../src/components/ManualProductManager.tsx', import.meta.url), 'utf8');
+  const productStart = manager.indexOf('const handleUpdateProduct =');
+  const variantStart = manager.indexOf('const handleUpdateVariant =');
+  const copyStart = manager.indexOf('const handleCopyStock =');
+  assert.ok(productStart >= 0 && variantStart > productStart && copyStart > variantStart);
+  const productHandler = manager.slice(productStart, variantStart);
+  const variantHandler = manager.slice(variantStart, copyStart);
+  for (const handler of [productHandler, variantHandler]) {
+    assert.match(handler, /async \(e: React\.FormEvent\)/);
+    assert.match(handler, /await persistManualInventory\(allProducts, storage\.getVoucherBatches\(\)\)/);
+    assert.doesNotMatch(handler, /storage\.saveProducts\(/);
+    assert.match(handler, /catch \(error: any\)/);
+  }
+});
