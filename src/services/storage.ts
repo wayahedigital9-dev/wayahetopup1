@@ -13,7 +13,9 @@ import {
   FulfillmentStatus,
   StoreCatalog,
   DiscountPopupConfig,
-  RegisteredMemberAccount
+  RegisteredMemberAccount,
+  HeroPromoSlide,
+  HeroPromoCardItem
 } from '../types';
 import { 
   INITIAL_PRODUCTS, 
@@ -40,6 +42,7 @@ const STORAGE_KEYS = {
   BANNERS: 'wd_promo_banners_v1',
   CATALOGS: 'wd_store_catalogs_v1',
   REGISTERED_MEMBERS: 'wd_registered_members_v1',
+  HERO_SLIDES: 'wd_hero_slides_v1',
 };
 
 export const INITIAL_CATALOGS: StoreCatalog[] = [
@@ -145,6 +148,124 @@ export const INITIAL_BANNERS: PromoBanner[] = [
   },
 ];
 
+export const INITIAL_HERO_SLIDES: HeroPromoSlide[] = [
+  {
+    id: 'slide-game',
+    badge: '🔥 FLASH SALE GAME • DISKON S/D 25%',
+    badgeColor: 'amber',
+    title: 'Pesta Top Up Game & Diamond Tercepat',
+    subtitle: 'Bonus diamond melimpah dan cashback koin instan untuk Mobile Legends, Free Fire, Valorant, & Genshin. Otomatis masuk 1-3 detik non-stop 24 jam.',
+    tags: ['⚡ Proses 1-3 Detik Masuk', '🛡️ Garansi 100% Legal', '💰 Cashback Koin Member'],
+    ctaText: 'Top Up Game Sekarang',
+    ctaCategory: 'game',
+    secondaryCtaText: 'Jelajahi Semua Game',
+    secondaryCtaAction: 'game',
+    cardTitle: 'Promo Game Terpopuler',
+    cardSubtitle: 'Harga Spesial Hari Ini',
+    cardItems: [
+      { name: 'Mobile Legends', sub: '86 💎 Diamond', price: 'Rp 21.000', discount: '-18%' },
+      { name: 'Free Fire', sub: '140 💎 Diamond', price: 'Rp 19.500', discount: '-22%' },
+      { name: 'Valorant Point', sub: '1125 VP Points', price: 'Rp 135.000', discount: '-15%' },
+    ],
+    serverStatus: '🟢 Server Otomatis 1-3 Detik',
+    accentGlow: 'from-amber-500/20 via-orange-500/10 to-transparent',
+    isActive: true,
+    order: 1,
+  },
+  {
+    id: 'slide-kuota',
+    badge: '🌐 HARGA AGEN RESMI • BEBAS FUP',
+    badgeColor: 'sky',
+    title: 'Paket Data Kuota Sakti 24 Jam All Operator',
+    subtitle: 'Telkomsel, Indosat Ooredoo, XL Axiata, Tri & Smartfren tanpa pembagian waktu malam. Harga agen langsung hemat hingga 35%!',
+    tags: ['📶 Semua Operator Resmi', '⏱️ Kuota 24 Jam Full', '🏷️ Harga Distributor Termurah'],
+    ctaText: 'Beli Paket Kuota Murah',
+    ctaCategory: 'kuota',
+    secondaryCtaText: 'Isi Pulsa Reguler',
+    secondaryCtaAction: 'pulsa',
+    cardTitle: 'Paket Kuota Paling Laris',
+    cardSubtitle: 'Semua Operator Siap Isi',
+    cardItems: [
+      { name: 'Telkomsel Data', sub: '35 GB / 30 Hari Full', price: 'Rp 45.000', discount: '-30%' },
+      { name: 'Indosat Freedom', sub: '50 GB / 30 Hari Bebas FUP', price: 'Rp 58.000', discount: '-25%' },
+      { name: 'XL Xtra Combo', sub: '40 GB / 30 Hari 24 Jam', price: 'Rp 49.000', discount: '-28%' },
+    ],
+    serverStatus: '⚡ Jalur Host-to-Host Resmi Digiflazz',
+    accentGlow: 'from-sky-500/20 via-blue-500/10 to-transparent',
+    isActive: true,
+    order: 2,
+  },
+  {
+    id: 'slide-premium',
+    badge: '⭐ AKUN RESMI RESELLER • GARANSI PENUH',
+    badgeColor: 'emerald',
+    title: 'Streaming 4K UHD & Musik Bebas Iklan',
+    subtitle: 'Nikmati Netflix 4K UHD Ultra, Spotify Family, YouTube Premium & Canva Pro tanpa kartu kredit luar negeri. Akun langsung aktif & garansi ganti baru.',
+    tags: ['🛡️ Garansi Full 30 Hari', '🎬 Kualitas 4K UHD Ultra', '⚡ Pengiriman Instan Detik Ini'],
+    ctaText: 'Pilih Akun Premium',
+    ctaCategory: 'premium',
+    secondaryCtaText: 'Lihat Semua Aplikasi',
+    secondaryCtaAction: 'premium',
+    cardTitle: 'Langganan Premium Populer',
+    cardSubtitle: 'Legal & Bergaransi Resmi',
+    cardItems: [
+      { name: 'Netflix 4K UHD', sub: '1 Bulan Private Profile', price: 'Rp 28.000', discount: 'Garansi' },
+      { name: 'Spotify Family', sub: '1 Bulan Akun Pribadi', price: 'Rp 15.000', discount: 'Bebas Iklan' },
+      { name: 'YouTube Premium', sub: '1 Bulan Bebas Iklan + Music', price: 'Rp 12.000', discount: 'Hemat' },
+    ],
+    serverStatus: '🔒 Garansi Full 30 Hari Ganti Baru',
+    accentGlow: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+    isActive: true,
+    order: 3,
+  },
+  {
+    id: 'slide-ai',
+    badge: '🤖 DEVELOPER AI SANDBOX • SIAP PAKAI',
+    badgeColor: 'violet',
+    title: 'Token API Key AI Terjangkau untuk Developer',
+    subtitle: 'Akses OpenAI GPT-4o, Claude 3.5 Sonnet & DeepSeek R1 tanpa perlu kartu kredit internasional. Latensi rendah, saldo otomatis terisi dan siap request.',
+    tags: ['🚀 Latency Cepat <300ms', '🔑 Saldo Token Siap Pakai', '💻 Ready cURL/Node/Python'],
+    ctaText: 'Beli Saldo Token AI',
+    ctaCategory: 'ai',
+    secondaryCtaText: 'Coba Sandbox API',
+    secondaryCtaAction: 'ai',
+    cardTitle: 'Pilihan Model AI Populer',
+    cardSubtitle: 'Saldo Token Langsung Aktif',
+    cardItems: [
+      { name: 'OpenAI GPT-4o', sub: 'Saldo $5 (~78rb Token)', price: 'Rp 82.500', discount: 'Populer' },
+      { name: 'Claude 3.5 Sonnet', sub: 'Saldo $10 Instant Token', price: 'Rp 165.000', discount: 'Ready Key' },
+      { name: 'DeepSeek R1/V3', sub: '20 Juta Token Output', price: 'Rp 45.000', discount: 'Hemat' },
+    ],
+    serverStatus: '🚀 Uptime 99.98% Latensi Rendah',
+    accentGlow: 'from-violet-500/20 via-purple-500/10 to-transparent',
+    isActive: true,
+    order: 4,
+  },
+  {
+    id: 'slide-wifi',
+    badge: '📡 INTERNET WARGA CEPAT • TANPA KUOTA',
+    badgeColor: 'yellow',
+    title: 'Voucher WiFi Hotspot Unlimited Warga & RT/RW Net',
+    subtitle: 'Akses internet warga tanpa batas kuota mulai Rp 2.000 / hari. Kecepatan stabil hingga 50 Mbps untuk streaming video, belajar, dan usaha online.',
+    tags: ['🚀 Speed Up to 50 Mbps', '💵 Mulai Rp 2.000/hari', '📶 Unlimited Bebas FUP'],
+    ctaText: 'Pilih Voucher WiFi',
+    ctaCategory: 'wifi',
+    secondaryCtaText: 'Cek Lokasi Hotspot',
+    secondaryCtaAction: 'wifi',
+    cardTitle: 'Paket Voucher Hotspot Desa',
+    cardSubtitle: 'Langsung Konek Sekali Klik',
+    cardItems: [
+      { name: 'WiFi Harian', sub: '24 Jam Non-Stop Full Speed', price: 'Rp 2.000', discount: 'Favorit' },
+      { name: 'WiFi Mingguan', sub: '7 Hari Unlimited Tanpa FUP', price: 'Rp 10.000', discount: 'Hemat' },
+      { name: 'WiFi Bulanan', sub: '30 Hari Unlimited Puas', price: 'Rp 35.000', discount: 'Best Value' },
+    ],
+    serverStatus: '📶 Jaringan Hotspot Siaga 24 Jam',
+    accentGlow: 'from-amber-400/20 via-yellow-500/10 to-transparent',
+    isActive: true,
+    order: 5,
+  },
+];
+
 export const DEFAULT_DISCOUNT_POPUP: DiscountPopupConfig = {
   isEnabled: true,
   targetAudience: 'NEW_MEMBER',
@@ -245,6 +366,14 @@ const DEFAULT_SETTINGS: AppSettings = {
     gateway_tambahan: true,
     pln: true,
   },
+
+  // Konfigurasi WiFi Hotspot RT/RW Net
+  wifiHotspotSsid: 'MelatiNet_Warga_Hotspot',
+  wifiLoginUrl: 'http://hotspot.wayahedigital.id',
+  wifiDefaultPassword: '1234',
+  wifiPasswordMode: 'RANDOM_PIN',
+  wifiLoginInstructions: '1. Sambungkan HP / Laptop Anda ke WiFi MelatiNet_Warga_Hotspot\n2. Buka browser atau klik notifikasi Masuk ke Jaringan Hotspot\n3. Masukkan Kode Voucher di atas dan klik Login',
+  wifiContactSupport: '0812-3456-7890',
 };
 
 const INITIAL_BATCHES: WifiVoucherBatch[] = [];
@@ -1685,6 +1814,57 @@ export const storage = {
     return INITIAL_CATALOGS;
   },
 
+  // Hero Carousel Promo Slides (Interactive Showcase on Homepage)
+  getHeroSlides(): HeroPromoSlide[] {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.HERO_SLIDES);
+      if (!data) {
+        localStorage.setItem(STORAGE_KEYS.HERO_SLIDES, JSON.stringify(INITIAL_HERO_SLIDES));
+        return INITIAL_HERO_SLIDES;
+      }
+      const parsed: HeroPromoSlide[] = JSON.parse(data);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return INITIAL_HERO_SLIDES;
+      }
+      return parsed;
+    } catch {
+      return INITIAL_HERO_SLIDES;
+    }
+  },
+
+  saveHeroSlides(slides: HeroPromoSlide[]): void {
+    localStorage.setItem(STORAGE_KEYS.HERO_SLIDES, JSON.stringify(slides));
+    pushEntityToBackend('hero_slides', slides);
+    notifyStorageSynced();
+  },
+
+  updateHeroSlide(slideId: string, updated: Partial<HeroPromoSlide>): HeroPromoSlide | null {
+    const list = this.getHeroSlides();
+    const idx = list.findIndex(s => s.id === slideId);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...updated };
+      this.saveHeroSlides(list);
+      return list[idx];
+    }
+    return null;
+  },
+
+  addHeroSlide(newSlide: HeroPromoSlide): void {
+    const list = this.getHeroSlides();
+    list.push(newSlide);
+    this.saveHeroSlides(list);
+  },
+
+  deleteHeroSlide(slideId: string): void {
+    const filtered = this.getHeroSlides().filter(s => s.id !== slideId);
+    this.saveHeroSlides(filtered);
+  },
+
+  resetHeroSlides(): HeroPromoSlide[] {
+    this.saveHeroSlides(INITIAL_HERO_SLIDES);
+    return INITIAL_HERO_SLIDES;
+  },
+
   // Reset database demo
   resetToDemo(): void {
     localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
@@ -1696,6 +1876,7 @@ export const storage = {
     localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
     localStorage.removeItem(STORAGE_KEYS.BANNERS);
     localStorage.removeItem(STORAGE_KEYS.CATALOGS);
+    localStorage.removeItem(STORAGE_KEYS.HERO_SLIDES);
   }
 };
 

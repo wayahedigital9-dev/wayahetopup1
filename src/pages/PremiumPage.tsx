@@ -185,17 +185,20 @@ export function PremiumPage({
               >
                 <div>
                   {/* Top Badges & Logo */}
-                  <div className="flex items-start justify-between gap-2.5 mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <ProductLogo
-                        provider={p.provider}
-                        name={p.name}
-                        category={p.categoryId}
-                        iconUrl={p.iconUrl}
-                        size="md"
-                      />
+                  <div className="flex items-start justify-between gap-3 mb-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-[#181411] border border-[#3E352B]">
+                        <ProductLogo
+                          provider={p.provider}
+                          name={p.name}
+                          category={p.categoryId}
+                          iconUrl={p.iconUrl}
+                          size="xl"
+                          className="w-full h-full"
+                        />
+                      </div>
                       <div>
-                        <span className="text-[10px] font-extrabold text-[#D4A359] uppercase tracking-wider block">
+                        <span className="text-[11px] font-extrabold text-[#D4A359] uppercase tracking-wider block">
                           {p.provider}
                         </span>
                         <span className="text-xs font-semibold text-[#FAF4EB] line-clamp-1">

@@ -14,8 +14,10 @@ import {
   Wifi,
   Eye,
   EyeOff,
-  Key
+  Key,
+  QrCode
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { Order } from '../types';
 import { formatRupiah, formatDateWIB } from '../utils/operator';
 import { PaymentStatusBadge, FulfillmentStatusBadge } from './StatusBadge';
@@ -33,6 +35,8 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
   const [currentOrder, setCurrentOrder] = useState<Order | null>(order);
   const [isPollingFulfillment, setIsPollingFulfillment] = useState<boolean>(false);
   const [showPasswordMap, setShowPasswordMap] = useState<Record<number, boolean>>({});
+  const [wifiQrDataUrl, setWifiQrDataUrl] = useState<string>('');
+  const [showWifiQr, setShowWifiQr] = useState<boolean>(false);
 
   const togglePasswordVisibility = (index: number) => {
     setShowPasswordMap(prev => ({
@@ -221,9 +225,10 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
     (isWifi && currentOrder.serialNumber && !currentOrder.serialNumber.startsWith('SN') ? currentOrder.serialNumber : '') ||
     '';
 
-  const wifiPassword = currentOrder.voucherPassword || currentOrder.fulfillmentResult?.voucherPassword || '1234';
-  const wifiSsid = currentOrder.wifiSsid || currentOrder.fulfillmentResult?.wifiSsid || 'MelatiNet_Warga_Hotspot';
-  const wifiLoginUrl = currentOrder.wifiLoginUrl || currentOrder.fulfillmentResult?.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
+  const settings = storage.getSettings();
+  const wifiPassword = currentOrder.voucherPassword || currentOrder.fulfillmentResult?.voucherPassword || settings.wifiDefaultPassword || '1234';
+  const wifiSsid = currentOrder.wifiSsid || currentOrder.fulfillmentResult?.wifiSsid || settings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot';
+  const wifiLoginUrl = currentOrder.wifiLoginUrl || currentOrder.fulfillmentResult?.wifiLoginUrl || settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
 
   const activeSerialNumber = currentOrder.fulfillmentResult?.serialNumber || currentOrder.serialNumber;
   const activeSupplierRef = currentOrder.fulfillmentResult?.supplierRefId || currentOrder.supplierRefId;
@@ -234,9 +239,19 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
   const isFulfillmentSuccess = currentOrder.fulfillmentStatus === 'SUCCESS' || Boolean(activeSerialNumber) || Boolean(wifiVoucherCode);
   const isProcessingFulfillment = isPaid && !isFulfillmentSuccess && !isFailedOrRefunded;
 
-  const settings = storage.getSettings();
-  const rawSupportWa = settings.supportWhatsApp || '0812-3456-7890';
+  const rawSupportWa = settings.supportWhatsApp || settings.wifiContactSupport || '0812-3456-7890';
   const cleanAdminWa = rawSupportWa.replace(/[^0-9]/g, '').replace(/^0/, '62') || '6281234567890';
+
+  useEffect(() => {
+    if (isWifi && isPaid && wifiVoucherCode) {
+      const qrTarget = wifiLoginUrl
+        ? `${wifiLoginUrl}${wifiLoginUrl.includes('?') ? '&' : '?'}username=${encodeURIComponent(wifiVoucherCode)}&password=${encodeURIComponent(wifiPassword)}`
+        : `WIFI:S:${wifiSsid};T:WPA;P:${wifiPassword};;`;
+      QRCode.toDataURL(qrTarget, { margin: 1, width: 220 })
+        .then(url => setWifiQrDataUrl(url))
+        .catch(() => {});
+    }
+  }, [isWifi, isPaid, wifiVoucherCode, wifiLoginUrl, wifiPassword, wifiSsid]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
@@ -431,7 +446,37 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
                     <p className="text-[11px] text-slate-500">Gunakan kode voucher di bawah untuk login ke jaringan Hotspot.</p>
                   </div>
                 </div>
+
+                {wifiQrDataUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setShowWifiQr(!showWifiQr)}
+                    className="px-2.5 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    title="Tampilkan / Sembunyikan QR Code Login"
+                  >
+                    <QrCode size={14} />
+                    <span>{showWifiQr ? 'Tutup QR' : 'Scan QR'}</span>
+                  </button>
+                )}
               </div>
+
+              {/* QR Code Container Toggle */}
+              {showWifiQr && wifiQrDataUrl && (
+                <div className="p-4 bg-white rounded-xl border border-emerald-200 text-center space-y-2 shadow-xs animate-fadeIn">
+                  <div className="text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5">
+                    <QrCode size={16} className="text-emerald-600" />
+                    <span>Scan untuk Langsung Konek / Login Hotspot</span>
+                  </div>
+                  <img
+                    src={wifiQrDataUrl}
+                    alt="QR Login Hotspot WiFi"
+                    className="w-44 h-44 mx-auto rounded-lg border border-slate-100 p-1 bg-white shadow-2xs"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    Scan via kamera HP yang telah terhubung ke WiFi <b>{wifiSsid}</b>
+                  </p>
+                </div>
+              )}
 
               {/* Box Kode Voucher Monospace Besar */}
               <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -475,29 +520,47 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
                 </div>
               </div>
 
+              {/* Portal Login + Direct Button */}
               {wifiLoginUrl && (
-                <div className="text-xs text-slate-600 bg-white/70 p-2.5 rounded-xl border border-emerald-100 flex items-center justify-between">
-                  <span className="text-slate-500">Portal Login:</span>
+                <div className="text-xs text-slate-600 bg-white/90 p-3 rounded-xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Portal Login Hotspot:</span>
+                    <a
+                      href={wifiLoginUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-700 font-bold hover:underline inline-flex items-center gap-1 text-xs"
+                    >
+                      {wifiLoginUrl}
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
                   <a
                     href={wifiLoginUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-emerald-700 font-bold hover:underline inline-flex items-center gap-1"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs inline-flex items-center justify-center gap-1.5 self-start sm:self-auto cursor-pointer"
                   >
-                    {wifiLoginUrl}
-                    <ExternalLink size={12} />
+                    <ExternalLink size={13} />
+                    <span>Buka Portal Login</span>
                   </a>
                 </div>
               )}
 
-              {/* Petunjuk Pemakaian 3 Langkah */}
-              <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
+              {/* Petunjuk Pemakaian */}
+              <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 text-[11px] text-slate-600 space-y-1.5">
                 <p className="font-bold text-slate-800 text-xs">Cara Menggunakan Voucher:</p>
-                <ol className="list-decimal list-inside space-y-0.5 text-slate-600">
-                  <li>Sambungkan HP / Laptop Anda ke WiFi <b>{wifiSsid}</b></li>
-                  <li>Buka browser atau klik notifikasi <b>Masuk ke Jaringan Hotspot</b></li>
-                  <li>Masukkan <b>Kode Voucher</b> di atas dan klik <b>Login</b></li>
-                </ol>
+                {settings.wifiLoginInstructions ? (
+                  <div className="whitespace-pre-line text-slate-600 leading-relaxed font-sans text-xs">
+                    {settings.wifiLoginInstructions}
+                  </div>
+                ) : (
+                  <ol className="list-decimal list-inside space-y-0.5 text-slate-600">
+                    <li>Sambungkan HP / Laptop Anda ke WiFi <b>{wifiSsid}</b></li>
+                    <li>Buka browser atau klik notifikasi <b>Masuk ke Jaringan Hotspot</b></li>
+                    <li>Masukkan <b>Kode Voucher</b> di atas dan klik <b>Login</b></li>
+                  </ol>
+                )}
               </div>
             </div>
           )}

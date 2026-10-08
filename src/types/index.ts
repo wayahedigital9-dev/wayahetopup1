@@ -62,6 +62,8 @@ export interface ProductVariant {
   priceMode?: 'AUTO' | 'MANUAL';
   isActive?: boolean;
   isDeleted?: boolean;
+  snk?: string; // Syarat & Ketentuan garansi / klaim
+  expiredDays?: number; // Masa berlaku akun / voucher dalam hari
 }
 
 export interface Product {
@@ -318,11 +320,19 @@ export interface WifiVoucherBatch {
   location: string;
   speedProfile: string;
   createdAt: string;
+  productId?: string;
+  variantId?: string;
+  duration?: string;
+  quotaLimit?: string;
+  notes?: string;
   vouchers: {
     id: string;
     code: string;
     password?: string;
     status: 'AVAILABLE' | 'USED';
+    usedAt?: string;
+    orderId?: string;
+    createdAt?: string;
   }[];
 }
 
@@ -344,6 +354,34 @@ export interface PromoBanner {
   photoLayout?: 'FULL_HOLDER' | 'SPLIT_FULL_HEIGHT'; // FULL_HOLDER: ukurannya sama dengan holder penuh (100% holder)
   showTextOverlay?: boolean; // Tampilkan teks di atas foto (default true)
 }
+
+export interface HeroPromoCardItem {
+  name: string;
+  sub: string;
+  price: string;
+  discount: string;
+}
+
+export interface HeroPromoSlide {
+  id: string;
+  badge: string;
+  badgeColor?: 'amber' | 'sky' | 'emerald' | 'violet' | 'yellow' | 'rose' | string;
+  title: string;
+  subtitle: string;
+  tags: string[];
+  ctaText: string;
+  ctaCategory?: string; // 'game' | 'kuota' | 'pulsa' | 'premium' | 'ai' | 'wifi'
+  secondaryCtaText: string;
+  secondaryCtaAction?: string;
+  cardTitle: string;
+  cardSubtitle: string;
+  cardItems: HeroPromoCardItem[];
+  serverStatus: string;
+  accentGlow?: string;
+  isActive?: boolean;
+  order?: number;
+}
+
 
 export interface AppSettings {
   siteName: string;
@@ -456,6 +494,14 @@ export interface AppSettings {
   xavieraPremiumToken?: string;
   xavieraSmmToken?: string;
   xavieraApiBaseUrl?: string;
+
+  // Konfigurasi WiFi Hotspot RT/RW Net
+  wifiHotspotSsid?: string;
+  wifiLoginUrl?: string;
+  wifiDefaultPassword?: string;
+  wifiPasswordMode?: 'SAME_AS_CODE' | 'RANDOM_PIN' | 'CUSTOM' | 'NO_PASSWORD';
+  wifiLoginInstructions?: string;
+  wifiContactSupport?: string;
 }
 
 export interface SecurityIntrusionLog {
