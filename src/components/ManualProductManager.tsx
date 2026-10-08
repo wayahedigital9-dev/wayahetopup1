@@ -13,7 +13,8 @@ import {
   EyeOff, 
   Database, 
   RefreshCw,
-  FolderPlus
+  FolderPlus,
+  Edit3
 } from 'lucide-react';
 import { Product, ProductVariant, WifiVoucherBatch } from '../types';
 import { storage } from '../services/storage';
@@ -32,7 +33,7 @@ export function ManualProductManager({
   category,
   title,
   subtitle,
-  viewMode = category === 'wifi' ? 'STOCKS_ONLY' : 'FULL',
+  viewMode = 'FULL',
   onRefreshData,
   onShowToast,
 }: ManualProductManagerProps) {
@@ -72,6 +73,23 @@ export function ManualProductManager({
   } | null>(null);
   const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Edit Product Modal
+  const [editingProduct, setEditingProduct] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
+
+  // Edit Variant Modal
+  const [editingVariant, setEditingVariant] = useState<{
+    productId: string;
+    variantId: string;
+    name: string;
+    sellingPrice: number;
+    supplierPrice: number;
+    expiredDays?: number;
+  } | null>(null);
 
   // Trigger re-render when local storage updates
   const [reloadKey, setReloadKey] = useState(0);
@@ -476,6 +494,52 @@ export function ManualProductManager({
     setReloadKey(prev => prev + 1);
     if (onRefreshData) onRefreshData();
     onShowToast('Dihapus', '1 Item stok berhasil dihapus.', 'info');
+  };
+
+  // Edit product handler
+  const handleUpdateProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct || !editingProduct.name.trim()) return;
+    const allProducts = storage.getProducts();
+    const idx = allProducts.findIndex(p => p.id === editingProduct.id);
+    if (idx !== -1) {
+      allProducts[idx].name = editingProduct.name.trim();
+      allProducts[idx].provider = editingProduct.name.trim();
+      allProducts[idx].description = editingProduct.description.trim();
+      storage.saveProducts(allProducts);
+      setReloadKey(prev => prev + 1);
+      if (onRefreshData) onRefreshData();
+      onShowToast('Berhasil', `Produk ${editingProduct.name} berhasil diperbarui!`, 'success');
+      setEditingProduct(null);
+    }
+  };
+
+  // Edit variant handler
+  const handleUpdateVariant = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVariant || !editingVariant.name.trim()) return;
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === editingVariant.productId);
+    if (prodIdx !== -1) {
+      const prod = { ...allProducts[prodIdx] };
+      const variants = [...(prod.variants || [])];
+      const varIdx = variants.findIndex(v => v.id === editingVariant.variantId);
+      if (varIdx !== -1) {
+        variants[varIdx].name = editingVariant.name.trim();
+        variants[varIdx].sellingPrice = Number(editingVariant.sellingPrice) || 0;
+        variants[varIdx].supplierPrice = Number(editingVariant.supplierPrice) || 0;
+        if (editingVariant.expiredDays) {
+          variants[varIdx].expiredDays = Number(editingVariant.expiredDays);
+        }
+        prod.variants = variants;
+        allProducts[prodIdx] = prod;
+        storage.saveProducts(allProducts);
+        setReloadKey(prev => prev + 1);
+        if (onRefreshData) onRefreshData();
+        onShowToast('Berhasil', `Varian ${editingVariant.name} berhasil diperbarui!`, 'success');
+        setEditingVariant(null);
+      }
+    }
   };
 
   const handleCopyStock = (text: string, idx: number) => {
@@ -935,6 +999,18 @@ export function ManualProductManager({
                       </span>
                       <button
                         type="button"
+                        onClick={() => setEditingProduct({
+                          id: prod.id,
+                          name: prod.name,
+                          description: prod.description || '',
+                        })}
+                        className="text-blue-400 hover:text-blue-300 p-1 hover:bg-blue-950/40 rounded transition-colors cursor-pointer"
+                        title="Edit Produk"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDeleteProduct(prod.id, prod.name)}
                         className="text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-950/40 rounded transition-colors cursor-pointer"
                         title="Hapus Produk"
@@ -964,14 +1040,31 @@ export function ManualProductManager({
                                   {formatRupiah(variant.sellingPrice)}
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteVariant(prod.id, variant.id, variant.name)}
-                                className="text-slate-500 hover:text-rose-400 p-1 rounded transition-colors cursor-pointer"
-                                title="Hapus Variant"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingVariant({
+                                    productId: prod.id,
+                                    variantId: variant.id,
+                                    name: variant.name,
+                                    sellingPrice: variant.sellingPrice,
+                                    supplierPrice: variant.supplierPrice || 0,
+                                    expiredDays: variant.expiredDays || 7,
+                                  })}
+                                  className="text-slate-400 hover:text-blue-400 p-1 rounded hover:bg-blue-950/30 transition-colors cursor-pointer"
+                                  title="Edit Variant"
+                                >
+                                  <Edit3 size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteVariant(prod.id, variant.id, variant.name)}
+                                  className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                  title="Hapus Variant"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </div>
 
                             <div className="flex items-center justify-between pt-1 border-t border-[#1c273e] text-[10px]">
@@ -1085,6 +1178,154 @@ export function ManualProductManager({
                 Tutup
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT PRODUK */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0e1626] border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit3 size={15} className="text-blue-400" />
+                <span>Edit Produk</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Nama Produk (Display Name)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  className="w-full bg-[#080d19] border border-[#1e2a3f] focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Deskripsi
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingProduct.description}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  className="w-full bg-[#080d19] border border-[#1e2a3f] focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none resize-none"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <Save size={13} />
+                  <span>Simpan Perubahan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT VARIANT */}
+      {editingVariant && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0e1626] border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit3 size={15} className="text-blue-400" />
+                <span>Edit Varian Produk</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setEditingVariant(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateVariant} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Nama Varian
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingVariant.name}
+                  onChange={(e) => setEditingVariant({ ...editingVariant, name: e.target.value })}
+                  className="w-full bg-[#080d19] border border-[#1e2a3f] focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                    Harga Jual (IDR)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editingVariant.sellingPrice}
+                    onChange={(e) => setEditingVariant({ ...editingVariant, sellingPrice: Number(e.target.value) })}
+                    className="w-full bg-[#080d19] border border-[#1e2a3f] focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                    Expired (Hari)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editingVariant.expiredDays || ''}
+                    onChange={(e) => setEditingVariant({ ...editingVariant, expiredDays: Number(e.target.value) })}
+                    placeholder="7"
+                    className="w-full bg-[#080d19] border border-[#1e2a3f] focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingVariant(null)}
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <Save size={13} />
+                  <span>Simpan Perubahan</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
