@@ -1155,7 +1155,7 @@ export function AdminDashboard({
   const [selectedBatchForPrint, setSelectedBatchForPrint] = useState<WifiVoucherBatch | null>(null);
   const [singleBatchVouchersRaw, setSingleBatchVouchersRaw] = useState('');
   // WiFi Voucher Central Sub-tab ('BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG')
-  const [wifiSubTab, setWifiSubTab] = useState<'BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG'>('BATCHES');
+  const [wifiSubTab, setWifiSubTab] = useState<'BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG'>('MANUAL');
   // Premium Management Mode ('MANUAL' | 'PROVIDER')
   const [premiumMode, setPremiumMode] = useState<'MANUAL' | 'PROVIDER'>('MANUAL');
 
@@ -5818,6 +5818,24 @@ export function AdminDashboard({
                 <div className="bg-slate-100 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/60">
                   <button
                     type="button"
+                    onClick={() => setWifiSubTab('MANUAL')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'MANUAL'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Box size={15} className={wifiSubTab === 'MANUAL' ? 'text-white' : 'text-blue-600'} />
+                    <span>Stocks (Input Stok)</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-black ${
+                      wifiSubTab === 'MANUAL' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      FOTO
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setWifiSubTab('BATCHES')}
                     className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       wifiSubTab === 'BATCHES'
@@ -5849,22 +5867,6 @@ export function AdminDashboard({
                       wifiSubTab === 'CATALOG' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-600'
                     }`}>
                       {wifiProducts.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setWifiSubTab('MANUAL')}
-                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      wifiSubTab === 'MANUAL'
-                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                    }`}
-                  >
-                    <Box size={15} className={wifiSubTab === 'MANUAL' ? 'text-blue-600' : 'text-slate-400'} />
-                    <span>Input Produk & Stok Manual</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded font-black bg-blue-100 text-blue-800">
-                      BARU
                     </span>
                   </button>
 
