@@ -1776,7 +1776,7 @@ app.get('/api/payment/pakasir/health', (req: Request, res: Response) => {
 });
 
 // 5. Admin Test Connection (POST /api/payment/pakasir/test)
-app.post('/api/payment/pakasir/test', async (req: Request, res: Response) => {
+app.post('/api/payment/pakasir/test', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { slug, apiKey, webhookSecret } = req.body || {};
     
@@ -1855,7 +1855,7 @@ app.post('/api/payment/pakasir/test', async (req: Request, res: Response) => {
 });
 
 // 6. Pakasir Mode Switcher (POST /api/payment/pakasir/toggle-sandbox)
-app.post('/api/payment/pakasir/toggle-sandbox', async (req: Request, res: Response) => {
+app.post('/api/payment/pakasir/toggle-sandbox', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { isSandbox } = req.body;
     const boolVal = Boolean(isSandbox);
@@ -2011,13 +2011,13 @@ app.get('/api/tunnel/status', requireAdmin, (req: Request, res: Response) => {
   res.json(ngrokService.getStatus());
 });
 
-app.post('/api/tunnel/start', async (req: Request, res: Response) => {
+app.post('/api/tunnel/start', requireAdmin, async (req: Request, res: Response) => {
   const { authtoken, domain } = req.body || {};
   const status = await ngrokService.start(Number(PORT), authtoken, domain);
   res.json(status);
 });
 
-app.post('/api/tunnel/stop', async (req: Request, res: Response) => {
+app.post('/api/tunnel/stop', requireAdmin, async (req: Request, res: Response) => {
   const status = await ngrokService.stop();
   res.json(status);
 });
@@ -2037,7 +2037,7 @@ app.get('/api/supabase/info', (req: Request, res: Response) => {
   });
 });
 
-app.post('/api/supabase/test', async (req: Request, res: Response) => {
+app.post('/api/supabase/test', requireAdmin, async (req: Request, res: Response) => {
   const { url, key } = req.body || {};
   const result = await supabaseService.testConnection(url, key);
   res.json(result);
@@ -2124,7 +2124,7 @@ app.get('/api/mongodb/info', (req: Request, res: Response) => {
   });
 });
 
-app.post('/api/mongodb/test', async (req: Request, res: Response) => {
+app.post('/api/mongodb/test', requireAdmin, async (req: Request, res: Response) => {
   const { uri, dbName, dbNameTrans } = req.body || {};
   const result = await mongoDbService.testConnection(uri, dbName, dbNameTrans);
   res.json(result);
