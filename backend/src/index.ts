@@ -221,7 +221,24 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 
     const subtotal = Number(product.sellingPrice || dynamicPriceFromReq || 0);
     const adminFee = Number(req.body.adminFee || 0);
-    const totalAmount = Math.max(0, subtotal - discount + adminFee);
+    const activeGateway = (preferredGateway || paymentGatewayProvider || state?.settings?.paymentGatewayProvider || 'QIOSPAY') as any;
+    const baseAmount = Math.max(0, subtotal - discount + adminFee);
+    let paymentReferenceFee = 0;
+    let totalAmount = baseAmount;
+    if (String(activeGateway).toUpperCase() === 'QIOSPAY') {
+      const usedPendingAmounts = new Set(
+        (Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {}))
+          .filter((order: any) => ['PENDING', 'UNPAID', 'EXPIRED'].includes(order.paymentStatus))
+          .map((order: any) => Number(order.totalAmount || 0))
+      );
+      for (let candidate = 1; candidate <= 999; candidate++) {
+        if (!usedPendingAmounts.has(baseAmount + candidate)) {
+          paymentReferenceFee = candidate;
+          totalAmount = baseAmount + candidate;
+          break;
+        }
+      }
+    }
     const invoiceNumber = customInvoice || `INV/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}/WD/${Math.floor(1000 + Math.random() * 9000)}`;
     const orderId = customId || `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -251,9 +268,6 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     await supabaseService.saveOrder(reservation, true);
     const { userId: _owner, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
     await prisma.order.create({ data: { ...prismaReservation, idempotencyKey: idempotencyKey || invoiceNumber } });
-
-    // Tentukan gateway aktif dari request atau pengaturan tersimpan
-    const activeGateway = (preferredGateway || paymentGatewayProvider || state?.settings?.paymentGatewayProvider || 'QIOSPAY') as any;
 
     // Generate Payment Session (QRIS)
     const paymentResult = await createPaymentSession({

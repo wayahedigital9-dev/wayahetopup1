@@ -242,6 +242,12 @@ export const apiAdapter = {
         const contentType = backendRes.headers.get('content-type') || '';
         if (!contentType.includes('text/html')) {
           const backendData = await backendRes.json();
+          const canonicalOrder = backendData?.data;
+          if (Number.isFinite(Number(canonicalOrder?.totalAmount)) && Number(canonicalOrder.totalAmount) > 0) {
+            newOrder.totalAmount = Number(canonicalOrder.totalAmount);
+            newOrder.totalPayment = Number(canonicalOrder.totalPayment || canonicalOrder.totalAmount);
+            newOrder.adminFee = Number(canonicalOrder.adminFee || newOrder.adminFee || 0);
+          }
           const responseGateway = (backendData?.gateway || backendData?.paymentGatewayProvider || activeGateway).toUpperCase();
           newOrder.paymentGatewayProvider = responseGateway as any;
           newOrder.paymentMethod = responseGateway === 'PAKASIR' ? 'QRIS (Pakasir)' : 'QRIS';
