@@ -1029,60 +1029,198 @@ export function HomePage({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
             {[
-              { id: 'cat-game', catKey: 'game', label: 'Top Up Game', desc: 'MLBB, FF, Valo, Steam', icon: Gamepad2, badge: 'Populer', iconStyle: isDark ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-amber-50 text-amber-600 border-amber-200/60', action: () => {
-                if (categoryStatus.game === false) {
-                  onShowToast('Top Up Game', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              {
+                id: 'cat-game',
+                catKey: 'game',
+                label: 'Top Up Game',
+                desc: 'MLBB, FF, Valo, Steam',
+                icon: Gamepad2,
+                badge: 'POPULER',
+                glow: 'bg-amber-500/20',
+                accentText: 'group-hover:text-amber-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-amber-500/25 via-amber-600/10 to-amber-950/20 border-amber-500/35 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]' 
+                  : 'bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200 text-amber-600 shadow-xs',
+                badgeStyle: isDark 
+                  ? 'bg-amber-500/15 border-amber-500/35 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]' 
+                  : 'bg-amber-100/80 border-amber-300 text-amber-800',
+                hoverBorder: isDark ? 'group-hover:border-amber-500/50' : 'group-hover:border-amber-400',
+                action: () => {
+                  if (categoryStatus.game === false) {
+                    onShowToast('Top Up Game', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('katalog-game-unggulan');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('katalog-game-unggulan');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-pulsa', catKey: 'pulsa', label: 'Pulsa & Data', desc: 'Semua Operator 24 Jam', icon: Smartphone, badge: 'Auto 5s', iconStyle: isDark ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200/60', action: () => {
-                if (categoryStatus.pulsa === false && categoryStatus.kuota === false) {
-                  onShowToast('Pulsa & Data', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-pulsa',
+                catKey: 'pulsa',
+                label: 'Pulsa & Data',
+                desc: 'Semua Operator 24 Jam',
+                icon: Smartphone,
+                badge: 'AUTO 5S',
+                glow: 'bg-emerald-500/20',
+                accentText: 'group-hover:text-emerald-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-emerald-500/25 via-emerald-600/10 to-emerald-950/20 border-emerald-500/35 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]' 
+                  : 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-600 shadow-xs',
+                badgeStyle: isDark 
+                  ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]' 
+                  : 'bg-emerald-100/80 border-emerald-300 text-emerald-800',
+                hoverBorder: isDark ? 'group-hover:border-emerald-500/50' : 'group-hover:border-emerald-400',
+                action: () => {
+                  if (categoryStatus.pulsa === false && categoryStatus.kuota === false) {
+                    onShowToast('Pulsa & Data', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('section-pulsa-kuota');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('section-pulsa-kuota');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-pln', catKey: 'pln', label: 'PLN & Token', desc: 'Token Listrik Prabayar', icon: Zap, iconStyle: isDark ? 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30' : 'bg-yellow-50 text-yellow-600 border-yellow-200/60', action: () => {
-                if (categoryStatus.pln === false) {
-                  onShowToast('Token PLN', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-pln',
+                catKey: 'pln',
+                label: 'PLN & Token',
+                desc: 'Token Listrik Prabayar',
+                icon: Zap,
+                glow: 'bg-yellow-500/20',
+                accentText: 'group-hover:text-yellow-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-600/10 to-yellow-950/20 border-yellow-500/35 text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]' 
+                  : 'bg-gradient-to-br from-yellow-100 to-yellow-50 border-yellow-200 text-yellow-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-yellow-500/50' : 'group-hover:border-yellow-400',
+                action: () => {
+                  if (categoryStatus.pln === false) {
+                    onShowToast('Token PLN', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onShowToast('Token PLN', 'Masukkan nomor meter di menu pulsa/tagihan', 'info');
                 }
-                onShowToast('Token PLN', 'Masukkan nomor meter di menu pulsa/tagihan', 'info');
-              }},
-              { id: 'cat-voucher', catKey: 'wifi', label: 'Voucher Digital', desc: 'WiFi RT/RW Net & Game', icon: Radio, iconStyle: isDark ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200/60', action: () => {
-                if (categoryStatus.wifi === false) {
-                  onShowToast('Voucher WiFi', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-voucher',
+                catKey: 'wifi',
+                label: 'Voucher Digital',
+                desc: 'WiFi RT/RW Net & Game',
+                icon: Radio,
+                glow: 'bg-blue-500/20',
+                accentText: 'group-hover:text-blue-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-600/10 to-blue-950/20 border-blue-500/35 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]' 
+                  : 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-200 text-blue-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-blue-500/50' : 'group-hover:border-blue-400',
+                action: () => {
+                  if (categoryStatus.wifi === false) {
+                    onShowToast('Voucher WiFi', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onNavigate('wifi');
                 }
-                onNavigate('wifi');
-              }},
-              { id: 'cat-premium', catKey: 'premium', label: 'App Premium', desc: 'Netflix, Spotify, Viu, AI', icon: Crown, badge: 'Garansi', iconStyle: isDark ? 'bg-purple-500/15 text-purple-300 border-purple-500/30' : 'bg-purple-50 text-purple-600 border-purple-200/60', action: () => {
-                if (categoryStatus.premium === false) {
-                  onShowToast('App Premium', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-premium',
+                catKey: 'premium',
+                label: 'App Premium',
+                desc: 'Netflix, Spotify, Viu, AI',
+                icon: Crown,
+                badge: 'GARANSI',
+                glow: 'bg-purple-500/20',
+                accentText: 'group-hover:text-purple-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-purple-500/25 via-purple-600/10 to-purple-950/20 border-purple-500/35 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]' 
+                  : 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 text-purple-600 shadow-xs',
+                badgeStyle: isDark 
+                  ? 'bg-purple-500/15 border-purple-500/35 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]' 
+                  : 'bg-purple-100/80 border-purple-300 text-purple-800',
+                hoverBorder: isDark ? 'group-hover:border-purple-500/50' : 'group-hover:border-purple-400',
+                action: () => {
+                  if (categoryStatus.premium === false) {
+                    onShowToast('App Premium', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('section-premium-apps');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('section-premium-apps');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-smm', catKey: 'smm', label: 'Sosmed SMM', desc: 'Follower & Like Cepat', icon: Share2, iconStyle: isDark ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-rose-50 text-rose-600 border-rose-200/60', action: () => {
-                if (categoryStatus.smm === false) {
-                  onShowToast('Sosmed SMM', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-smm',
+                catKey: 'smm',
+                label: 'Sosmed SMM',
+                desc: 'Follower & Like Cepat',
+                icon: Share2,
+                glow: 'bg-rose-500/20',
+                accentText: 'group-hover:text-rose-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-rose-500/25 via-rose-600/10 to-rose-950/20 border-rose-500/35 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]' 
+                  : 'bg-gradient-to-br from-rose-100 to-rose-50 border-rose-200 text-rose-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-rose-500/50' : 'group-hover:border-rose-400',
+                action: () => {
+                  if (categoryStatus.smm === false) {
+                    onShowToast('Sosmed SMM', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onShowToast('Sosmed SMM', 'Layanan SMM diproses server 24 jam otomatis', 'info');
                 }
-                onShowToast('Sosmed SMM', 'Layanan SMM diproses server 24 jam otomatis', 'info');
-              }},
-              { id: 'cat-roblox', label: 'Roblox RFT', desc: 'Robux Kilat & Giftcard', icon: Boxes, iconStyle: isDark ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-indigo-50 text-indigo-600 border-indigo-200/60', action: () => {
-                const robloxGame = featuredGamesCatalog.find(g => g.id === 'roblox');
-                if (robloxGame) setSelectedGameModal(robloxGame as any);
-              }},
-              { id: 'cat-steam', label: 'Steam & TF2', desc: 'Wallet IDR & Global Key', icon: Flame, iconStyle: isDark ? 'bg-orange-500/15 text-orange-300 border-orange-500/30' : 'bg-orange-50 text-orange-600 border-orange-200/60', action: () => onShowToast('Steam Wallet', 'Voucher Steam Wallet IDR terkirim otomatis', 'info') },
-              { id: 'cat-tax', label: 'Payment TAX', desc: 'Pascabayar & PBB Online', icon: ReceiptText, iconStyle: isDark ? 'bg-teal-500/15 text-teal-300 border-teal-500/30' : 'bg-teal-50 text-teal-600 border-teal-200/60', action: () => onShowToast('Pascabayar', 'Pascabayar siap diproses secara real-time', 'info') },
-              { id: 'cat-jasa', label: 'Jasa Sosmed', desc: 'Verified & Optimasi Akun', icon: ShieldCheck, iconStyle: isDark ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' : 'bg-cyan-50 text-cyan-600 border-cyan-200/60', action: () => onShowToast('Jasa Sosmed', 'Hubungi CS WhatsApp kami untuk bantuan optimasi', 'info') },
+              },
+              {
+                id: 'cat-roblox',
+                label: 'Roblox RFT',
+                desc: 'Robux Kilat & Giftcard',
+                icon: Boxes,
+                glow: 'bg-indigo-500/20',
+                accentText: 'group-hover:text-indigo-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-indigo-500/25 via-indigo-600/10 to-indigo-950/20 border-indigo-500/35 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]' 
+                  : 'bg-gradient-to-br from-indigo-100 to-indigo-50 border-indigo-200 text-indigo-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-indigo-500/50' : 'group-hover:border-indigo-400',
+                action: () => {
+                  const robloxGame = featuredGamesCatalog.find(g => g.id === 'roblox');
+                  if (robloxGame) setSelectedGameModal(robloxGame as any);
+                }
+              },
+              {
+                id: 'cat-steam',
+                label: 'Steam & TF2',
+                desc: 'Wallet IDR & Global Key',
+                icon: Flame,
+                glow: 'bg-orange-500/20',
+                accentText: 'group-hover:text-orange-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-orange-500/25 via-orange-600/10 to-orange-950/20 border-orange-500/35 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
+                  : 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-200 text-orange-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-orange-500/50' : 'group-hover:border-orange-400',
+                action: () => onShowToast('Steam Wallet', 'Voucher Steam Wallet IDR terkirim otomatis', 'info')
+              },
+              {
+                id: 'cat-tax',
+                label: 'Payment TAX',
+                desc: 'Pascabayar & PBB Online',
+                icon: ReceiptText,
+                glow: 'bg-teal-500/20',
+                accentText: 'group-hover:text-teal-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-teal-500/25 via-teal-600/10 to-teal-950/20 border-teal-500/35 text-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)]' 
+                  : 'bg-gradient-to-br from-teal-100 to-teal-50 border-teal-200 text-teal-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-teal-500/50' : 'group-hover:border-teal-400',
+                action: () => onShowToast('Pascabayar', 'Pascabayar siap diproses secara real-time', 'info')
+              },
+              {
+                id: 'cat-jasa',
+                label: 'Jasa Sosmed',
+                desc: 'Verified & Optimasi Akun',
+                icon: ShieldCheck,
+                glow: 'bg-cyan-500/20',
+                accentText: 'group-hover:text-cyan-400',
+                iconStyle: isDark 
+                  ? 'bg-gradient-to-br from-cyan-500/25 via-cyan-600/10 to-cyan-950/20 border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]' 
+                  : 'bg-gradient-to-br from-cyan-100 to-cyan-50 border-cyan-200 text-cyan-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-cyan-500/50' : 'group-hover:border-cyan-400',
+                action: () => onShowToast('Jasa Sosmed', 'Hubungi CS WhatsApp kami untuk bantuan optimasi', 'info')
+              },
             ].map((cat) => {
               const IconComp = cat.icon;
               const isMaintenance = cat.catKey ? categoryStatus[cat.catKey] === false : false;
@@ -1091,37 +1229,66 @@ export function HomePage({
                 <button
                   key={cat.id}
                   onClick={cat.action}
-                  className={`p-3.5 rounded-2xl ${
+                  className={`group relative p-3 sm:p-3.5 rounded-2xl text-left transition-all duration-300 cursor-pointer overflow-hidden flex items-center gap-3 border ${
                     isMaintenance
                       ? isDark
                         ? 'bg-amber-950/20 border-amber-600/40 text-amber-200'
                         : 'bg-amber-50/70 border-amber-300 text-amber-900'
                       : isDark
-                      ? 'bg-[#1B1F1C] border-[#28302A] hover:border-[#3E4C41] text-[#F5F7F2]'
-                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
-                  } border flex items-center gap-3 transition-all duration-200 cursor-pointer group text-left relative overflow-hidden shadow-xs hover:-translate-y-0.5`}
+                      ? `bg-gradient-to-b from-[#1C211D]/90 via-[#151916]/95 to-[#101311]/95 border-white/[0.08] ${cat.hoverBorder} shadow-[0_4px_20px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]`
+                      : `bg-gradient-to-b from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 ${cat.hoverBorder} shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.07)]`
+                  } hover:-translate-y-1 active:scale-[0.98]`}
                 >
-                  <div className={`w-10 h-10 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-transform group-hover:scale-105 shrink-0`}>
-                    <IconComp size={18} />
+                  {/* Subtle Top Chamfer Highlight */}
+                  {isDark && (
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.16] to-transparent pointer-events-none" />
+                  )}
+
+                  {/* Ambient Glow on Hover */}
+                  <div
+                    className={`absolute -right-8 -bottom-8 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none ${cat.glow}`}
+                  />
+
+                  {/* Glowing Icon Frame */}
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-all duration-300 group-hover:scale-108 group-hover:-rotate-2 shrink-0 relative z-10`}>
+                    <IconComp size={19} className="transition-transform duration-300 group-hover:scale-110" />
                   </div>
-                  <div className="flex-1 min-w-0">
+
+                  {/* Text Content */}
+                  <div className="flex-1 min-w-0 relative z-10">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`font-space font-bold text-xs ${isDark ? 'text-[#F5F7F2] group-hover:text-[#C7FF4D]' : 'text-slate-900 group-hover:text-amber-600'} transition-colors truncate`}>
+                      <span className={`font-space font-extrabold text-xs sm:text-[13px] tracking-tight transition-colors duration-200 truncate ${
+                        isDark 
+                          ? `text-[#F5F7F2] ${cat.accentText}` 
+                          : `text-slate-900 ${cat.accentText}`
+                      }`}>
                         {cat.label}
                       </span>
                       {isMaintenance ? (
-                        <span className="text-[8px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 uppercase tracking-tighter">
+                        <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 uppercase tracking-tighter shadow-xs">
                           Maintenance
                         </span>
                       ) : cat.badge ? (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${isDark ? 'bg-[#C7FF4D]/15 text-[#C7FF4D]' : 'bg-amber-100 text-amber-700'} uppercase`}>
-                          {cat.badge}
+                        <span className={`inline-flex items-center gap-1 text-[8.5px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider border backdrop-blur-xs ${cat.badgeStyle}`}>
+                          <span className="w-1 h-1 rounded-full bg-current animate-pulse shrink-0" />
+                          <span>{cat.badge}</span>
                         </span>
                       ) : null}
                     </div>
-                    <p className={`text-[10px] ${isMaintenance ? 'text-amber-600 dark:text-amber-400 font-bold' : isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} truncate font-jakarta`}>
+                    <p className={`text-[10px] mt-0.5 truncate font-jakarta transition-colors ${
+                      isMaintenance 
+                        ? 'text-amber-500 font-bold' 
+                        : isDark 
+                        ? 'text-[#9DA69F] group-hover:text-[#CBD5CD]' 
+                        : 'text-slate-500 group-hover:text-slate-700'
+                    }`}>
                       {isMaintenance ? 'Maintenance akan segera kembali' : cat.desc}
                     </p>
+                  </div>
+
+                  {/* Interactive Micro Chevron */}
+                  <div className="hidden xl:block shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300 text-slate-400 group-hover:text-white relative z-10">
+                    <ChevronRight size={13} />
                   </div>
                 </button>
               );

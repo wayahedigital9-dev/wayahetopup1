@@ -1155,7 +1155,7 @@ export function AdminDashboard({
   const [selectedBatchForPrint, setSelectedBatchForPrint] = useState<WifiVoucherBatch | null>(null);
   const [singleBatchVouchersRaw, setSingleBatchVouchersRaw] = useState('');
   // WiFi Voucher Central Sub-tab ('BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG')
-  const [wifiSubTab, setWifiSubTab] = useState<'BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG'>('MANUAL');
+  const [wifiSubTab, setWifiSubTab] = useState<'MANUAL' | 'BATCHES' | 'GENERATOR' | 'CONFIG'>('MANUAL');
   // Premium Management Mode ('MANUAL' | 'PROVIDER')
   const [premiumMode, setPremiumMode] = useState<'MANUAL' | 'PROVIDER'>('MANUAL');
 
@@ -5722,12 +5722,16 @@ export function AdminDashboard({
                     </button>
 
                     <button
-                      onClick={handleOpenAddWifiProduct}
-                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                      title="Tambah produk paket WiFi baru & kelola varian harga"
+                      onClick={() => setWifiSubTab('MANUAL')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                        wifiSubTab === 'MANUAL'
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                          : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}
+                      title="Buka Halaman Input Stok & Produk WiFi"
                     >
-                      <Plus size={14} />
-                      <span>Tambah Paket & Varian</span>
+                      <Box size={14} />
+                      <span>Stocks (Input Stok)</span>
                     </button>
 
                     <button
@@ -5836,7 +5840,7 @@ export function AdminDashboard({
                     <span className={`text-[10px] px-1.5 py-0.2 rounded font-black ${
                       wifiSubTab === 'MANUAL' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'
                     }`}>
-                      FOTO
+                      {wifiProducts.length} Produk
                     </span>
                   </button>
 
@@ -5855,24 +5859,6 @@ export function AdminDashboard({
                       wifiSubTab === 'BATCHES' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200 text-slate-600'
                     }`}>
                       {batches.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setWifiSubTab('CATALOG')}
-                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      wifiSubTab === 'CATALOG'
-                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                    }`}
-                  >
-                    <Package size={15} className={wifiSubTab === 'CATALOG' ? 'text-emerald-600' : 'text-slate-400'} />
-                    <span>Katalog Paket & Varian</span>
-                    <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
-                      wifiSubTab === 'CATALOG' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {wifiProducts.length}
                     </span>
                   </button>
 
@@ -6204,196 +6190,13 @@ export function AdminDashboard({
                 )}
 
                 {/* ══════════════════════════════════════════════════════════════════════ */}
-                {/* SUB-TAB 2: KATALOG PAKET & VARIAN */}
-                {/* ══════════════════════════════════════════════════════════════════════ */}
-                {wifiSubTab === 'CATALOG' && (
-                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-5 animate-fadeIn">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                      <div>
-                        <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                          <Package size={18} className="text-emerald-600" />
-                          <span>Katalog Produk & Varian Paket WiFi RT/RW Net</span>
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Daftar paket internet hotspot warga yang dijual di halaman storefront. Setiap produk dapat memiliki beberapa varian (durasi, kecepatan, & harga masing-masing).
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={handleOpenAddWifiProduct}
-                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                      >
-                        <Plus size={14} />
-                        <span>Tambah Produk Baru</span>
-                      </button>
-                    </div>
-
-                    {wifiProducts.length === 0 ? (
-                      <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                        <Radio size={36} className="mx-auto text-slate-300" />
-                        <p className="text-sm font-bold text-slate-700">Belum ada paket produk WiFi</p>
-                        <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                          Buat paket WiFi warga pertama Anda untuk mulai menjual voucher secara otomatis.
-                        </p>
-                        <button
-                          onClick={handleOpenAddWifiProduct}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer mt-2"
-                        >
-                          Tambah Produk WiFi Pertama
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {wifiProducts.map(prod => {
-                          const hasVariants = Array.isArray(prod.variants) && prod.variants.length > 0;
-                          return (
-                            <div key={prod.id} className="bg-slate-50/70 hover:bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4 transition-colors">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div className="flex items-start gap-3.5">
-                                  <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs shrink-0">
-                                    <ProductLogo
-                                      provider={prod.provider}
-                                      name={prod.name}
-                                      category={prod.categoryId}
-                                      iconUrl={prod.iconUrl}
-                                      size="sm"
-                                    />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900">{prod.name}</h4>
-                                      {prod.badge && (
-                                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md">
-                                          {prod.badge}
-                                        </span>
-                                      )}
-                                      <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
-                                        SSID: {prod.networkLocation || 'Hotspot Warga'}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{prod.description}</p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleProductActive(prod)}
-                                    className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-all ${
-                                      prod.isActive
-                                        ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
-                                        : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
-                                    }`}
-                                    title="Klik untuk ubah status aktif/nonaktif"
-                                  >
-                                    {prod.isActive ? '✓ Aktif' : '✗ Nonaktif'}
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleOpenEditWifiProduct(prod)}
-                                    className="px-3 py-1.5 bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                    title="Edit Produk, Harga & Kode Voucher"
-                                  >
-                                    <Edit3 size={13} />
-                                    <span>Edit Produk</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleDeleteWifiProduct(prod.id, prod.name)}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                                    title="Hapus produk"
-                                  >
-                                    <Trash2 size={15} />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Variants Table / Cards */}
-                              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <div className="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
-                                  <span>{hasVariants ? `Daftar ${prod.variants!.length} Varian Paket & Harga Jual` : 'Harga Tunggal Produk (Tanpa Varian)'}</span>
-                                  <span className="text-slate-500 font-mono">
-                                    {hasVariants ? 'Margin laba dihitung otomatis' : `Tarif: ${formatRupiah(prod.sellingPrice)}`}
-                                  </span>
-                                </div>
-
-                                {hasVariants ? (
-                                  <div className="divide-y divide-slate-100 text-xs">
-                                    {prod.variants!.map((v, idx) => {
-                                      const margin = Math.max(0, Number(v.sellingPrice) - Number(v.supplierPrice || 0));
-                                      const stockCount = v.voucherCodes?.length ?? v.stock ?? 0;
-                                      return (
-                                        <div key={v.id || idx} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
-                                          <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center shrink-0">
-                                              {idx + 1}
-                                            </div>
-                                            <div>
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="font-extrabold text-slate-900">{v.name}</span>
-                                                {v.badge && (
-                                                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                                                    {v.badge}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <span className="text-[11px] text-slate-400 block mt-0.5">
-                                                ⏱️ {v.duration || '24 Jam'} • ⚡ {v.speed || 'Up to 10 Mbps'} • 📦 Stok: <b>{stockCount}</b> pcs
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          <div className="flex items-center gap-4 text-xs font-mono self-end sm:self-auto">
-                                            <div>
-                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Harga Modal</span>
-                                              <span className="text-slate-600">{formatRupiah(v.supplierPrice || 0)}</span>
-                                            </div>
-
-                                            <div>
-                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Harga Jual</span>
-                                              <span className="font-black text-emerald-700 text-sm">{formatRupiah(v.sellingPrice)}</span>
-                                            </div>
-
-                                            <div>
-                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Margin Laba</span>
-                                              <span className="font-extrabold text-indigo-600">
-                                                +{formatRupiah(margin)}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <div className="p-3.5 flex items-center justify-between text-xs">
-                                    <div>
-                                      <span className="text-slate-600 font-medium">Paket Reguler: </span>
-                                      <span className="font-bold text-slate-900">{prod.duration || '24 Jam'} ({prod.speed || 'Up to 10 Mbps'})</span>
-                                      <span className="text-slate-400 ml-2">📦 Stok: <b>{prod.voucherCodes?.length ?? prod.stock ?? 0}</b> pcs</span>
-                                    </div>
-                                    <div className="flex items-center gap-4 font-mono">
-                                      <span className="text-slate-500">Modal: {formatRupiah(prod.supplierPrice)}</span>
-                                      <span className="font-black text-emerald-700 text-sm">Jual: {formatRupiah(prod.sellingPrice)}</span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ══════════════════════════════════════════════════════════════════════ */}
                 {/* SUB-TAB: PRODUK & STOK MANUAL (WIFI) */}
                 {/* ══════════════════════════════════════════════════════════════════════ */}
                 {wifiSubTab === 'MANUAL' && (
                   <div className="space-y-4 animate-fadeIn">
                     <ManualProductManager
                       category="wifi"
+                      viewMode="FULL"
                       title="Input Produk Manual & Stok Voucher WiFi"
                       subtitle="Tambah produk paket hotspot RT/RW Net baru, buat varian durasi & kecepatan, serta input stok kode voucher individu atau massal."
                       onRefreshData={onRefreshData}
