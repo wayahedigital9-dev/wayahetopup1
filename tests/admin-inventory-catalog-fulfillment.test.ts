@@ -16,3 +16,8 @@ test('paid WiFi orders stored in Mongo can be fulfilled without a Prisma mirror'
 test('customer catalog hydrates manual inventory from the admin database on app startup', () => {
   assert.match(app, /storage\.hydrateManualInventory\(\).*loadData\(\)/s);
 });
+
+test('WiFi category always uses local voucher fulfillment even when the order carries a buyer SKU', () => {
+  assert.match(fulfillment, /const isDigiflazz\s*=\s*rawCat\s*!==\s*['"]WIFI['"]\s*&&/);
+  assert.match(fulfillment, /else if \(rawCat === ['"]WIFI['"]\)\s*\{\s*await this\.fulfillWifiVoucher/);
+});

@@ -82,7 +82,7 @@ export class FulfillmentService {
     }
 
     const rawCat = String(orderAny.category || orderAny.categoryId || product?.categoryId || primaryItem?.category || '').toUpperCase();
-    const isDigiflazz =
+    const isDigiflazz = rawCat !== 'WIFI' && (
       rawCat === 'PULSA' ||
       rawCat === 'KUOTA' ||
       rawCat === 'DATA' ||
@@ -98,7 +98,8 @@ export class FulfillmentService {
       Boolean(product?.digiflazzCategory) ||
       Boolean(product?.sellerName) ||
       Boolean(orderAny.buyerSkuCode) ||
-      (product?.sku && String(product.sku).startsWith('DF-'));
+      Boolean(product?.sku && String(product.sku).startsWith('DF-'))
+    );
 
     try {
       if (isDigiflazz) {

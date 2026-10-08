@@ -53,3 +53,14 @@ test('adapter network failure cannot fabricate whitelist or detect client IP as 
  await assert.rejects(adapter.getDigiflazzIpStatus(),/Tidak dapat/);
  await assert.rejects(adapter.detectDigiflazzLiveIp(),/Tidak dapat/);
 });
+test('admin Digiflazz balance test reports success only after a confirmed provider response',()=>{
+ const dashboard=fs.readFileSync(new URL('src/pages/AdminDashboard.tsx',root),'utf8');
+ const start=dashboard.indexOf('const handleTestDigiflazz = async () =>');
+ const end=dashboard.indexOf('const handleTestPaymentGateway = async () =>',start);
+ assert.ok(start>=0&&end>start,'Digiflazz test handler must exist');
+ const handler=dashboard.slice(start,end);
+ assert.match(handler,/credentials:\s*['"]include['"]/);
+ assert.match(handler,/response\.ok\s*&&\s*json\.success/);
+ assert.doesNotMatch(handler,/2450000/,'must not invent a fallback balance');
+ assert.doesNotMatch(handler,/catch\s*\{[\s\S]*Koneksi Aman/,'network failure must not be presented as a successful connection');
+});

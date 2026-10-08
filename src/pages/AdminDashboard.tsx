@@ -2297,19 +2297,25 @@ export function AdminDashboard({
     setDigiflazzTestLoading(true);
     setDigiflazzBalanceResult(null);
     try {
-      const response = await fetch('/api/digiflazz/balance');
-      if (response.ok) {
-        const json = await response.json();
-        const deposit = json.data?.deposit ?? 2450000;
-        setDigiflazzBalanceResult(`✓ Terhubung via Backend .env! Saldo Digiflazz: ${formatRupiah(deposit)}`);
-        onShowToast('Koneksi Sukses', `Digiflazz H2H terhubung ke backend server. Saldo: ${formatRupiah(deposit)}`, 'success');
+      const response = await fetch('/api/digiflazz/balance', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const json = await response.json().catch(() => ({}));
+      if (response.ok && json.success) {
+        const deposit = Number(json.data?.deposit);
+        if (!Number.isFinite(deposit)) {
+          throw new Error('Respons saldo Digiflazz tidak valid.');
+        }
+        setDigiflazzBalanceResult(`✓ Digiflazz terhubung. Saldo: ${formatRupiah(deposit)}`);
+        onShowToast('Koneksi Sukses', `Digiflazz H2H terhubung. Saldo: ${formatRupiah(deposit)}`, 'success');
       } else {
-        setDigiflazzBalanceResult('✓ Backend Ready: Kredensial Digiflazz aman dikelola di backend/.env');
-        onShowToast('Backend Terhubung', 'API Key tersimpan aman di server backend', 'success');
+        throw new Error(json.message || json.data?.error || `Uji koneksi gagal (HTTP ${response.status}).`);
       }
-    } catch {
-      setDigiflazzBalanceResult('✓ Server Backend Siap: API Key Digiflazz tersimpan di backend/.env');
-      onShowToast('Koneksi Aman', 'Kredensial tersimpan aman di server backend', 'info');
+    } catch (error: any) {
+      const message = error?.message || 'Tidak dapat terhubung ke layanan Digiflazz.';
+      setDigiflazzBalanceResult(`✗ ${message}`);
+      onShowToast('Koneksi Digiflazz Gagal', message, 'error');
     } finally {
       setDigiflazzTestLoading(false);
     }
