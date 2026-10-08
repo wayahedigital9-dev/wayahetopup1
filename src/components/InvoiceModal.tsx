@@ -79,58 +79,25 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
           const newSN = json?.serialNumber || backendData?.serialNumber || backendData?.fulfillmentResult?.serialNumber;
           const newSupplierRef = json?.supplierRefId || backendData?.supplierRefId;
 
-          if (newFulfillmentStatus && newFulfillmentStatus !== currentOrder.fulfillmentStatus) {
-            const isFailed = newFulfillmentStatus === 'FAILED' || json?.paymentStatus === 'REFUNDED' || backendData?.paymentStatus === 'REFUNDED';
+          if (backendData || newFulfillmentStatus) {
             setCurrentOrder(prev => {
               if (!prev) return null;
-              const nextOrder: Order = {
+              const serverOrder: Order = {
                 ...prev,
-                fulfillmentStatus: newFulfillmentStatus,
-                paymentStatus: isFailed ? 'REFUNDED' : prev.paymentStatus,
-                supplierRefId: newSupplierRef || prev.supplierRefId,
+                ...(backendData || {}),
+                paymentStatus: json?.paymentStatus || backendData?.paymentStatus || prev.paymentStatus,
+                fulfillmentStatus: newFulfillmentStatus || prev.fulfillmentStatus,
+                voucherCode: json?.voucherCode || backendData?.voucherCode || prev.voucherCode,
+                voucherPassword: json?.voucherPassword || backendData?.voucherPassword || prev.voucherPassword,
+                wifiSsid: json?.wifiSsid || backendData?.wifiSsid || prev.wifiSsid,
+                wifiLoginUrl: json?.wifiLoginUrl || backendData?.wifiLoginUrl || prev.wifiLoginUrl,
                 serialNumber: newSN || prev.serialNumber,
-                fulfillmentResult: {
-                  ...(prev.fulfillmentResult || {}),
-                  serialNumber: newSN || prev.fulfillmentResult?.serialNumber || prev.serialNumber,
-                  supplierRefId: newSupplierRef || prev.fulfillmentResult?.supplierRefId || prev.supplierRefId,
-                  notes: backendData?.notes || prev.fulfillmentResult?.notes,
-                },
+                supplierRefId: newSupplierRef || prev.supplierRefId,
               };
-
-              // Simpan ke storage lokal agar konsisten di seluruh aplikasi
-              try {
-                const orders = storage.getOrders();
-                const idx = orders.findIndex(o => o.id === prev.id || o.invoiceNumber === prev.invoiceNumber);
-                if (idx !== -1) {
-                  orders[idx] = nextOrder;
-                  storage.saveOrders(orders);
-                }
-
-                // Otomatis kembalikan dana ke saldo akun member jika transaksi gagal
-                if (isFailed && prev.paymentStatus !== 'REFUNDED') {
-                  const members = storage.getRegisteredMembers();
-                  const matchedMember = members.find(u => 
-                    (prev.customerPhone && (u.phone === prev.customerPhone || u.email === prev.customerPhone)) ||
-                    (prev.customerEmail && u.email === prev.customerEmail) ||
-                    (prev.targetDestination && u.phone === prev.targetDestination)
-                  );
-                  const refundAmount = prev.totalAmount || (prev as any).totalPayment || 0;
-                  if (matchedMember && refundAmount > 0) {
-                    matchedMember.balance = (matchedMember.balance || 0) + refundAmount;
-                    storage.saveRegisteredMember(matchedMember);
-                    const activeUser = storage.getUser();
-                    if (activeUser && activeUser.id === matchedMember.id) {
-                      void storage.hydrateMemberFromBackend();
-                    }
-                  }
-                }
-              } catch (_) {}
-
-              return nextOrder;
+              return serverOrder;
             });
 
-            // Stop polling setelah mencapai status terminal
-            if (newFulfillmentStatus === 'SUCCESS' || newFulfillmentStatus === 'FAILED' || newFulfillmentStatus === 'MANUAL_REVIEW') {
+            if (['SUCCESS', 'FAILED', 'MANUAL_REVIEW'].includes(String(newFulfillmentStatus || '').toUpperCase())) {
               setIsPollingFulfillment(false);
               clearInterval(intervalId);
             }
@@ -146,65 +113,8 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
     };
   }, [isOpen, currentOrder?.id, currentOrder?.fulfillmentStatus, currentOrder?.paymentStatus]);
 
-  // Auto-allocate / ensure WiFi voucher is present if order is PAID
-  useEffect(() => {
-    if (!isOpen || !currentOrder || currentOrder.paymentStatus !== 'PAID') return;
-    const isWifiOrder = currentOrder.category === 'wifi' || 
-      (currentOrder.items && currentOrder.items[0]?.category === 'wifi') ||
-      String(currentOrder.productName || '').toLowerCase().includes('wifi');
-    
-    const existingCode = currentOrder.voucherCode || currentOrder.fulfillmentResult?.voucherCode;
-    if (isWifiOrder && !existingCode) {
-      const vouchers = storage.getWifiVouchers();
-      let found = vouchers.find(v => v.orderId === currentOrder.id && v.status === 'SOLD');
-      if (!found) {
-        found = vouchers.find(v => v.status === 'AVAILABLE');
-        if (found) {
-          found.status = 'SOLD';
-          found.orderId = currentOrder.id;
-          storage.saveWifiVouchers(vouchers);
-        }
-      }
-      const assignedCode = found?.code || `WF-${Math.floor(100000 + Math.random() * 900000)}`;
-      const assignedPass = found?.password || '1234';
-      const ssid = currentOrder.wifiSsid || 'MelatiNet_Warga_Hotspot';
-      const loginUrl = currentOrder.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
-
-      const updated: Order = {
-        ...currentOrder,
-        fulfillmentStatus: 'SUCCESS',
-        voucherCode: assignedCode,
-        voucherPassword: assignedPass,
-        wifiSsid: ssid,
-        wifiLoginUrl: loginUrl,
-        fulfillmentResult: {
-          ...(currentOrder.fulfillmentResult || {}),
-          voucherCode: assignedCode,
-          voucherPassword: assignedPass,
-          wifiSsid: ssid,
-          wifiLoginUrl: loginUrl,
-          notes: 'Voucher WiFi aktif siap digunakan.',
-        },
-      };
-      setCurrentOrder(updated);
-
-      const allOrders = storage.getOrders();
-      const idx = allOrders.findIndex(o => o.id === currentOrder.id || o.invoiceNumber === currentOrder.invoiceNumber);
-      if (idx !== -1) {
-        allOrders[idx] = updated;
-        storage.saveOrders(allOrders);
-      }
-
-      // Sinkronkan ke serverless backend
-      try {
-        fetch('/api/sync/entity', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entity: 'orders', data: allOrders }),
-        }).catch(() => {});
-      } catch (_) {}
-    }
-  }, [isOpen, currentOrder?.id, currentOrder?.paymentStatus]);
+  // Voucher is allocated only by the backend after a confirmed fulfillment.
+  // The receipt never creates, changes, or syncs voucher inventory in the browser.
 
   if (!isOpen || !currentOrder) return null;
 
@@ -365,57 +275,7 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
             </div>
           )}
 
-          {/* 2. KARTU JAMINAN UANG KEMBALI 100% (TRANSAKSI GAGAL / REFUND) */}
-          {isFailedOrRefunded && (
-            <div className="bg-rose-50/90 border-2 border-rose-300 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3 animate-fadeIn">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <ShieldAlert size={22} className="text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white uppercase tracking-wider mb-1">
-                    Jaminan Uang Kembali 100%
-                  </span>
-                  <h3 className="text-xs sm:text-sm font-extrabold text-rose-950">
-                    Transaksi Gagal — Dana Dikembalikan ke Pembeli
-                  </h3>
-                </div>
-              </div>
 
-              <div className="bg-white/95 p-3 rounded-xl border border-rose-200 space-y-2 text-xs text-rose-900 leading-relaxed">
-                <p>
-                  Mohon maaf, transaksi pengisian produk ke operator mengalami kendala ({currentOrder.fulfillmentResult?.notes || currentOrder.errorReason || 'Gangguan sistem operator'}).
-                </p>
-                <div className="p-2.5 bg-rose-100/80 rounded-lg border border-rose-200 font-semibold text-rose-950 text-[11px] flex items-start gap-2">
-                  <span className="text-base leading-none">🔒</span>
-                  <span>
-                    <strong>Uang Anda TIDAK masuk ke penjual.</strong> Pesanan ini otomatis berstatus <strong>REFUNDED (Dana Aman)</strong> agar pembeli tidak dirugikan sama sekali.
-                  </span>
-                </div>
-                <ul className="text-[11px] text-rose-800 space-y-1 list-disc list-inside">
-                  <li><strong>Pembeli dengan Akun Member:</strong> Saldo senilai <strong>{formatRupiah(currentOrder.totalAmount)}</strong> telah otomatis dikembalikan ke saldo akun Anda.</li>
-                  <li><strong>Pembeli QRIS / Transfer Bank:</strong> Hubungi Admin melalui WhatsApp di bawah untuk konfirmasi pencairan refund 100% instan ke rekening atau e-wallet Anda.</li>
-                </ul>
-              </div>
-
-              <a
-                href={`https://wa.me/${cleanAdminWa}?text=${encodeURIComponent(
-                  `Halo Admin WayaheDigital, transaksi saya GAGAL dan mohon konfirmasi pengembalian dana:\n` +
-                  `• No Invoice: ${currentOrder.invoiceNumber}\n` +
-                  `• Produk: ${item?.productName || currentOrder.category}\n` +
-                  `• Nomor/Tujuan: ${currentOrder.targetDestination}\n` +
-                  `• Nominal: ${formatRupiah(currentOrder.totalAmount)}\n` +
-                  `Mohon dibantu refund dana saya. Terima kasih!`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors shadow-xs"
-              >
-                <MessageCircle size={16} />
-                Hubungi WhatsApp Admin untuk Konfirmasi Refund
-              </a>
-            </div>
-          )}
 
           {/* Indikator Auto-Polling Sederhana saat belum final */}
           {isPollingFulfillment && !isProcessingFulfillment && !isFailedOrRefunded && (
@@ -428,8 +288,8 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
             </div>
           )}
 
-          {/* KODE VOUCHER WIFI UTAMA (HERO CARD - SELALU MUNCUL SAAT ORDER WIFI BERSTATUS PAID) */}
-          {isWifi && isPaid && (
+          {/* Voucher WiFi only appears after backend fulfillment has succeeded. */}
+          {isWifi && currentOrder.fulfillmentStatus === 'SUCCESS' && Boolean(wifiVoucherCode) && (
             <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-amber-500/10 border-2 border-emerald-500/30 rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -485,12 +345,12 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
                     KODE VOUCHER HOTSPOT:
                   </span>
                   <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-700 tracking-widest select-all">
-                    {wifiVoucherCode || 'WF-' + currentOrder.id.slice(-6).toUpperCase()}
+                    {wifiVoucherCode}
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => onCopyText(wifiVoucherCode || 'WF-' + currentOrder.id.slice(-6).toUpperCase(), 'Kode Voucher WiFi')}
+                  onClick={() => onCopyText(wifiVoucherCode, 'Kode Voucher WiFi')}
                   className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
                 >
                   <Copy size={15} />
