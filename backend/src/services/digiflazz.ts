@@ -301,8 +301,8 @@ export class DigiflazzService {
     const username = (credentials?.username || this.config.username || '').trim();
     const apiKey = (credentials?.apiKey || this.config.apiKey || '').trim();
 
-    if (!username || !apiKey) {
-      throw new Error('Kredensial Digiflazz belum diatur (Username / Production API Key kosong).');
+    if (!username || username.startsWith('YOUR_') || !apiKey) {
+      throw new Error('Kredensial Digiflazz belum valid. Isi DIGIFLAZZ_USERNAME asli dari member.digiflazz.com dan Production API Key.');
     }
 
     const sign = crypto.createHash('md5').update(`${username}${apiKey}depo`).digest('hex');
@@ -337,8 +337,8 @@ export class DigiflazzService {
     const apiKey = (credentials?.apiKey || this.config.apiKey || '').trim();
     const cmd = credentials?.cmd || 'prepaid';
 
-    if (!username || !apiKey) {
-      throw new Error('Kredensial Digiflazz belum diatur (Username / Production API Key kosong).');
+    if (!username || username.startsWith('YOUR_') || !apiKey) {
+      throw new Error('Kredensial Digiflazz belum valid. Isi DIGIFLAZZ_USERNAME asli dari member.digiflazz.com dan Production API Key.');
     }
 
     const sign = crypto.createHash('md5').update(`${username}${apiKey}pricelist`).digest('hex');

@@ -70,10 +70,10 @@ export function AdminApiSettingsSection({
     }));
   };
 
-  const handleSaveConfig = () => {
+  const handleSaveConfig = async () => {
     triggerTopLoading.start();
     try {
-      providerIntegrationService.saveApiConfig(currentConfig);
+      await providerIntegrationService.saveApiConfig(currentConfig);
       onShowToast(
         'Konfigurasi Disimpan',
         `Pengaturan API untuk ${currentConfig.providerName} (${activeCategory.toUpperCase()}) berhasil disimpan di server.`,
@@ -116,19 +116,23 @@ export function AdminApiSettingsSection({
     }
   };
 
-  const handleToggleActive = () => {
+  const handleToggleActive = async () => {
     const nextState = !currentConfig.isActive;
     const updated = {
       ...currentConfig,
       isActive: nextState,
     };
-    updateCurrentConfig({ isActive: nextState });
-    providerIntegrationService.saveApiConfig(updated);
-    onShowToast(
-      nextState ? 'Integrasi Diaktifkan' : 'Integrasi Dinonaktifkan',
-      `Integrasi ${currentConfig.providerName} untuk kategori ${activeCategory.toUpperCase()} kini ${nextState ? 'AKTIF' : 'NONAKTIF'}.`,
-      nextState ? 'success' : 'info'
-    );
+    try {
+      await providerIntegrationService.saveApiConfig(updated);
+      updateCurrentConfig({ isActive: nextState });
+      onShowToast(
+        nextState ? 'Integrasi Diaktifkan' : 'Integrasi Dinonaktifkan',
+        `Integrasi ${currentConfig.providerName} untuk kategori ${activeCategory.toUpperCase()} kini ${nextState ? 'AKTIF' : 'NONAKTIF'}.`,
+        nextState ? 'success' : 'info'
+      );
+    } catch (err: any) {
+      onShowToast('Gagal Menyimpan', err?.message || 'Status integrasi tidak tersimpan di server', 'error');
+    }
   };
 
   const handleSyncProducts = async () => {

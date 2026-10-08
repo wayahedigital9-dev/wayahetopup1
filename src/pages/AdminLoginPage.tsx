@@ -46,78 +46,51 @@ export function AdminLoginPage({
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     const cleanInput = usernameOrEmail.trim().toLowerCase();
-    const cleanPass = password.trim();
-
-    if (!cleanInput) {
-      setErrorMessage('Nama pengguna atau email wajib diisi.');
-      return;
-    }
-
-    if (!cleanPass) {
-      setErrorMessage('Kata sandi wajib diisi.');
+    const cleanPass = password;
+    if (!cleanInput || !cleanPass) {
+      setErrorMessage('Nama pengguna dan kata sandi wajib diisi.');
       return;
     }
 
     setIsLoading(true);
-
-    setTimeout(() => {
-      const currentSettings = storage.getSettings();
-      const activeAdminUser = (currentSettings.adminUsername || 'admin').trim().toLowerCase();
-      const activeAdminPass = currentSettings.adminPassword || 'admin123';
-      const activeAdminEmail = (currentSettings.supportEmail || 'admin@wayahedigital.id').trim().toLowerCase();
-
-      const isMatch = (cleanInput === activeAdminUser || cleanInput === activeAdminEmail) && cleanPass === activeAdminPass;
-
-      if (isMatch) {
-        const adminName = currentSettings.adminName || 'Super Administrator';
-        const adminEmail = currentSettings.supportEmail || 'admin@wayahedigital.id';
-        const adminRole: AdminRole = 'SUPER_ADMIN';
-        const adminRoleTitle = 'Super Administrator';
-
-        const session: AdminAuthSession = {
-          isAuthenticated: true,
-          username: activeAdminUser,
-          name: adminName,
-          email: adminEmail,
-          role: adminRole,
-          roleTitle: adminRoleTitle,
-          token: 'adm-token-' + Date.now() + Math.random().toString(36).substring(2, 8),
-          loginAt: new Date().toISOString(),
-        };
-
-        // Periksa apakah Google Authenticator (2FA) diaktifkan
-        if (currentSettings.googleAuthEnabled && currentSettings.googleAuthSecret) {
-          setIsLoading(false);
-          setPendingSession(session);
-          setLoginStep('2FA_OTP');
-          setTotpInput('');
-          setErrorMessage(null);
-          onShowToast('Langkah 2: Verifikasi 2FA', 'Buka aplikasi Google Authenticator dan masukkan kode 6-digit.', 'info');
-          return;
-        }
-
-        // Jika 2FA tidak aktif, login langsung sukses
-        storage.saveAdminSession(session);
-        storage.addAuditLog(
-          'ADMIN_LOGIN_SUCCESS',
-          `${adminName} (${adminRoleTitle})`,
-          `Login berhasil via portal autentikasi admin pada ${new Date().toLocaleString('id-ID')}`
-        );
-
-        setIsLoading(false);
-        onShowToast('Sugeng Rawuh!', `Selamat datang, ${adminName} (${adminRoleTitle})`, 'success');
-        onLoginSuccess(session);
-      } else {
-        setIsLoading(false);
-        setErrorMessage('Nama pengguna atau kata sandi tidak cocok. Silakan periksa kembali.');
-        onShowToast('Autentikasi Gagal', 'Kredensial admin tidak valid.', 'error');
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: cleanInput, password: cleanPass }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Kredensial admin tidak valid.');
       }
-    }, 500);
+      const data = result.data || {};
+      const adminName = data.name || 'Administrator';
+      const session: AdminAuthSession = {
+        isAuthenticated: true,
+        username: data.username || cleanInput,
+        name: adminName,
+        email: data.email || '',
+        role: 'SUPER_ADMIN' as AdminRole,
+        roleTitle: 'Super Administrator',
+        token: 'server-session',
+        loginAt: new Date().toISOString(),
+      };
+      storage.saveAdminSession(session);
+      storage.addAuditLog('ADMIN_LOGIN_SUCCESS', `${adminName} (Super Administrator)`, 'Login berhasil melalui sesi server.');
+      onShowToast('Sugeng Rawuh!', `Selamat datang, ${adminName}.`, 'success');
+      onLoginSuccess(session);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Login admin gagal diproses.');
+      onShowToast('Autentikasi Gagal', 'Kredensial admin tidak valid.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyTotp = async (e: React.FormEvent) => {

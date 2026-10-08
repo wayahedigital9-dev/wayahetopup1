@@ -74,9 +74,6 @@ export class OutboundIpService {
    * Menggunakan IP Whitelist terkonfigurasi jika ada, atau IP live VPS jika belum dikonfigurasi.
    */
   async detectOutboundIp(customProxy?: string): Promise<string> {
-    if (DIGIFLAZZ_CONFIG.WHITELIST_IP && DIGIFLAZZ_CONFIG.WHITELIST_IP.trim()) {
-      return DIGIFLAZZ_CONFIG.WHITELIST_IP.trim();
-    }
     return this.detectLiveVpsIp(customProxy);
   }
 
@@ -85,17 +82,17 @@ export class OutboundIpService {
    */
   async checkDigiflazzWhitelist(customProxy?: string): Promise<OutboundIpStatus> {
     const proxyUrl = customProxy !== undefined ? customProxy : (DIGIFLAZZ_CONFIG.OUTBOUND_PROXY || '');
-    const configuredIp = (DIGIFLAZZ_CONFIG.WHITELIST_IP || '82.158.130.255').trim();
+    const configuredIp = (DIGIFLAZZ_CONFIG.WHITELIST_IP || '').trim();
     let liveServerIp = configuredIp;
     try {
       liveServerIp = await this.detectLiveVpsIp(proxyUrl);
     } catch (_) {}
-    const outboundIp = configuredIp;
+    const outboundIp = liveServerIp;
 
     const username = DIGIFLAZZ_CONFIG.USERNAME;
     const apiKey = DIGIFLAZZ_CONFIG.API_KEY;
 
-    if (!username || !apiKey) {
+    if (!username || username.startsWith('YOUR_') || !apiKey) {
       const status: OutboundIpStatus = {
         outboundIp,
         configuredWhitelistIp: configuredIp,

@@ -44,6 +44,12 @@ export class MongoDbService {
   private client: MongoClient | null = null;
   private isConnecting: boolean = false;
 
+  private omitId(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    const { _id, ...rest } = obj;
+    return rest;
+  }
+
   private readEnvFile(): { uri: string; dbName: string; dbNameTrans: string } {
     try {
       const envPath = path.join(process.cwd(), '.env');

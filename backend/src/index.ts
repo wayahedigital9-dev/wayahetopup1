@@ -656,7 +656,7 @@ app.post('/api/orders/bulk-delete', async (req: Request, res: Response) => {
 
 // 4b. DIGIFLAZZ (H2H) SECURE BACKEND ENDPOINTS
 // Menggunakan API Key yang aman di server backend .env (tidak pernah dikirim ke frontend)
-app.all('/api/digiflazz/balance', async (req: Request, res: Response) => {
+app.all('/api/digiflazz/balance', requireAdmin, async (req: Request, res: Response) => {
   try {
     const qUser = (req.query.username as string) || (req.body?.username as string);
     const qKey = (req.query.apiKey as string) || (req.body?.apiKey as string);
@@ -701,7 +701,7 @@ app.all('/api/digiflazz/balance', async (req: Request, res: Response) => {
 });
 
 // Transaksi Digiflazz dengan dukungan multi-webhook parameter cb_url
-app.post('/api/digiflazz/transaction', async (req: Request, res: Response) => {
+app.post('/api/digiflazz/transaction', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { buyerSkuCode, customerNo, refId, maxPrice, callbackUrl, allowDot, testing } = req.body;
     if (!buyerSkuCode || !customerNo || !refId) {
@@ -800,7 +800,7 @@ export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count:
   }
 }
 
-app.all(['/api/digiflazz/sync-products', '/api/digiflazz/sync'], async (req: Request, res: Response) => {
+app.all(['/api/digiflazz/sync-products', '/api/digiflazz/sync'], requireAdmin, async (req: Request, res: Response) => {
   const result = await syncDigiflazzCatalog();
   res.json(result);
 });
@@ -828,7 +828,7 @@ app.get('/api/digiflazz/products', async (req: Request, res: Response) => {
 });
 
 // 4e. DIGIFLAZZ OUTBOUND IP & WHITELIST MANAGEMENT
-app.get('/api/digiflazz/detect-live-ip', async (req: Request, res: Response) => {
+app.get('/api/digiflazz/detect-live-ip', requireAdmin, async (req: Request, res: Response) => {
   try {
     const liveIp = await outboundIpService.detectLiveVpsIp();
     const configuredWhitelistIp = (process.env.DIGIFLAZZ_WHITELIST_IP || '82.158.130.255').trim();
@@ -847,7 +847,7 @@ app.get('/api/digiflazz/detect-live-ip', async (req: Request, res: Response) => 
   }
 });
 
-app.get('/api/digiflazz/ip-status', async (req: Request, res: Response) => {
+app.get('/api/digiflazz/ip-status', requireAdmin, async (req: Request, res: Response) => {
   try {
     const status = await outboundIpService.checkDigiflazzWhitelist();
     return res.json({
@@ -892,7 +892,7 @@ app.post('/api/digiflazz/test-ip', requireAdmin, async (req: Request, res: Respo
   }
 });
 
-app.post(['/api/orders/:id/fulfill', '/api/fulfillment/fulfill'], async (req: Request, res: Response) => {
+app.post(['/api/orders/:id/fulfill', '/api/fulfillment/fulfill'], requireAdmin, async (req: Request, res: Response) => {
   try {
     const orderId = req.params.id || req.body.orderId || req.body.id || req.body.order?.id;
     if (!orderId && !req.body.invoiceNumber && !req.body.order?.invoiceNumber) {
@@ -1870,7 +1870,10 @@ app.post('/api/payment/pakasir/toggle-sandbox', async (req: Request, res: Respon
 });
 
 // 7. Pakasir Sandbox Payment Simulation (POST /api/payment/pakasir/simulate)
-app.post('/api/payment/pakasir/simulate', async (req: Request, res: Response) => {
+app.post('/api/payment/pakasir/simulate', requireAdmin, async (req: Request, res: Response) => {
+  if (CONSOLE_CONFIG.isProduction) {
+    return res.status(404).json({ success: false, message: 'Simulation endpoint is unavailable in production.' });
+  }
   try {
     const { orderId, amount } = req.body || {};
     if (!orderId) {
@@ -2013,7 +2016,7 @@ app.all('/api/qiospay/sync', async (req: Request, res: Response) => {
 });
 
 // 11. NGROK TUNNEL CONTROLLERS (Webhooks Exposer)
-app.get('/api/tunnel/status', (req: Request, res: Response) => {
+app.get('/api/tunnel/status', requireAdmin, (req: Request, res: Response) => {
   res.json(ngrokService.getStatus());
 });
 
@@ -2059,26 +2062,61 @@ app.get('/api/supabase/sql-schema', (req: Request, res: Response) => {
   res.json({ schema: supabaseService.getSqlSchema() });
 });
 
-function requireAdmin(req: Request, res: Response, next: any) {
-  const hdr = (req.headers['x-admin-token'] || req.headers['authorization'] || '').toString();
-  const token = hdr.replace(/^Bearer\s+/i, '').trim();
-  const expected = (CONSOLE_CONFIG.ADMIN_TOKEN || process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY || 'wayahe_admin_secret_token_1234').trim();
+const ADMIN_SESSION_COOKIE = 'wd_admin_session';
+const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-  if (token && (token === expected || token === 'wayahe_admin_secret_token_1234')) {
-    return next();
-  }
-
-  // Jika request internal dari localhost (127.0.0.1 / ::1), izinkan
-  const ip = req.ip || req.socket.remoteAddress || '';
-  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
-    return next();
-  }
-
-  if (!expected) {
-    return next();
-  }
-  return res.status(401).json({ success: false, message: 'Unauthorized — admin token required (header X-Admin-Token)' });
+function readCookie(req: Request, name: string): string {
+  const raw = String(req.headers.cookie || '');
+  const part = raw.split(';').map(v => v.trim()).find(v => v.startsWith(`${name}=`));
+  return part ? decodeURIComponent(part.slice(name.length + 1)) : '';
 }
+function sameSecret(a: string, b: string): boolean {
+  const x = Buffer.from(a || '');
+  const y = Buffer.from(b || '');
+  return x.length > 0 && x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+function adminSessionSecret(): string {
+  return (process.env.ADMIN_SESSION_SECRET || CONSOLE_CONFIG.ADMIN_TOKEN || process.env.ADMIN_TOKEN || '').trim();
+}
+function createAdminSession(username: string): string {
+  const payload = Buffer.from(JSON.stringify({ username, exp: Date.now() + ADMIN_SESSION_TTL_MS })).toString('base64url');
+  const signature = crypto.createHmac('sha256', adminSessionSecret()).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+function verifyAdminSession(req: Request): boolean {
+  const value = readCookie(req, ADMIN_SESSION_COOKIE);
+  const [payload, signature] = value.split('.');
+  if (!payload || !signature || !adminSessionSecret()) return false;
+  const expected = crypto.createHmac('sha256', adminSessionSecret()).update(payload).digest('base64url');
+  if (!sameSecret(signature, expected)) return false;
+  try { return Number(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')).exp) > Date.now(); } catch { return false; }
+}
+function requireAdmin(req: Request, res: Response, next: any) {
+  if (verifyAdminSession(req)) return next();
+  return res.status(401).json({ success: false, message: 'Unauthorized' });
+}
+
+app.post('/api/admin/login', async (req: Request, res: Response) => {
+  const username = String(req.body?.username || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!username || !password) return res.status(400).json({ success: false, message: 'Username dan password wajib diisi.' });
+  try {
+    const settings = (await mongoDbService.getAllState()).settings || {};
+    const configuredUser = String(process.env.ADMIN_USERNAME || settings.adminUsername || '').trim().toLowerCase();
+    const configuredPassword = String(process.env.ADMIN_PASSWORD || settings.adminPassword || '');
+    if (!configuredUser || !configuredPassword || !adminSessionSecret()) return res.status(503).json({ success: false, message: 'Autentikasi admin belum dikonfigurasi.' });
+    if (!sameSecret(username, configuredUser) || !sameSecret(password, configuredPassword)) return res.status(401).json({ success: false, message: 'Kredensial admin tidak valid.' });
+    const secure = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+    res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=${createAdminSession(configuredUser)}; Path=/; Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}`);
+    return res.json({ success: true, data: { username: configuredUser, name: settings.adminName || 'Administrator', email: settings.supportEmail || '' } });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Login admin gagal diproses.' });
+  }
+});
+app.post('/api/admin/logout', (_req: Request, res: Response) => {
+  res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`);
+  res.json({ success: true });
+});
 
 
 // 12b. MONGODB DATABASE MANAGEMENT (Legacy / Fallback)
@@ -2115,12 +2153,7 @@ const SENSITIVE_SETTINGS_KEYS = new Set([
   'qiospayQrString', 'pakasirQrString',
 ]);
 function isAdminRequest(req: Request): boolean {
-  const hdr = (req.headers['x-admin-token'] || req.headers['authorization'] || '').toString().replace(/^Bearer\s+/i, '').trim();
-  const expected = (CONSOLE_CONFIG.ADMIN_TOKEN || process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY || 'wayahe_admin_secret_token_1234').trim();
-  if (hdr && (hdr === expected || hdr === 'wayahe_admin_secret_token_1234')) return true;
-  const ip = req.ip || req.socket.remoteAddress || '';
-  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return true;
-  return false;
+  return verifyAdminSession(req);
 }
 function sanitizeSettingsForPublic(settings: any, isAdmin: boolean): any {
   if (!settings || typeof settings !== 'object') return settings;
@@ -2135,6 +2168,8 @@ function sanitizeSettingsForPublic(settings: any, isAdmin: boolean): any {
       delete out[k];
     }
   }
+  // API provider configs contain nested credentials and must never be public.
+  delete out.apiConfigs;
   // tetap expose has* untuk UI cek 'terkonfigurasi'
   return out;
 }

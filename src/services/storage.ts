@@ -267,8 +267,8 @@ async function fetchWithTimeout(url: string, options?: RequestInit, timeoutMs = 
 }
 
 export function getAdminHeaders(): Record<string, string> {
-  const tok = ((import.meta as any)?.env?.VITE_ADMIN_TOKEN || (typeof process !== 'undefined' ? process.env?.VITE_ADMIN_TOKEN : '')) as string | undefined;
-  return tok ? { 'X-Admin-Token': tok.trim() } : {};
+  // Admin authorization is carried by the HttpOnly server session cookie.
+  return {};
 }
 
 function withAdminHeaders(opts?: RequestInit): RequestInit | undefined {
@@ -1316,10 +1316,16 @@ export const storage = {
 
   async hydrateSettingsFromBackend(): Promise<AppSettings | null> {
     try {
-      const res = await fetch('/api/sync/state', { cache: 'no-store' as any, headers: { ...getAdminHeaders() } as any });
+      // sync/state is intentionally a public, sanitized DTO. Admin settings,
+      // including apiConfigs, must be restored only from the admin endpoint.
+      const res = await fetchWithFallback('/api/settings/load', {
+        cache: 'no-store',
+        headers: getAdminHeaders(),
+      } as any);
       if (!res.ok) return null;
       const json = await res.json().catch(() => null);
-      const remote: AppSettings | undefined = json?.data?.settings;
+      if (json?._sanitized === true) return null;
+      const remote: AppSettings | undefined = json?.data?.settings ?? json?.data;
       if (!remote || typeof remote !== 'object') return null;
       const local = this.getSettings();
       const merged: AppSettings = {
@@ -1389,7 +1395,7 @@ export const storage = {
       const rb = await fetchWithFallback('/api/settings/load', { cache: 'no-store', headers: getAdminHeaders() } as any);
       if (rb.ok) {
         const cj = await rb.json().catch(() => null);
-        if (cj?._sanitized === true) throw new Error('Token admin tidak valid atau belum disetel. Periksa VITE_ADMIN_TOKEN di .env frontend.');
+        if (cj?._sanitized === true) throw new Error('Sesi admin tidak valid atau telah berakhir. Silakan login ulang.');
         if (cj?.success === true && cj?.data) remote = (cj.data as any).settings ?? cj.data;
       }
     } catch (e: any) {

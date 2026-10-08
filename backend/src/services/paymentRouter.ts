@@ -1,7 +1,6 @@
 import { QIOSPAY_CONFIG, PAKASIR_CONFIG } from '../config/apikeys.js';
 import { qiospayService } from './qiospay.js';
 import { pakasirService } from './pakasir.js';
-import { generateDynamicQRIS, convertStaticToDynamicQRIS } from '../utils/qris.js';
 
 /**
  * ╔══════════════════════════════════════════════════════════════╗
@@ -114,36 +113,11 @@ export async function createPaymentSession(params: {
 
       if (pakasirRes.success && pakasirRes.payment) {
         const p = pakasirRes.payment;
-        const isLiveEMVCo = p.qr_string && p.qr_string.startsWith('000201') && !p.qr_string.includes('lorem-ipsum');
-
-        let finalQR = isLiveEMVCo ? p.qr_string : undefined;
-
-        // Pastikan finalQR selalu menyematkan Tag 54 dengan nominal dinamis
-        if (finalQR) {
-          try {
-            finalQR = convertStaticToDynamicQRIS(finalQR, dynamicAmount, params.orderId, { gateway: 'PAKASIR' });
-          } catch (_) {}
-        }
-
-        // Pakasir QRIS Statis MANDIRI (Tidak pernah memakai Qiospay)
-        if (!finalQR) {
-          const registeredStatic = (PAKASIR_CONFIG.QR_STRING || process.env.PAKASIR_QR_STRING || '').trim();
-          if (registeredStatic && registeredStatic.startsWith('000201')) {
-            try {
-              finalQR = convertStaticToDynamicQRIS(registeredStatic, dynamicAmount, params.orderId, { gateway: 'PAKASIR' });
-            } catch (_) {}
-          }
-        }
-
-        if (!finalQR) {
-          finalQR = generateDynamicQRIS({
-            amount: dynamicAmount,
-            invoiceNumber: params.orderId,
-            merchantName: PAKASIR_CONFIG.MERCHANT_NAME || 'WAYAHE DIGITAL',
-            merchantCity: 'SURABAYA',
-            nmid: PAKASIR_CONFIG.NMID || undefined,
-            gateway: 'PAKASIR',
-          });
+        const finalQR = p.qr_string && p.qr_string.startsWith('000201') && !p.qr_string.includes('lorem-ipsum')
+          ? p.qr_string
+          : undefined;
+        if (!finalQR && !p.payment_link) {
+          throw new Error('Pakasir tidak mengembalikan QRIS atau tautan pembayaran yang valid.');
         }
 
         return {
@@ -162,35 +136,9 @@ export async function createPaymentSession(params: {
       console.warn('⚠️ [PaymentRouter] Pakasir create transaction fallback notice:', err.message);
     }
 
-    // Jika API Pakasir offline atau terjadi kendala jaringan:
-    let fallbackQR: string | undefined = undefined;
-    const registeredStatic = (PAKASIR_CONFIG.QR_STRING || process.env.PAKASIR_QR_STRING || '').trim();
-    if (registeredStatic && registeredStatic.startsWith('000201')) {
-      try {
-        fallbackQR = convertStaticToDynamicQRIS(registeredStatic, dynamicAmount, params.orderId);
-      } catch (_) {}
-    }
-
-    if (!fallbackQR) {
-      fallbackQR = generateDynamicQRIS({
-        amount: dynamicAmount,
-        invoiceNumber: params.orderId,
-        merchantName: PAKASIR_CONFIG.MERCHANT_NAME || 'WAYAHE DIGITAL',
-        merchantCity: 'SURABAYA',
-        nmid: PAKASIR_CONFIG.NMID || undefined,
-        gateway: 'PAKASIR',
-      });
-    }
-
-    return {
-      gateway: 'PAKASIR',
-      token: `PKS-${params.orderId.replace(/[^a-zA-Z0-9]/g, '')}`,
-      redirectUrl: fallbackPaymentLink,
-      qrString: fallbackQR,
-      totalPayment: dynamicAmount,
-      isDynamic: true,
-      isSandbox: PAKASIR_CONFIG.IS_SANDBOX,
-    };
+    // A payment gateway failure must never produce a locally fabricated QRIS.
+    // The caller can retry safely; no customer is shown an untracked payment.
+    throw new Error('Pakasir gagal membuat transaksi. Tidak ada pembayaran yang dibuat; silakan coba lagi.');
   }
 
   // 2. Jalur Qiospay QRIS Dinamis

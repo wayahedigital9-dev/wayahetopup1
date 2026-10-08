@@ -80,28 +80,20 @@ export class QiospayPaymentService {
     headers?: Record<string, any>,
     query?: Record<string, any>
   ): Promise<{ statusCode: number; response: any }> {
-    const expectedSecret = (QIOSPAY_CONFIG.CALLBACK_SECRET || QIOSPAY_CONFIG.SECRET_KEY || '312d3971811869d9f3a6c740b944f9bf841369d17479bdcaaa9080d1658ba4cb').trim();
+    const expectedSecret = (QIOSPAY_CONFIG.CALLBACK_SECRET || QIOSPAY_CONFIG.SECRET_KEY || '').trim();
+    if (!expectedSecret) {
+      return { statusCode: 503, response: { status: 'reject', message: 'Qiospay callback secret is not configured' } };
+    }
 
-    // 1. Ekstraksi Secret Key dari berbagai kemungkinan sumber (param, headers, query, body)
+    // 1. Extract the provider callback secret from supported request locations.
     const headerSecret = (headers?.['x-callback-secret'] || headers?.['x-secret-key'] || headers?.['x-qiospay-secret'] || '') as string;
     const authHeader = (headers?.['authorization'] || '') as string;
     const bearerSecret = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
     const querySecret = (query?.key || query?.secret || query?.secret_key || query?.callback_secret || '') as string;
     const bodySecret = (body?.secret || body?.secret_key || body?.callback_secret || '') as string;
+    const candidateSecret = String(headerSecret || bearerSecret || querySecret || bodySecret || keyParam || '').trim();
 
-    const nonPlaceholderCandidate = [headerSecret, bearerSecret, querySecret, bodySecret]
-      .map(s => String(s || '').trim())
-      .find(s => s.length > 0 && s !== 'callback_scret' && s !== 'callback_secret');
-
-    const candidateSecret = String(nonPlaceholderCandidate || keyParam || headerSecret || bearerSecret || querySecret || bodySecret || '').trim();
-
-    // Verifikasi Secret Key
-    const isSecretValid = same(candidateSecret, expectedSecret) || 
-      (candidateSecret.length > 0 && candidateSecret === expectedSecret) ||
-      (expectedSecret === 'mysecret' && (candidateSecret === 'mysecret' || candidateSecret === '312d3971811869d9f3a6c740b944f9bf841369d17479bdcaaa9080d1658ba4cb')) ||
-      (candidateSecret === 'callback_scret' || candidateSecret === 'callback_secret');
-
-    if (!isSecretValid) {
+    if (!same(candidateSecret, expectedSecret)) {
       console.warn(`🔒 [QIOSPAY_CALLBACK_INVALID_SECRET] Rejected unauthorized callback. Candidate: ${maskSecret(candidateSecret)}, Expected: ${maskSecret(expectedSecret)}`);
       return {
         statusCode: 403,

@@ -43,7 +43,7 @@ export const CONSOLE_CONFIG = {
   MONGODB_DBNAME_TRANS: process.env.MONGODB_DBNAME_TRANS || '',
 
   /** Token admin untuk proteksi /api/supabase/exec-sql & endpoint sensitif */
-  ADMIN_TOKEN: process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY || 'wayahe_admin_secret_token_1234',
+  ADMIN_TOKEN: process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY || '',
 
   /** Apakah mode production? */
   get isProduction(): boolean {

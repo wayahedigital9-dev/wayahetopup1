@@ -260,11 +260,11 @@ export class ProviderIntegrationService {
   /**
    * Simpan pembaruan konfigurasi API
    */
-  saveApiConfig(config: ApiProviderConfig): void {
+  async saveApiConfig(config: ApiProviderConfig): Promise<void> {
     const settings = storage.getSettings();
     const current = settings.apiConfigs || {};
     current[config.category] = config;
-    storage.saveSettings({ ...settings, apiConfigs: current });
+    await storage.saveSettings({ ...settings, apiConfigs: current });
   }
 
   /**
@@ -306,7 +306,7 @@ export class ProviderIntegrationService {
               connectionStatus: 'CONNECTED',
               lastTestedAt: now,
             };
-            this.saveApiConfig(updatedConfig);
+            await this.saveApiConfig(updatedConfig);
             return {
               success: true,
               message: `Terhubung ke Xaviera Store! Ditemukan ${json.products.length} produk katalog aktif.`,
@@ -322,7 +322,7 @@ export class ProviderIntegrationService {
           connectionStatus: 'CONNECTED',
           lastTestedAt: now,
         };
-        this.saveApiConfig(updatedConfig);
+        await this.saveApiConfig(updatedConfig);
 
         return {
           success: true,
@@ -362,7 +362,7 @@ export class ProviderIntegrationService {
               connectionStatus: 'CONNECTED',
               lastTestedAt: now,
             };
-            this.saveApiConfig(updatedConfig);
+            await this.saveApiConfig(updatedConfig);
             return {
               success: true,
               message: `Terhubung ke Xaviera SMM Gateway! Ditemukan ${json.services.length} layanan aktif.`,
@@ -377,7 +377,7 @@ export class ProviderIntegrationService {
           connectionStatus: 'CONNECTED',
           lastTestedAt: now,
         };
-        this.saveApiConfig(updatedConfig);
+        await this.saveApiConfig(updatedConfig);
 
         return {
           success: true,
@@ -392,7 +392,7 @@ export class ProviderIntegrationService {
           connectionStatus: 'CONNECTED',
           lastTestedAt: now,
         };
-        this.saveApiConfig(updatedConfig);
+        await this.saveApiConfig(updatedConfig);
         return {
           success: true,
           message: `Koneksi ke provider ${config.providerName} berhasil diverifikasi.`,
@@ -404,7 +404,7 @@ export class ProviderIntegrationService {
         connectionStatus: 'FAILED',
         lastTestedAt: now,
       };
-      this.saveApiConfig(updatedConfig);
+      await this.saveApiConfig(updatedConfig);
       return {
         success: false,
         message: `Gagal menghubungkan ke provider: ${err?.message || 'Server timeout atau endpoint tidak merespon.'}`,
@@ -738,7 +738,7 @@ export class ProviderIntegrationService {
       lastSyncStatus: 'SUCCESS',
       lastSyncSummary: `Sinkronisasi berhasil: +${addedCount} baru, ${updatedCount} diperbarui, ${skippedCount} dilewati.`,
     };
-    this.saveApiConfig(updatedConfig);
+    await this.saveApiConfig(updatedConfig);
 
     return {
       added: addedCount,
