@@ -331,6 +331,30 @@ export class FulfillmentService {
   }
 
   private async fulfillWifiVoucher(order: any, product: any): Promise<void> {
+    const primaryItem = (Array.isArray(order.items) && order.items.length > 0) ? order.items[0] : null;
+    const reservedManualVoucher = await mongoDbService.reserveManualWifiVoucher({
+      productId: product?.id || order.productId || primaryItem?.productId,
+      variantId: order.variantId || primaryItem?.variantId,
+      orderId: order.id,
+    });
+    if (reservedManualVoucher) {
+      const ssid = product?.networkLocation || 'MelatiNet_Warga_Hotspot';
+      const loginUrl = 'http://hotspot.wayahedigital.id';
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: {
+          fulfillmentStatus: 'SUCCESS', voucherCode: reservedManualVoucher.code,
+          voucherPassword: reservedManualVoucher.password || '1234', wifiSsid: ssid, wifiLoginUrl: loginUrl, fulfilledAt: new Date(),
+        },
+      });
+      await mongoDbService.saveOrder({
+        id: order.id, fulfillmentStatus: 'SUCCESS', voucherCode: reservedManualVoucher.code,
+        voucherPassword: reservedManualVoucher.password || '1234', wifiSsid: ssid, wifiLoginUrl: loginUrl,
+        serialNumber: reservedManualVoucher.code, fulfilledAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      });
+      return;
+    }
+
     // 1. Alokasikan voucher yang AVAILABLE dari tabel
     let selectedVoucher = await this.prisma.wifiVoucherItem.findFirst({
       where: {

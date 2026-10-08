@@ -484,6 +484,42 @@ export class MongoDbService {
     }
   }
 
+  async reserveManualWifiVoucher(input: { productId?: string; variantId?: string; orderId: string }): Promise<{ code: string; password?: string } | null> {
+    const client = await this.getClient();
+    if (!client) return null;
+    const db = client.db(this.getPrimaryDbName());
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const snapshot: any = await db.collection('manual_inventory').findOne({ _id: 'current' as any });
+      if (!snapshot || !Array.isArray(snapshot.products)) return null;
+      const products = structuredClone(snapshot.products);
+      const wifiBatches = Array.isArray(snapshot.wifiBatches) ? structuredClone(snapshot.wifiBatches) : [];
+      const product = products.find((item: any) => item.id === input.productId);
+      if (!product) return null;
+      const variant = input.variantId ? (product.variants || []).find((item: any) => item.id === input.variantId) : null;
+      const holder = variant || product;
+      const codes = Array.isArray(holder.voucherCodes) ? [...holder.voucherCodes] : [];
+      const raw = codes.shift();
+      if (!raw) return null;
+      holder.voucherCodes = codes;
+      holder.stock = codes.length;
+      if (variant) product.stock = (product.variants || []).reduce((sum: number, item: any) => sum + Number(item.stock || 0), 0);
+      const [code, password] = String(raw).split('|');
+      const batch = wifiBatches.find((item: any) => item.productId === product.id && (!variant || item.variantId === variant.id));
+      const batchVoucher = batch?.vouchers?.find((item: any) => item.status === 'AVAILABLE' && item.code === String(code).trim());
+      if (batchVoucher) { batchVoucher.status = 'USED'; batchVoucher.usedAt = new Date().toISOString(); batchVoucher.orderId = input.orderId; }
+      const write = await db.collection('manual_inventory').updateOne(
+        { _id: 'current' as any, revision: Number(snapshot.revision || 0) },
+        { $set: { products, wifiBatches, updatedAt: new Date().toISOString() }, $inc: { revision: 1 } },
+        { writeConcern: { w: 'majority', j: true } }
+      );
+      if (write.modifiedCount === 1) {
+        try { const local = this.loadLocalFile(); local.products = products; local.wifiBatches = wifiBatches; this.saveLocalFile(local); } catch (_) {}
+        return { code: String(code).trim(), password: password?.trim() || undefined };
+      }
+    }
+    throw new Error('Stok voucher berubah bersamaan. Silakan coba ulang.');
+  }
+
   /**
    * Direct User Persistence (Registration / Update)
    */

@@ -892,7 +892,7 @@ export const apiAdapter = {
             'Digiflazz Buyer Service',
             `Transaksi Digiflazz ${order.category} untuk ${(item as any)?.productName || (order as any).productName} ke ${order.targetDestination} diproses.`
           );
-        } else if (order.category === 'wifi') {
+        } else if (order.category === 'wifi' && false) {
           const wifiSettings = storage.getSettings();
           const targetProduct = storage.getProducts().find(p => p.id === item.productId);
           const targetSsid = targetProduct?.networkLocation || wifiSettings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot';
@@ -1049,6 +1049,11 @@ export const apiAdapter = {
               );
             }
           }
+        } else if (order.category === 'wifi') {
+          // Voucher WiFi hanya dialokasikan oleh backend setelah pembayaran dikonfirmasi.
+          // Browser tidak boleh lagi membaca atau mengurangi stok lokal.
+          order.fulfillmentStatus = 'PROCESSING';
+          order.fulfillmentResult = { notes: 'Pembayaran diterima. Voucher WiFi sedang dialokasikan aman oleh server.' };
         } else if (order.category === 'premium') {
           const allProducts = storage.getProducts();
           const targetProduct = allProducts.find(p => p.id === item.productId);

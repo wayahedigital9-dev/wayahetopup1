@@ -159,7 +159,12 @@ export function ManualProductManager({
     };
 
     allProducts.unshift(newProd);
-    storage.saveProducts(allProducts);
+    try {
+      await persistManualInventory(allProducts, storage.getVoucherBatches());
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Produk belum tersimpan di database.', 'error');
+      return;
+    }
     storage.addAuditLog(
       'MANUAL_PRODUCT_CREATED',
       category === 'premium' ? 'Admin Premium' : 'Admin WiFi',
@@ -175,7 +180,7 @@ export function ManualProductManager({
   };
 
   // 2. Simpan Variant Baru
-  const handleSaveVariant = (e: React.FormEvent) => {
+  const handleSaveVariant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVariantName.trim()) {
       onShowToast('Gagal', 'Nama variant wajib diisi', 'error');
@@ -222,33 +227,25 @@ export function ManualProductManager({
     }
     allProducts[prodIdx] = targetProduct;
 
-    storage.saveProducts(allProducts);
+    const wifiBatches = storage.getVoucherBatches();
+    if (category === 'wifi') {
+      wifiBatches.unshift({
+        id: 'batch-' + Date.now().toString(36), name: `${targetProduct.name} - ${newVariant.name}`,
+        productId: targetProduct.id, variantId: newVariant.id, speedProfile: 'Up to 10 Mbps', duration: newVariant.name,
+        quotaLimit: 'Unlimited FUP', location: 'Hotspot Area RT/RW', vouchers: [], createdAt: new Date().toISOString(),
+      });
+    }
+    try {
+      await persistManualInventory(allProducts, wifiBatches);
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Varian belum tersimpan di database.', 'error');
+      return;
+    }
     storage.addAuditLog(
       'MANUAL_VARIANT_CREATED',
       category === 'premium' ? 'Admin Premium' : 'Admin WiFi',
       `Varian ${newVariant.name} untuk produk ${targetProduct.name} berhasil ditambahkan.`
     );
-
-    // If WiFi, also create linked batch
-    if (category === 'wifi') {
-      try {
-        const curBatches = storage.getVoucherBatches();
-        const newBatch: WifiVoucherBatch = {
-          id: 'batch-' + Date.now().toString(36),
-          name: `${targetProduct.name} - ${newVariant.name}`,
-          productId: targetProduct.id,
-          variantId: newVariant.id,
-          speedProfile: 'Up to 10 Mbps',
-          duration: newVariant.name,
-          quotaLimit: 'Unlimited FUP',
-          location: 'Hotspot Area RT/RW',
-          vouchers: [],
-          createdAt: new Date().toISOString(),
-        };
-        curBatches.unshift(newBatch);
-        storage.saveVoucherBatches(curBatches);
-      } catch (_) {}
-    }
 
     setNewVariantName('');
     setNewVariantPrice('');
@@ -412,17 +409,21 @@ export function ManualProductManager({
   };
 
   // Delete product
-  const handleDeleteProduct = (prodId: string, prodName: string) => {
+  const handleDeleteProduct = async (prodId: string, prodName: string) => {
     if (!window.confirm(`Hapus produk "${prodName}" beserta semua varian dan stoknya?`)) return;
     const allProducts = storage.getProducts().filter(p => p.id !== prodId);
-    storage.saveProducts(allProducts);
-    setReloadKey(prev => prev + 1);
-    if (onRefreshData) onRefreshData();
+    const wifiBatches = storage.getVoucherBatches().filter(batch => batch.productId !== prodId);
+    try {
+      await persistManualInventory(allProducts, wifiBatches);
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Produk belum dihapus dari database.', 'error');
+      return;
+    }
     onShowToast('Dihapus', `Produk "${prodName}" berhasil dihapus.`, 'info');
   };
 
   // Delete variant
-  const handleDeleteVariant = (prodId: string, variantId: string, variantName: string) => {
+  const handleDeleteVariant = async (prodId: string, variantId: string, variantName: string) => {
     if (!window.confirm(`Hapus varian "${variantName}"?`)) return;
     const allProducts = storage.getProducts();
     const prodIdx = allProducts.findIndex(p => p.id === prodId);
@@ -431,9 +432,13 @@ export function ManualProductManager({
       prod.variants = (prod.variants || []).filter(v => v.id !== variantId);
       prod.stock = (prod.variants || []).reduce((acc, v) => acc + (v.stock || 0), 0);
       allProducts[prodIdx] = prod;
-      storage.saveProducts(allProducts);
-      setReloadKey(prev => prev + 1);
-      if (onRefreshData) onRefreshData();
+      const wifiBatches = storage.getVoucherBatches().filter(batch => !(batch.productId === prodId && batch.variantId === variantId));
+      try {
+        await persistManualInventory(allProducts, wifiBatches);
+      } catch (error: any) {
+        onShowToast('Gagal', error?.message || 'Varian belum dihapus dari database.', 'error');
+        return;
+      }
       onShowToast('Dihapus', `Varian "${variantName}" berhasil dihapus.`, 'info');
     }
   };
