@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Package, 
+  Box,
   Ticket, 
   ReceiptText, 
   RefreshCw, 
@@ -81,7 +82,7 @@ import {
   SlidersHorizontal,
   Loader2
 } from 'lucide-react';
-import { Product, ProductVariant, Order, WifiVoucherBatch, AppSettings, PaymentStatus, FulfillmentStatus, AdminAuthSession, PromoBanner, StoreCatalog, DiscountPopupConfig, PromoCode } from '../types';
+import { Product, ProductVariant, Order, WifiVoucherBatch, AppSettings, PaymentStatus, FulfillmentStatus, AdminAuthSession, PromoBanner, StoreCatalog, DiscountPopupConfig, PromoCode, HeroPromoSlide, HeroPromoCardItem } from '../types';
 import { formatRupiah, formatDateWIB } from '../utils/operator';
 import { PaymentStatusBadge, FulfillmentStatusBadge } from '../components/StatusBadge';
 import { ProductLogo } from '../components/ProductLogo';
@@ -90,9 +91,10 @@ import { AdminRealtimeRevenueCards } from '../components/AdminRealtimeRevenueCar
 import { DiscountPopupModal } from '../components/DiscountPopupModal';
 import { AdminDigiflazzIpCard } from '../components/AdminDigiflazzIpCard';
 import { AdminSecurityCard } from '../components/AdminSecurityCard';
-import { storage, DEFAULT_DISCOUNT_POPUP } from '../services/storage';
+import { storage, DEFAULT_DISCOUNT_POPUP, INITIAL_HERO_SLIDES } from '../services/storage';
 import { apiAdapter } from '../services/apiAdapter';
 import { triggerTopLoading } from '../components/TopProgressBar';
+import QRCode from 'qrcode';
 import { tunnelClient, TunnelStatusResponse } from '../services/tunnelClient';
 import { mongoClient, MongoInfoResponse, MongoTestResponse, MongoQueryResponse } from '../services/mongoClientService';
 import { supabaseClient, SupabaseInfoResponse, SupabaseTestResponse, sanitizeUrl } from '../services/supabaseClientService';
@@ -100,6 +102,7 @@ import { pushClientService, PushStatus, DeviceInfo } from '../services/pushClien
 import { validateQRISPayload } from '../utils/qris';
 import { AdminApiSettingsSection } from '../components/AdminApiSettingsSection';
 import { AdminProductProviderTable } from '../components/AdminProductProviderTable';
+import { ManualProductManager } from '../components/ManualProductManager';
 import { providerIntegrationService } from '../services/providerIntegrationService';
 
 interface AdminDashboardProps {
@@ -513,6 +516,197 @@ export function AdminDashboard({
   const [bannerFormCtaCategory, setBannerFormCtaCategory] = useState<string>('game');
   const [bannerFormImageUrl, setBannerFormImageUrl] = useState<string>('');
   const [bannerFormIsActive, setBannerFormIsActive] = useState<boolean>(true);
+
+  // Hero Carousel Promo Slides State (Slide Interaktif Teks & Kartu Produk di Beranda)
+  const [heroSlidesList, setHeroSlidesList] = useState<HeroPromoSlide[]>(() => storage.getHeroSlides());
+  const [bannerTabMode, setBannerTabMode] = useState<'SLIDER' | 'IMAGE'>('SLIDER');
+  const [editingHeroSlide, setEditingHeroSlide] = useState<HeroPromoSlide | null>(null);
+  const [isAddingHeroSlide, setIsAddingHeroSlide] = useState<boolean>(false);
+
+  // Form fields for Hero Slide
+  const [slideFormBadge, setSlideFormBadge] = useState<string>('');
+  const [slideFormBadgeColor, setSlideFormBadgeColor] = useState<string>('emerald');
+  const [slideFormTitle, setSlideFormTitle] = useState<string>('');
+  const [slideFormSubtitle, setSlideFormSubtitle] = useState<string>('');
+  const [slideFormTag1, setSlideFormTag1] = useState<string>('');
+  const [slideFormTag2, setSlideFormTag2] = useState<string>('');
+  const [slideFormTag3, setSlideFormTag3] = useState<string>('');
+  const [slideFormCtaText, setSlideFormCtaText] = useState<string>('Pilih Akun Premium');
+  const [slideFormCtaCategory, setSlideFormCtaCategory] = useState<string>('premium');
+  const [slideFormSecondaryCtaText, setSlideFormSecondaryCtaText] = useState<string>('Lihat Semua Aplikasi');
+  const [slideFormSecondaryCtaAction, setSlideFormSecondaryCtaAction] = useState<string>('premium');
+  const [slideFormCardTitle, setSlideFormCardTitle] = useState<string>('Langganan Premium Populer');
+  const [slideFormCardSubtitle, setSlideFormCardSubtitle] = useState<string>('Legal & Bergaransi Resmi');
+  const [slideFormServerStatus, setSlideFormServerStatus] = useState<string>('🔒 Garansi Full 30 Hari Ganti Baru');
+  const [slideFormIsActive, setSlideFormIsActive] = useState<boolean>(true);
+  const [slideFormItem1Name, setSlideFormItem1Name] = useState<string>('Netflix 4K UHD');
+  const [slideFormItem1Sub, setSlideFormItem1Sub] = useState<string>('1 Bulan Private Profile');
+  const [slideFormItem1Price, setSlideFormItem1Price] = useState<string>('Rp 28.000');
+  const [slideFormItem1Discount, setSlideFormItem1Discount] = useState<string>('Garansi');
+
+  const [slideFormItem2Name, setSlideFormItem2Name] = useState<string>('Spotify Family');
+  const [slideFormItem2Sub, setSlideFormItem2Sub] = useState<string>('1 Bulan Akun Pribadi');
+  const [slideFormItem2Price, setSlideFormItem2Price] = useState<string>('Rp 15.000');
+  const [slideFormItem2Discount, setSlideFormItem2Discount] = useState<string>('Bebas Iklan');
+
+  const [slideFormItem3Name, setSlideFormItem3Name] = useState<string>('YouTube Premium');
+  const [slideFormItem3Sub, setSlideFormItem3Sub] = useState<string>('1 Bulan Bebas Iklan + Music');
+  const [slideFormItem3Price, setSlideFormItem3Price] = useState<string>('Rp 12.000');
+  const [slideFormItem3Discount, setSlideFormItem3Discount] = useState<string>('Hemat');
+
+  const handleOpenEditHeroSlide = (slide: HeroPromoSlide) => {
+    setEditingHeroSlide(slide);
+    setIsAddingHeroSlide(false);
+    setSlideFormBadge(slide.badge || '');
+    setSlideFormBadgeColor(slide.badgeColor || 'emerald');
+    setSlideFormTitle(slide.title || '');
+    setSlideFormSubtitle(slide.subtitle || '');
+    setSlideFormTag1(slide.tags?.[0] || '');
+    setSlideFormTag2(slide.tags?.[1] || '');
+    setSlideFormTag3(slide.tags?.[2] || '');
+    setSlideFormCtaText(slide.ctaText || 'Pilih Produk');
+    setSlideFormCtaCategory(slide.ctaCategory || 'premium');
+    setSlideFormSecondaryCtaText(slide.secondaryCtaText || 'Lihat Semua');
+    setSlideFormSecondaryCtaAction(slide.secondaryCtaAction || slide.ctaCategory || 'premium');
+    setSlideFormCardTitle(slide.cardTitle || 'Promo Terpopuler');
+    setSlideFormCardSubtitle(slide.cardSubtitle || 'Harga Spesial');
+    setSlideFormServerStatus(slide.serverStatus || '🟢 Server Otomatis');
+    setSlideFormIsActive(slide.isActive !== false);
+
+    const it1 = slide.cardItems?.[0] || { name: '', sub: '', price: '', discount: '' };
+    const it2 = slide.cardItems?.[1] || { name: '', sub: '', price: '', discount: '' };
+    const it3 = slide.cardItems?.[2] || { name: '', sub: '', price: '', discount: '' };
+    setSlideFormItem1Name(it1.name); setSlideFormItem1Sub(it1.sub); setSlideFormItem1Price(it1.price); setSlideFormItem1Discount(it1.discount);
+    setSlideFormItem2Name(it2.name); setSlideFormItem2Sub(it2.sub); setSlideFormItem2Price(it2.price); setSlideFormItem2Discount(it2.discount);
+    setSlideFormItem3Name(it3.name); setSlideFormItem3Sub(it3.sub); setSlideFormItem3Price(it3.price); setSlideFormItem3Discount(it3.discount);
+  };
+
+  const handleOpenAddHeroSlide = () => {
+    setEditingHeroSlide(null);
+    setIsAddingHeroSlide(true);
+    setSlideFormBadge('⭐ PROMO RESELLER TERBARU');
+    setSlideFormBadgeColor('emerald');
+    setSlideFormTitle('Judul Promo Baru Menarik');
+    setSlideFormSubtitle('Penjelasan keuntungan, bonus, dan fitur promo spesial untuk pelanggan.');
+    setSlideFormTag1('⚡ Proses Instan Detik Ini');
+    setSlideFormTag2('🛡️ Garansi 100% Legal');
+    setSlideFormTag3('💰 Cashback Koin Member');
+    setSlideFormCtaText('Pilih Produk');
+    setSlideFormCtaCategory('premium');
+    setSlideFormSecondaryCtaText('Lihat Semua');
+    setSlideFormSecondaryCtaAction('premium');
+    setSlideFormCardTitle('Paket Paling Laris');
+    setSlideFormCardSubtitle('Harga Spesial Hari Ini');
+    setSlideFormServerStatus('🟢 Server Siaga 24 Jam');
+    setSlideFormIsActive(true);
+    setSlideFormItem1Name('Produk A'); setSlideFormItem1Sub('Deskripsi singkat'); setSlideFormItem1Price('Rp 20.000'); setSlideFormItem1Discount('Promo');
+    setSlideFormItem2Name('Produk B'); setSlideFormItem2Sub('Deskripsi singkat'); setSlideFormItem2Price('Rp 35.000'); setSlideFormItem2Discount('Best');
+    setSlideFormItem3Name('Produk C'); setSlideFormItem3Sub('Deskripsi singkat'); setSlideFormItem3Price('Rp 50.000'); setSlideFormItem3Discount('Hemat');
+  };
+
+  const handleSaveHeroSlide = () => {
+    if (!slideFormTitle.trim()) {
+      onShowToast('Judul Wajib Diisi', 'Masukkan judul utama promo slide', 'warning');
+      return;
+    }
+
+    const tags = [slideFormTag1.trim(), slideFormTag2.trim(), slideFormTag3.trim()].filter(Boolean);
+    const cardItems: HeroPromoCardItem[] = [
+      { name: slideFormItem1Name.trim(), sub: slideFormItem1Sub.trim(), price: slideFormItem1Price.trim(), discount: slideFormItem1Discount.trim() },
+      { name: slideFormItem2Name.trim(), sub: slideFormItem2Sub.trim(), price: slideFormItem2Price.trim(), discount: slideFormItem2Discount.trim() },
+      { name: slideFormItem3Name.trim(), sub: slideFormItem3Sub.trim(), price: slideFormItem3Price.trim(), discount: slideFormItem3Discount.trim() },
+    ].filter(item => Boolean(item.name));
+
+    const currentAll = storage.getHeroSlides();
+
+    if (editingHeroSlide) {
+      const updated = currentAll.map(s => s.id === editingHeroSlide.id ? {
+        ...s,
+        badge: slideFormBadge,
+        badgeColor: slideFormBadgeColor,
+        title: slideFormTitle,
+        subtitle: slideFormSubtitle,
+        tags: tags.length > 0 ? tags : ['⚡ Instan 24 Jam'],
+        ctaText: slideFormCtaText,
+        ctaCategory: slideFormCtaCategory,
+        secondaryCtaText: slideFormSecondaryCtaText,
+        secondaryCtaAction: slideFormSecondaryCtaAction,
+        cardTitle: slideFormCardTitle,
+        cardSubtitle: slideFormCardSubtitle,
+        cardItems: cardItems.length > 0 ? cardItems : s.cardItems,
+        serverStatus: slideFormServerStatus,
+        isActive: slideFormIsActive,
+      } : s);
+      storage.saveHeroSlides(updated);
+      setHeroSlidesList(updated);
+      onShowToast('Slide Diperbarui', 'Tampilan slide promo beranda berhasil disimpan', 'success');
+    } else if (isAddingHeroSlide) {
+      const newSlide: HeroPromoSlide = {
+        id: 'slide-' + Date.now(),
+        badge: slideFormBadge,
+        badgeColor: slideFormBadgeColor,
+        title: slideFormTitle,
+        subtitle: slideFormSubtitle,
+        tags: tags.length > 0 ? tags : ['⚡ Instan 24 Jam'],
+        ctaText: slideFormCtaText,
+        ctaCategory: slideFormCtaCategory,
+        secondaryCtaText: slideFormSecondaryCtaText,
+        secondaryCtaAction: slideFormSecondaryCtaAction,
+        cardTitle: slideFormCardTitle,
+        cardSubtitle: slideFormCardSubtitle,
+        cardItems: cardItems.length > 0 ? cardItems : [
+          { name: 'Produk Pilihan', sub: 'Deskripsi', price: 'Rp 10.000', discount: 'Promo' }
+        ],
+        serverStatus: slideFormServerStatus,
+        isActive: slideFormIsActive,
+        order: currentAll.length + 1,
+      };
+      const updated = [...currentAll, newSlide];
+      storage.saveHeroSlides(updated);
+      setHeroSlidesList(updated);
+      onShowToast('Slide Ditambahkan', 'Slide baru berhasil ditambahkan ke carousel beranda', 'success');
+    }
+
+    setEditingHeroSlide(null);
+    setIsAddingHeroSlide(false);
+  };
+
+  const handleDeleteHeroSlide = (slideId: string) => {
+    if (heroSlidesList.length <= 1) {
+      onShowToast('Tidak Dapat Dihapus', 'Minimal harus ada 1 slide promo di beranda', 'warning');
+      return;
+    }
+    if (!confirm('Apakah Anda yakin ingin menghapus slide ini dari carousel beranda?')) return;
+    storage.deleteHeroSlide(slideId);
+    const remaining = storage.getHeroSlides();
+    setHeroSlidesList(remaining);
+    onShowToast('Slide Dihapus', 'Slide promo berhasil dihapus dari carousel beranda', 'info');
+  };
+
+  const handleToggleHeroSlideActive = (slideId: string) => {
+    const currentAll = storage.getHeroSlides();
+    const updated = currentAll.map(s => s.id === slideId ? { ...s, isActive: !s.isActive } : s);
+    storage.saveHeroSlides(updated);
+    setHeroSlidesList(updated);
+  };
+
+  const handleMoveHeroSlideOrder = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= heroSlidesList.length) return;
+    const newList = [...heroSlidesList];
+    const temp = newList[index];
+    newList[index] = newList[targetIndex];
+    newList[targetIndex] = temp;
+    storage.saveHeroSlides(newList);
+    setHeroSlidesList(newList);
+  };
+
+  const handleResetHeroSlides = () => {
+    if (!confirm('Kembalikan semua slide promo ke setelan awal default bawaan sistem?')) return;
+    const def = storage.resetHeroSlides();
+    setHeroSlidesList(def);
+    onShowToast('Setelan Direset', 'Slide promo beranda berhasil dikembalikan ke default', 'success');
+  };
 
   const handleOpenEditBanner = (banner: PromoBanner) => {
     setEditingBanner(banner);
@@ -961,6 +1155,41 @@ export function AdminDashboard({
   const [selectedBatchForAdd, setSelectedBatchForAdd] = useState<WifiVoucherBatch | null>(null);
   const [selectedBatchForPrint, setSelectedBatchForPrint] = useState<WifiVoucherBatch | null>(null);
   const [singleBatchVouchersRaw, setSingleBatchVouchersRaw] = useState('');
+  // WiFi Voucher Central Sub-tab ('BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG')
+  const [wifiSubTab, setWifiSubTab] = useState<'BATCHES' | 'CATALOG' | 'MANUAL' | 'GENERATOR' | 'CONFIG'>('BATCHES');
+  // Premium Management Mode ('MANUAL' | 'PROVIDER')
+  const [premiumMode, setPremiumMode] = useState<'MANUAL' | 'PROVIDER'>('MANUAL');
+
+  // MikroTik RouterOS Generator States
+  const [genQty, setGenQty] = useState<number>(20);
+  const [genPrefix, setGenPrefix] = useState<string>('WF-');
+  const [genLength, setGenLength] = useState<number>(6);
+  const [genCharset, setGenCharset] = useState<'ALPHANUMERIC_UPPER' | 'NUMERIC_ONLY' | 'ALPHANUMERIC_LOWER'>('ALPHANUMERIC_UPPER');
+  const [genPassMode, setGenPassMode] = useState<'SAME_AS_CODE' | 'RANDOM_PIN' | 'CUSTOM' | 'NO_PASS'>('RANDOM_PIN');
+  const [genCustomPass, setGenCustomPass] = useState<string>('1234');
+  const [genProfile, setGenProfile] = useState<string>('10M-Unlimited');
+  const [genDuration, setGenDuration] = useState<string>('24 Jam');
+  const [genBatchTarget, setGenBatchTarget] = useState<string>('NEW_BATCH');
+  const [genNewBatchName, setGenNewBatchName] = useState<string>('Batch Hotspot ' + new Date().toLocaleDateString('id-ID'));
+  const [genNewBatchLocation, setGenNewBatchLocation] = useState<string>('MelatiNet_Warga_Hotspot');
+  const [genTargetProductId, setGenTargetProductId] = useState<string>('');
+  const [genPreviewVouchers, setGenPreviewVouchers] = useState<Array<{ code: string; password?: string }>>([]);
+  const [genMikrotikScript, setGenMikrotikScript] = useState<string>('');
+
+  // Print Voucher States & Layout
+  const [printLayout, setPrintLayout] = useState<'MODERN_CARD' | 'THERMAL' | 'A4_GRID'>('MODERN_CARD');
+  const [printShowPassword, setPrintShowPassword] = useState<boolean>(true);
+  const [printShowQr, setPrintShowQr] = useState<boolean>(true);
+  const [printQrCodeMap, setPrintQrCodeMap] = useState<Record<string, string>>({});
+
+  // Hotspot & Captive Portal Configuration States
+  const [hotspotSsid, setHotspotSsid] = useState<string>(settings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot');
+  const [hotspotLoginUrl, setHotspotLoginUrl] = useState<string>(settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id');
+  const [hotspotDefaultPassword, setHotspotDefaultPassword] = useState<string>(settings.wifiDefaultPassword || '1234');
+  const [hotspotPasswordMode, setHotspotPasswordMode] = useState<'SAME_AS_CODE' | 'RANDOM_PIN' | 'CUSTOM' | 'NO_PASSWORD'>(settings.wifiPasswordMode || 'RANDOM_PIN');
+  const [hotspotLoginInstructions, setHotspotLoginInstructions] = useState<string>(settings.wifiLoginInstructions || '1. Sambungkan HP / Laptop Anda ke WiFi Hotspot\n2. Buka browser atau klik notifikasi Masuk ke Jaringan Hotspot\n3. Masukkan Kode Voucher di atas dan klik Login');
+  const [hotspotContactSupport, setHotspotContactSupport] = useState<string>(settings.wifiContactSupport || '0812-3456-7890');
+  const [isSavingHotspotConfig, setIsSavingHotspotConfig] = useState<boolean>(false);
 
   // WiFi Product & Variant Management States
   const [showWifiProductModal, setShowWifiProductModal] = useState(false);
@@ -1180,6 +1409,18 @@ export function AdminDashboard({
       .filter(l => l.length > 0);
 
     const vouchers = lines.map((line, idx) => {
+      // MikroTik CLI format check: add name="USER" password="PASS"
+      const mikrotikNameMatch = line.match(/name=["']?([^"'\s]+)["']?/i);
+      const mikrotikPassMatch = line.match(/password=["']?([^"'\s]+)["']?/i);
+      if (mikrotikNameMatch) {
+        return {
+          id: `vch-${Date.now()}-${idx}`,
+          code: mikrotikNameMatch[1],
+          password: mikrotikPassMatch ? mikrotikPassMatch[1] : undefined,
+          status: 'AVAILABLE' as const,
+        };
+      }
+
       // format: code,password OR just code
       const parts = line.split(/[,:|\t]/);
       return {
@@ -1271,6 +1512,17 @@ export function AdminDashboard({
       .filter(l => l.length > 0);
 
     const newVouchers = lines.map((line, idx) => {
+      const mikrotikNameMatch = line.match(/name=["']?([^"'\s]+)["']?/i);
+      const mikrotikPassMatch = line.match(/password=["']?([^"'\s]+)["']?/i);
+      if (mikrotikNameMatch) {
+        return {
+          id: `vch-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
+          code: mikrotikNameMatch[1],
+          password: mikrotikPassMatch ? mikrotikPassMatch[1] : undefined,
+          status: 'AVAILABLE' as const,
+        };
+      }
+
       const parts = line.split(/[,:|\t]/);
       return {
         id: `vch-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
@@ -1338,6 +1590,253 @@ export function AdminDashboard({
     document.body.removeChild(link);
     onShowToast('Export Berhasil', 'Data voucher berhasil diexport ke CSV', 'success');
   };
+
+  const handleCleanUsedVouchers = (batchId: string) => {
+    const target = batches.find(b => b.id === batchId);
+    if (!target) return;
+    const usedCount = target.vouchers.filter(v => v.status === 'USED').length;
+    if (usedCount === 0) {
+      alert('Tidak ada voucher terpakai di batch ini.');
+      return;
+    }
+    if (confirm(`Bersihkan ${usedCount} voucher yang sudah TERPAKAI dari batch "${target.name}"? Stok tersedia tetap aman.`)) {
+      triggerTopLoading.start();
+      const updated = batches.map(b => {
+        if (b.id !== batchId) return b;
+        return {
+          ...b,
+          vouchers: b.vouchers.filter(v => v.status !== 'USED'),
+        };
+      });
+      storage.saveVoucherBatches(updated);
+      setBatches(updated);
+      onShowToast('Voucher Dibersihkan', `${usedCount} voucher terpakai telah dibersihkan`, 'success');
+      setTimeout(() => triggerTopLoading.done(), 200);
+    }
+  };
+
+  const handleMarkAllVouchersUsed = (batchId: string) => {
+    const target = batches.find(b => b.id === batchId);
+    if (!target) return;
+    const availCount = target.vouchers.filter(v => v.status === 'AVAILABLE').length;
+    if (availCount === 0) {
+      alert('Semua voucher di batch ini sudah terpakai.');
+      return;
+    }
+    if (confirm(`Tandai seluruh ${availCount} voucher di batch "${target.name}" sebagai TERPAKAI (USED)?`)) {
+      triggerTopLoading.start();
+      const updated = batches.map(b => {
+        if (b.id !== batchId) return b;
+        return {
+          ...b,
+          vouchers: b.vouchers.map(v => ({ ...v, status: 'USED' as const, usedAt: new Date().toISOString() })),
+        };
+      });
+      storage.saveVoucherBatches(updated);
+      setBatches(updated);
+      onShowToast('Status Diperbarui', `Semua voucher di batch "${target.name}" ditandai terpakai`, 'info');
+      setTimeout(() => triggerTopLoading.done(), 200);
+    }
+  };
+
+  const handleExportMikrotikScript = (batch?: WifiVoucherBatch) => {
+    const targetBatches = batch ? [batch] : batches;
+    const profile = batch?.speedProfile?.replace(/[^a-zA-Z0-9_-]/g, '_') || 'default';
+    let script = `# ================================================================\n# MikroTik RouterOS Script - Hotspot User Batch Import\n# Platform: WayaheDigital RT/RW Net Engine\n# Generated: ${new Date().toLocaleString('id-ID')}\n# ================================================================\n/ip hotspot user\n`;
+
+    let total = 0;
+    targetBatches.forEach(b => {
+      const avail = b.vouchers.filter(v => v.status === 'AVAILABLE');
+      avail.forEach(v => {
+        total++;
+        const pass = v.password || v.code;
+        script += `add name="${v.code}" password="${pass}" profile="${profile}" comment="${b.name.replace(/"/g, '')}"\n`;
+      });
+    });
+
+    if (total === 0) {
+      alert('Tidak ada voucher ready (AVAILABLE) untuk diekspor ke script MikroTik.');
+      return;
+    }
+
+    navigator.clipboard.writeText(script);
+    onShowToast('Script MikroTik Disalin', `${total} user RouterOS script disalin. Tempel di Terminal Winbox!`, 'success');
+  };
+
+  const handleGenerateVouchers = () => {
+    const count = Math.min(Math.max(1, Number(genQty) || 10), 500);
+    const chars = genCharset === 'NUMERIC_ONLY' 
+      ? '0123456789'
+      : (genCharset === 'ALPHANUMERIC_LOWER' ? '23456789abcdefghjkmnpqrstuvwxyz' : '23456789ABCDEFGHJKLMNPQRSTUVWXYZ');
+    
+    const results: Array<{ code: string; password?: string }> = [];
+    const usedCodes = new Set<string>();
+
+    batches.forEach(b => b.vouchers.forEach(v => usedCodes.add(v.code.toUpperCase())));
+
+    for (let i = 0; i < count; i++) {
+      let code = '';
+      let attempts = 0;
+      do {
+        let randStr = '';
+        for (let j = 0; j < genLength; j++) {
+          randStr += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        code = (genPrefix ? genPrefix.trim() : '') + randStr;
+        attempts++;
+      } while (usedCodes.has(code.toUpperCase()) && attempts < 100);
+
+      usedCodes.add(code.toUpperCase());
+
+      let password: string | undefined = undefined;
+      if (genPassMode === 'SAME_AS_CODE') {
+        password = code;
+      } else if (genPassMode === 'RANDOM_PIN') {
+        password = String(Math.floor(1000 + Math.random() * 9000));
+      } else if (genPassMode === 'CUSTOM') {
+        password = genCustomPass.trim() || '1234';
+      }
+
+      results.push({ code, password });
+    }
+
+    setGenPreviewVouchers(results);
+
+    // Build MikroTik RouterOS Script
+    const safeProfile = genProfile.trim().replace(/[^a-zA-Z0-9_-]/g, '_') || 'default';
+    const commentTag = genNewBatchName.trim().replace(/"/g, '') || 'Hotspot';
+    let script = `# ================================================================\n# MikroTik RouterOS CLI Script - Generated by WayaheDigital\n# Total: ${results.length} Vouchers | Profile: ${safeProfile} | Durasi: ${genDuration}\n# ================================================================\n/ip hotspot user\n`;
+    results.forEach(v => {
+      const pass = v.password || v.code;
+      script += `add name="${v.code}" password="${pass}" profile="${safeProfile}" comment="${commentTag}"\n`;
+    });
+
+    setGenMikrotikScript(script);
+    onShowToast('Generator Selesai', `${results.length} kode voucher berhasil digenerate!`, 'success');
+  };
+
+  const handleSaveGeneratedVouchers = () => {
+    if (genPreviewVouchers.length === 0) {
+      alert('Silakan klik tombol "Generate Kode Voucher" terlebih dahulu.');
+      return;
+    }
+
+    triggerTopLoading.start();
+    setIsSubmittingModal(true);
+
+    const newVoucherItems = genPreviewVouchers.map((v, idx) => ({
+      id: `vch-gen-${Date.now()}-${idx}`,
+      code: v.code,
+      password: v.password,
+      status: 'AVAILABLE' as const,
+      createdAt: new Date().toISOString(),
+    }));
+
+    let updatedBatches = [...batches];
+
+    if (genBatchTarget === 'NEW_BATCH') {
+      const newBatch: WifiVoucherBatch = {
+        id: 'batch-' + Date.now(),
+        name: genNewBatchName.trim() || `Batch Generator (${genDuration})`,
+        location: genNewBatchLocation.trim() || settings.wifiHotspotSsid || 'Hotspot RT/RW Net',
+        speedProfile: genProfile.trim() || 'Up to 10 Mbps (Burstable)',
+        createdAt: new Date().toISOString(),
+        vouchers: newVoucherItems,
+      };
+      updatedBatches = [newBatch, ...updatedBatches];
+    } else {
+      updatedBatches = updatedBatches.map(b => {
+        if (b.id !== genBatchTarget) return b;
+        return {
+          ...b,
+          vouchers: [...b.vouchers, ...newVoucherItems],
+        };
+      });
+    }
+
+    storage.saveVoucherBatches(updatedBatches);
+    setBatches(updatedBatches);
+
+    // If linked to product
+    if (genTargetProductId) {
+      const prod = products.find(p => p.id === genTargetProductId);
+      if (prod) {
+        const justCodes = genPreviewVouchers.map(v => v.password ? `${v.code},${v.password}` : v.code);
+        if (prod.hasVariants && prod.variants && prod.variants.length > 0) {
+          const firstVar = prod.variants[0];
+          const updatedVars = prod.variants.map((va, idx) => {
+            if (idx !== 0) return va;
+            const existingCodes = va.voucherCodes || [];
+            const merged = [...existingCodes, ...justCodes];
+            return {
+              ...va,
+              voucherCodes: merged,
+              stock: merged.length,
+            };
+          });
+          const totalStock = updatedVars.reduce((sum, v) => sum + (v.stock || 0), 0);
+          storage.updateProduct(prod.id, { ...prod, variants: updatedVars, stock: totalStock });
+        } else {
+          const existingCodes = prod.voucherCodes || [];
+          const merged = [...existingCodes, ...justCodes];
+          storage.updateProduct(prod.id, { ...prod, voucherCodes: merged, stock: merged.length });
+        }
+        onRefreshData();
+      }
+    }
+
+    setTimeout(() => {
+      setIsSubmittingModal(false);
+      triggerTopLoading.done();
+      onShowToast('Stok Berhasil Disimpan', `${genPreviewVouchers.length} kode voucher berhasil ditambahkan ke inventori!`, 'success');
+      setGenPreviewVouchers([]);
+      setGenMikrotikScript('');
+      setWifiSubTab('BATCHES');
+    }, 200);
+  };
+
+  const handleSaveHotspotConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingHotspotConfig(true);
+    triggerTopLoading.start();
+
+    const updatedSettings: AppSettings = {
+      ...settings,
+      wifiHotspotSsid: hotspotSsid.trim() || 'MelatiNet_Warga_Hotspot',
+      wifiLoginUrl: hotspotLoginUrl.trim() || 'http://hotspot.wayahedigital.id',
+      wifiDefaultPassword: hotspotDefaultPassword.trim() || '1234',
+      wifiPasswordMode: hotspotPasswordMode,
+      wifiLoginInstructions: hotspotLoginInstructions.trim(),
+      wifiContactSupport: hotspotContactSupport.trim(),
+    };
+
+    storage.saveSettings(updatedSettings);
+    setSettings(updatedSettings);
+
+    setTimeout(() => {
+      setIsSavingHotspotConfig(false);
+      triggerTopLoading.done();
+      onShowToast('Konfigurasi Disimpan', 'Pengaturan Hotspot Captive Portal RT/RW Net berhasil diperbarui.', 'success');
+    }, 200);
+  };
+
+  useEffect(() => {
+    if (showPrintModal) {
+      const activeList = (selectedBatchForPrint ? [selectedBatchForPrint] : batches).flatMap(b =>
+        b.vouchers.filter(v => v.status === 'AVAILABLE')
+      );
+      const urlBase = settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
+      const qrs: Record<string, string> = {};
+      Promise.all(
+        activeList.slice(0, 48).map(async v => {
+          try {
+            const targetUrl = `${urlBase}${urlBase.includes('?') ? '&' : '?'}username=${encodeURIComponent(v.code)}&password=${encodeURIComponent(v.password || '')}`;
+            qrs[v.code] = await QRCode.toDataURL(targetUrl, { margin: 1, width: 120 });
+          } catch (_) {}
+        })
+      ).then(() => setPrintQrCodeMap(qrs));
+    }
+  }, [showPrintModal, selectedBatchForPrint, batches, settings.wifiLoginUrl]);
 
   // WiFi Product & Variants Handlers (Simple & Fast)
   const handleOpenAddWifiProduct = () => {
@@ -3730,7 +4229,7 @@ export function AdminDashboard({
                   setActiveTab('PRODUK_PREMIUM');
                   setIsMobileDrawerOpen(false);
                 }}
-                title="Produk Aplikasi Premium (Xaviera Store)"
+                title="Produk Aplikasi Premium (Manual & API)"
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-3'} py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
                   activeTab === 'PRODUK_PREMIUM'
                     ? 'bg-[#162A1C] text-indigo-300 border border-indigo-500/40 font-extrabold shadow-xs'
@@ -3743,10 +4242,52 @@ export function AdminDashboard({
                 </div>
                 {!isSidebarCollapsed && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase bg-indigo-950 text-indigo-300 border border-indigo-800">
-                    Xaviera
+                    {premiumMode === 'MANUAL' ? 'Manual' : 'API'}
                   </span>
                 )}
               </button>
+
+              {/* Sub-menu di sidebar jika tab Aplikasi Premium aktif */}
+              {!isSidebarCollapsed && activeTab === 'PRODUK_PREMIUM' && (
+                <div className="pl-6 pr-2 py-1 space-y-1 bg-black/20 rounded-xl my-1 border border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPremiumMode('MANUAL');
+                      setIsMobileDrawerOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      premiumMode === 'MANUAL'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Box size={13} className={premiumMode === 'MANUAL' ? 'text-white' : 'text-blue-400'} />
+                      <span>Produk & Stok Manual</span>
+                    </div>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-blue-900/60 text-blue-200">Baru</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPremiumMode('PROVIDER');
+                      setIsMobileDrawerOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      premiumMode === 'PROVIDER'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={13} className={premiumMode === 'PROVIDER' ? 'text-white' : 'text-amber-400'} />
+                      <span>API Provider Xaviera</span>
+                    </div>
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => {
@@ -4212,13 +4753,16 @@ export function AdminDashboard({
                   if (activeTab === 'PREMIUM') setShowAddPremiumModal(true);
                   else if (activeTab === 'DIGIFLAZZ') setShowManualAddModal(true);
                   else if (activeTab === 'VOUCHERS') setShowBatchModal(true);
-                  else if (activeTab === 'BANNERS') handleOpenAddBanner();
+                  else if (activeTab === 'BANNERS') {
+                    if (bannerTabMode === 'SLIDER') handleOpenAddHeroSlide();
+                    else handleOpenAddBanner();
+                  }
                   else if (activeTab === 'PROMOS') handleOpenAddPromo();
                 }}
                 className="px-4 py-2 bg-[#122218] hover:bg-[#1A3324] text-white rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus size={14} />
-                <span>{activeTab === 'PREMIUM' ? 'Tambah Akun' : activeTab === 'DIGIFLAZZ' ? 'Tambah Produk' : activeTab === 'BANNERS' ? 'Tambah Banner' : activeTab === 'PROMOS' ? 'Tambah Kode Promo' : 'Buat Batch Baru'}</span>
+                <span>{activeTab === 'PREMIUM' ? 'Tambah Akun' : activeTab === 'DIGIFLAZZ' ? 'Tambah Produk' : activeTab === 'BANNERS' ? (bannerTabMode === 'SLIDER' ? 'Tambah Slide Promo' : 'Tambah Banner') : activeTab === 'PROMOS' ? 'Tambah Kode Promo' : 'Buat Batch Baru'}</span>
               </button>
             )}
           </div>
@@ -4628,19 +5172,65 @@ export function AdminDashboard({
             </div>
           )}
 
-          {/* TAB: PRODUK APLIKASI PREMIUM (XAVIERA STORE) */}
+          {/* TAB: PRODUK APLIKASI PREMIUM (MANUAL & PROVIDER) */}
           {activeTab === 'PRODUK_PREMIUM' && (
-            <AdminProductProviderTable
-              category="premium"
-              title="Produk Aplikasi Premium"
-              subtitle="Katalog resmi lisensi & akun premium digital Xaviera Store"
-              onNavigateToSettings={() => {
-                setActiveTab('SETTINGS');
-                setSettingsSubTab('API_PROVIDERS');
-              }}
-              onRefreshData={onRefreshData}
-              onShowToast={onShowToast}
-            />
+            <div className="space-y-4 animate-fadeInUp">
+              {/* Subtab Switcher */}
+              <div className="bg-[#0b1324] p-1.5 rounded-2xl flex flex-wrap items-center gap-2 border border-slate-800 shadow-md">
+                <button
+                  type="button"
+                  onClick={() => setPremiumMode('MANUAL')}
+                  className={`flex-1 min-w-[200px] px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    premiumMode === 'MANUAL'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Box size={16} className={premiumMode === 'MANUAL' ? 'text-white' : 'text-blue-400'} />
+                  <span>📦 Input Produk & Stok Manual</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    premiumMode === 'MANUAL' ? 'bg-blue-800/80 text-blue-100' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    Kustom
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPremiumMode('PROVIDER')}
+                  className={`flex-1 min-w-[200px] px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    premiumMode === 'PROVIDER'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Sparkles size={16} className={premiumMode === 'PROVIDER' ? 'text-white' : 'text-amber-400'} />
+                  <span>⚡ API Provider (Xaviera Store)</span>
+                </button>
+              </div>
+
+              {premiumMode === 'MANUAL' ? (
+                <ManualProductManager
+                  category="premium"
+                  title="Kelola Produk Manual & Stok Akun Premium"
+                  subtitle="Input produk streaming/produktivitas, buat varian durasi & garansi, dan input data akun (email|pass / lisensi) individu atau massal."
+                  onRefreshData={onRefreshData}
+                  onShowToast={onShowToast}
+                />
+              ) : (
+                <AdminProductProviderTable
+                  category="premium"
+                  title="Produk Aplikasi Premium (API Provider)"
+                  subtitle="Katalog resmi lisensi & akun premium digital Xaviera Store"
+                  onNavigateToSettings={() => {
+                    setActiveTab('SETTINGS');
+                    setSettingsSubTab('API_PROVIDERS');
+                  }}
+                  onRefreshData={onRefreshData}
+                  onShowToast={onShowToast}
+                />
+              )}
+            </div>
           )}
 
           {/* TAB: PRODUK SMM (XAVIERA STORE) */}
@@ -5098,6 +5688,13 @@ export function AdminDashboard({
             const totalAllVouchers = batches.reduce((acc, b) => acc + b.vouchers.length, 0);
             const totalAvailable = batches.reduce((acc, b) => acc + b.vouchers.filter(v => v.status === 'AVAILABLE').length, 0);
             const totalUsed = batches.reduce((acc, b) => acc + b.vouchers.filter(v => v.status === 'USED').length, 0);
+            const wifiProducts = products.filter(p => p.categoryId === 'wifi');
+
+            // Hitung estimasi nilai stok ready (ambil harga rata-rata produk wifi atau Rp 5.000)
+            const avgPrice = wifiProducts.length > 0 
+              ? Math.round(wifiProducts.reduce((sum, p) => sum + (p.sellingPrice || 5000), 0) / wifiProducts.length)
+              : 5000;
+            const estimatedReadyValue = totalAvailable * avgPrice;
 
             // Filter batches and their vouchers
             const filteredBatches = batches.filter(b => {
@@ -5112,38 +5709,61 @@ export function AdminDashboard({
             });
 
             return (
-              <div className="space-y-5 animate-fadeInUp">
+              <div className="space-y-6 animate-fadeInUp">
                 {/* Header & Quick Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        <Ticket size={18} />
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-emerald-500/5 via-teal-500/5 to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                        <Wifi size={20} />
                       </div>
-                      <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                        Pusat Stok Voucher WiFi RT/RW Net
-                      </h2>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Pusat Stok Voucher WiFi RT/RW Net
+                          </h2>
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            MikroTik & Hotspot Ready
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Manajemen inventori voucher, auto-generator kode & script RouterOS Winbox, cetak slip thermal/A4, & captive portal warga.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Kelola stok voucher MikroTik, input batch voucher, cetak kartu slip siap potong, & pantau status pemakaian.
-                    </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 relative z-10">
+                    <button
+                      onClick={() => setWifiSubTab('GENERATOR')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+                        wifiSubTab === 'GENERATOR'
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/25 ring-2 ring-amber-300'
+                          : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                      }`}
+                      title="Buka Generator Otomatis MikroTik"
+                    >
+                      <Zap size={14} />
+                      <span>⚡ Generator MikroTik</span>
+                    </button>
+
                     <button
                       onClick={handleOpenAddWifiProduct}
-                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                      title="Tambah produk voucher WiFi baru & kelola varian harga"
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      title="Tambah produk paket WiFi baru & kelola varian harga"
                     >
                       <Plus size={14} />
-                      <span>Tambah Produk & Varian</span>
+                      <span>Tambah Paket & Varian</span>
                     </button>
 
                     <button
                       onClick={() => setShowBatchModal(true)}
-                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      title="Input / Import Batch Voucher Manual"
                     >
-                      <Plus size={14} />
+                      <Download size={14} className="rotate-180" />
                       <span>Input Batch Manual</span>
                     </button>
 
@@ -5170,476 +5790,1202 @@ export function AdminDashboard({
                   </div>
                 </div>
 
-                {/* SECTION: DAFTAR PRODUK & VARIAN WIFI RT/RW NET */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                    <div>
-                      <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                        <Package size={18} className="text-emerald-600" />
-                        <span>Katalog Produk & Varian Paket WiFi RT/RW Net</span>
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Daftar paket WiFi yang dijual ke pembeli. Setiap produk dapat memiliki beberapa varian (durasi, kecepatan, & harga jual masing-masing).
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={handleOpenAddWifiProduct}
-                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                    >
-                      <Plus size={13} />
-                      <span>Tambah Produk Baru</span>
-                    </button>
-                  </div>
-
-                  {/* List of WiFi Products */}
-                  {products.filter(p => p.categoryId === 'wifi').length === 0 ? (
-                    <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
-                      <Radio size={32} className="mx-auto text-slate-300" />
-                      <p className="text-xs font-bold text-slate-700">Belum ada produk WiFi</p>
-                      <button
-                        onClick={handleOpenAddWifiProduct}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
-                      >
-                        Tambah Produk WiFi Pertama
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                      {products.filter(p => p.categoryId === 'wifi').map(prod => {
-                        const hasVariants = Array.isArray(prod.variants) && prod.variants.length > 0;
-                        return (
-                          <div key={prod.id} className="bg-slate-50/70 hover:bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 transition-colors">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-xl bg-white border border-slate-200 shrink-0">
-                                  <ProductLogo
-                                    provider={prod.provider}
-                                    name={prod.name}
-                                    category={prod.categoryId}
-                                    iconUrl={prod.iconUrl}
-                                    size="sm"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-extrabold text-sm text-slate-900">{prod.name}</h4>
-                                    {prod.badge && (
-                                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
-                                        {prod.badge}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{prod.description}</p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleProductActive(prod)}
-                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-all ${
-                                    prod.isActive
-                                      ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
-                                      : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
-                                  }`}
-                                  title="Klik untuk ubah status aktif/nonaktif"
-                                >
-                                  {prod.isActive ? '✓ Aktif' : '✗ Nonaktif'}
-                                </button>
-
-                                <button
-                                  onClick={() => handleOpenEditWifiProduct(prod)}
-                                  className="px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-600 border border-slate-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                                  title="Edit Produk, Harga & Kode Voucher"
-                                >
-                                  <Edit3 size={12} />
-                                  <span>Edit Produk & Kode</span>
-                                </button>
-
-                                <button
-                                  onClick={() => handleDeleteWifiProduct(prod.id, prod.name)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                  title="Hapus produk"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Variants Table / Cards */}
-                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                              <div className="px-3.5 py-2 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
-                                <span>{hasVariants ? `Daftar ${prod.variants!.length} Varian Paket & Harga` : 'Harga Tunggal Produk (Tanpa Varian)'}</span>
-                                <span className="text-slate-500">
-                                  {hasVariants ? 'Setiap varian memiliki harga jual & durasi terpisah' : `Tarif: ${formatRupiah(prod.sellingPrice)}`}
-                                </span>
-                              </div>
-
-                              {hasVariants ? (
-                                <div className="divide-y divide-slate-100 text-xs">
-                                  {prod.variants!.map((v, idx) => (
-                                    <div key={v.id || idx} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50/80 transition-colors">
-                                      <div className="flex items-center gap-2.5">
-                                        <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                          {idx + 1}
-                                        </div>
-                                        <div>
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="font-bold text-slate-900">{v.name}</span>
-                                            {v.badge && (
-                                              <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded">
-                                                {v.badge}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <span className="text-[11px] text-slate-400 block">
-                                            ⏱️ {v.duration || '24 Jam'} • ⚡ {v.speed || 'Up to 10 Mbps'}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center gap-4 text-xs font-mono">
-                                        <div>
-                                          <span className="text-[10px] text-slate-400 block uppercase font-sans">Harga Modal</span>
-                                          <span className="text-slate-600">{formatRupiah(v.supplierPrice || 0)}</span>
-                                        </div>
-
-                                        <div>
-                                          <span className="text-[10px] text-slate-400 block uppercase font-sans">Harga Jual</span>
-                                          <span className="font-bold text-emerald-700 text-sm">{formatRupiah(v.sellingPrice)}</span>
-                                        </div>
-
-                                        <div>
-                                          <span className="text-[10px] text-slate-400 block uppercase font-sans">Margin</span>
-                                          <span className="font-bold text-indigo-600">
-                                            +{formatRupiah(Math.max(0, Number(v.sellingPrice) - Number(v.supplierPrice || 0)))}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="p-3 flex items-center justify-between text-xs">
-                                  <div>
-                                    <span className="text-slate-600 font-medium">Paket Reguler: </span>
-                                    <span className="font-bold text-slate-900">{prod.duration || '24 Jam'} ({prod.speed || 'Up to 10 Mbps'})</span>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-slate-500">Modal: {formatRupiah(prod.supplierPrice)}</span>
-                                    <span className="font-black text-emerald-700 font-mono text-sm">Jual: {formatRupiah(prod.sellingPrice)}</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* 4 Stat Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                {/* 5 Metrik Statistik Ringkasan */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
                     <div className="flex items-center justify-between text-slate-500">
-                      <span className="text-xs font-bold uppercase tracking-wider">Voucher Ready</span>
-                      <CheckCircle2 size={16} className="text-emerald-500" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Voucher Ready</span>
+                      <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <CheckCircle2 size={14} />
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-emerald-600">{totalAvailable}</div>
+                    <div className="text-2xl font-black text-emerald-600 tracking-tight">{totalAvailable} <span className="text-xs font-normal text-slate-400">pcs</span></div>
                     <p className="text-[11px] text-slate-400">Siap dialokasikan ke pembeli</p>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
                     <div className="flex items-center justify-between text-slate-500">
-                      <span className="text-xs font-bold uppercase tracking-wider">Terpakai / Terjual</span>
-                      <XCircle size={16} className="text-slate-400" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Terpakai / Terjual</span>
+                      <div className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <XCircle size={14} />
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-700">{totalUsed}</div>
-                    <p className="text-[11px] text-slate-400">Sudah diklaim oleh pelanggan</p>
+                    <div className="text-2xl font-black text-slate-700 tracking-tight">{totalUsed} <span className="text-xs font-normal text-slate-400">pcs</span></div>
+                    <p className="text-[11px] text-slate-400">Telah diklaim pembeli</p>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
                     <div className="flex items-center justify-between text-slate-500">
-                      <span className="text-xs font-bold uppercase tracking-wider">Total Voucher</span>
-                      <Layers size={16} className="text-indigo-500" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Voucher</span>
+                      <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <Layers size={14} />
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-900">{totalAllVouchers}</div>
-                    <p className="text-[11px] text-slate-400">Dari seluruh batch terdaftar</p>
+                    <div className="text-2xl font-black text-indigo-900 tracking-tight">{totalAllVouchers} <span className="text-xs font-normal text-slate-400">pcs</span></div>
+                    <p className="text-[11px] text-slate-400">Dari seluruh batch sistem</p>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
                     <div className="flex items-center justify-between text-slate-500">
-                      <span className="text-xs font-bold uppercase tracking-wider">Total Batch</span>
-                      <Radio size={16} className="text-sky-500" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Batch</span>
+                      <div className="w-6 h-6 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <Radio size={14} />
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-indigo-600">{batches.length}</div>
-                    <p className="text-[11px] text-slate-400">Cluster / Titik Jaringan RT/RW</p>
+                    <div className="text-2xl font-black text-sky-600 tracking-tight">{batches.length} <span className="text-xs font-normal text-slate-400">batch</span></div>
+                    <p className="text-[11px] text-slate-400">Titik / cluster jaringan</p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1 col-span-2 sm:col-span-1">
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Nilai Stok Ready</span>
+                      <div className="w-6 h-6 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                        <DollarSign size={14} />
+                      </div>
+                    </div>
+                    <div className="text-lg sm:text-xl font-black text-teal-700 tracking-tight font-mono">{formatRupiah(estimatedReadyValue)}</div>
+                    <p className="text-[11px] text-slate-400">Estimasi omset stok tersedia</p>
                   </div>
                 </div>
 
-                {/* Filter & Search Toolbar */}
-                <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-2 flex-1">
-                    <div className="relative min-w-[200px] flex-1 sm:flex-initial">
-                      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Cari kode / password / batch..."
-                        value={voucherSearchQuery}
-                        onChange={(e) => setVoucherSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-
-                    {/* Status Filter */}
-                    <div className="inline-flex rounded-xl bg-slate-100 p-0.5 text-xs font-bold">
-                      <button
-                        onClick={() => setVoucherStatusFilter('ALL')}
-                        className={`px-3 py-1 rounded-lg transition-all ${
-                          voucherStatusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        Semua ({totalAllVouchers})
-                      </button>
-                      <button
-                        onClick={() => setVoucherStatusFilter('AVAILABLE')}
-                        className={`px-3 py-1 rounded-lg transition-all ${
-                          voucherStatusFilter === 'AVAILABLE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        Tersedia ({totalAvailable})
-                      </button>
-                      <button
-                        onClick={() => setVoucherStatusFilter('USED')}
-                        className={`px-3 py-1 rounded-lg transition-all ${
-                          voucherStatusFilter === 'USED' ? 'bg-slate-700 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        Terpakai ({totalUsed})
-                      </button>
-                    </div>
-
-                    {/* Batch Dropdown */}
-                    {batches.length > 1 && (
-                      <select
-                        value={selectedBatchFilter}
-                        onChange={(e) => setSelectedBatchFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      >
-                        <option value="ALL">Semua Batch ({batches.length})</option>
-                        {batches.map(b => (
-                          <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
+                {/* Sub-Tab Navigation Bar */}
+                <div className="bg-slate-100 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/60">
+                  <button
+                    type="button"
+                    onClick={() => setWifiSubTab('BATCHES')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'BATCHES'
+                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Ticket size={15} className={wifiSubTab === 'BATCHES' ? 'text-indigo-600' : 'text-slate-400'} />
+                    <span>Gudang Batch & Stok</span>
+                    <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
+                      wifiSubTab === 'BATCHES' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {batches.length}
+                    </span>
+                  </button>
 
                   <button
-                    onClick={() => handleCopyAllAvailable()}
-                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                    type="button"
+                    onClick={() => setWifiSubTab('CATALOG')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'CATALOG'
+                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
                   >
-                    <Copy size={13} />
-                    <span>Salin Semua Ready ({totalAvailable})</span>
+                    <Package size={15} className={wifiSubTab === 'CATALOG' ? 'text-emerald-600' : 'text-slate-400'} />
+                    <span>Katalog Paket & Varian</span>
+                    <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
+                      wifiSubTab === 'CATALOG' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {wifiProducts.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setWifiSubTab('MANUAL')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'MANUAL'
+                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Box size={15} className={wifiSubTab === 'MANUAL' ? 'text-blue-600' : 'text-slate-400'} />
+                    <span>Input Produk & Stok Manual</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded font-black bg-blue-100 text-blue-800">
+                      BARU
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setWifiSubTab('GENERATOR')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'GENERATOR'
+                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Zap size={15} className={wifiSubTab === 'GENERATOR' ? 'text-amber-500' : 'text-slate-400'} />
+                    <span>Generator MikroTik & Script</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded font-black bg-amber-100 text-amber-800">
+                      BARU
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setWifiSubTab('CONFIG')}
+                    className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      wifiSubTab === 'CONFIG'
+                        ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Settings size={15} className={wifiSubTab === 'CONFIG' ? 'text-teal-600' : 'text-slate-400'} />
+                    <span>Konfigurasi Hotspot & Portal</span>
                   </button>
                 </div>
 
-                {/* Batches List */}
-                {filteredBatches.length === 0 ? (
-                  <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
-                    <Ticket size={40} className="mx-auto text-slate-300" />
-                    <h3 className="font-bold text-slate-800 text-base">Tidak Ada Batch Voucher</h3>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                      Belum ada stok voucher atau filter pencarian tidak sesuai. Klik tombol di bawah untuk membuat batch baru.
-                    </p>
-                    <div className="flex items-center justify-center gap-2 pt-2">
-                      <button
-                        onClick={() => setShowBatchModal(true)}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
-                      >
-                        Input Batch Voucher
-                      </button>
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {/* SUB-TAB 1: GUDANG BATCH & STOK */}
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {wifiSubTab === 'BATCHES' && (
+                  <div className="space-y-4 animate-fadeIn">
+                    {/* Filter & Search Toolbar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2.5 flex-1">
+                        <div className="relative min-w-[220px] flex-1 sm:flex-initial">
+                          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Cari kode voucher / password / nama batch..."
+                            value={voucherSearchQuery}
+                            onChange={(e) => setVoucherSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                          />
+                        </div>
+
+                        {/* Status Filter Pills */}
+                        <div className="inline-flex rounded-xl bg-slate-100 p-0.5 text-xs font-bold">
+                          <button
+                            onClick={() => setVoucherStatusFilter('ALL')}
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                              voucherStatusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                            }`}
+                          >
+                            Semua ({totalAllVouchers})
+                          </button>
+                          <button
+                            onClick={() => setVoucherStatusFilter('AVAILABLE')}
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                              voucherStatusFilter === 'AVAILABLE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                            }`}
+                          >
+                            Tersedia ({totalAvailable})
+                          </button>
+                          <button
+                            onClick={() => setVoucherStatusFilter('USED')}
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                              voucherStatusFilter === 'USED' ? 'bg-slate-700 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                            }`}
+                          >
+                            Terpakai ({totalUsed})
+                          </button>
+                        </div>
+
+                        {/* Dropdown Filter Batch */}
+                        {batches.length > 1 && (
+                          <select
+                            value={selectedBatchFilter}
+                            onChange={(e) => setSelectedBatchFilter(e.target.value)}
+                            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="ALL">Semua Batch ({batches.length})</option>
+                            {batches.map(b => (
+                              <option key={b.id} value={b.id}>{b.name} ({b.vouchers.filter(v => v.status === 'AVAILABLE').length} ready)</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start md:self-auto">
+                        <button
+                          onClick={() => handleCopyAllAvailable()}
+                          className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Copy size={13} />
+                          <span>Salin Semua Ready ({totalAvailable})</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredBatches.map(b => {
-                      const batchTotal = b.vouchers.length;
-                      const availableVouchers = b.vouchers.filter(v => v.status === 'AVAILABLE');
-                      const usedVouchers = b.vouchers.filter(v => v.status === 'USED');
-                      const availableCount = availableVouchers.length;
-                      const usedCount = usedVouchers.length;
-                      const percentAvailable = batchTotal > 0 ? Math.round((availableCount / batchTotal) * 100) : 0;
 
-                      // Filter vouchers inside batch based on search and status
-                      const displayedVouchers = b.vouchers.filter(v => {
-                        if (voucherStatusFilter !== 'ALL' && v.status !== voucherStatusFilter) return false;
-                        if (voucherSearchQuery.trim()) {
-                          const q = voucherSearchQuery.toLowerCase();
-                          const matchCode = v.code.toLowerCase().includes(q);
-                          const matchPass = v.password && v.password.toLowerCase().includes(q);
-                          if (!matchCode && !matchPass) return false;
-                        }
-                        return true;
-                      });
+                    {/* Batches List */}
+                    {filteredBatches.length === 0 ? (
+                      <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
+                        <Ticket size={48} className="mx-auto text-slate-300" />
+                        <h3 className="font-extrabold text-slate-800 text-base">Tidak Ada Batch Voucher</h3>
+                        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                          Belum ada stok voucher yang sesuai dengan pencarian. Buat batch manual atau gunakan auto-generator MikroTik.
+                        </p>
+                        <div className="flex items-center justify-center gap-2 pt-2">
+                          <button
+                            onClick={() => setShowBatchModal(true)}
+                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                          >
+                            Input Batch Manual
+                          </button>
+                          <button
+                            onClick={() => setWifiSubTab('GENERATOR')}
+                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                          >
+                            ⚡ Buka Generator
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredBatches.map(b => {
+                          const batchTotal = b.vouchers.length;
+                          const availableVouchers = b.vouchers.filter(v => v.status === 'AVAILABLE');
+                          const usedVouchers = b.vouchers.filter(v => v.status === 'USED');
+                          const availableCount = availableVouchers.length;
+                          const usedCount = usedVouchers.length;
+                          const percentAvailable = batchTotal > 0 ? Math.round((availableCount / batchTotal) * 100) : 0;
 
-                      return (
-                        <div key={b.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
-                          {/* Batch Top Header */}
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-extrabold text-base text-slate-900">{b.name}</h3>
-                                <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
-                                  {b.location}
-                                </span>
-                                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
-                                  {b.speedProfile}
-                                </span>
-                              </div>
-                              <span className="text-[11px] text-slate-400 block mt-0.5">
-                                Dibuat {formatDateWIB(b.createdAt)} • Total {batchTotal} Voucher
-                              </span>
-                            </div>
+                          const displayedVouchers = b.vouchers.filter(v => {
+                            if (voucherStatusFilter !== 'ALL' && v.status !== voucherStatusFilter) return false;
+                            if (voucherSearchQuery.trim()) {
+                              const q = voucherSearchQuery.toLowerCase();
+                              const matchCode = v.code.toLowerCase().includes(q);
+                              const matchPass = v.password && v.password.toLowerCase().includes(q);
+                              if (!matchCode && !matchPass) return false;
+                            }
+                            return true;
+                          });
 
-                            {/* Batch Action Buttons */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <button
-                                onClick={() => {
-                                  setSelectedBatchForAdd(b);
-                                  setShowAddVoucherModal(true);
-                                }}
-                                className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="Tambah voucher ke batch ini"
-                              >
-                                <Plus size={13} />
-                                <span>Tambah Voucher</span>
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedBatchForPrint(b);
-                                  setShowPrintModal(true);
-                                }}
-                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="Cetak slip kartu voucher batch ini"
-                              >
-                                <Printer size={13} />
-                                <span>Cetak Slip</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleCopyAllAvailable(b)}
-                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="Salin kode yang siap pakai di batch ini"
-                              >
-                                <Copy size={13} />
-                                <span>Salin Ready</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleDeleteBatch(b.id)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                title="Hapus seluruh batch ini"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Availability Progress Bar */}
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-3">
-                                <span className="font-bold text-emerald-600 flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                  Tersedia: {availableCount} pcs
-                                </span>
-                                <span className="text-slate-500 flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-slate-300" />
-                                  Terpakai: {usedCount} pcs
-                                </span>
-                              </div>
-                              <span className="font-bold text-slate-700">{percentAvailable}% Tersedia</span>
-                            </div>
-
-                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
-                              <div 
-                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300" 
-                                style={{ width: `${percentAvailable}%` }}
-                              />
-                              <div 
-                                className="h-full bg-slate-200 transition-all duration-300" 
-                                style={{ width: `${100 - percentAvailable}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Interactive Voucher Chips Preview / Table */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[11px] text-slate-500">
-                              <span>Menampilkan {displayedVouchers.length} dari {batchTotal} voucher</span>
-                              <span className="text-[10px] text-slate-400 italic">Klik status untuk switch Tersedia/Terpakai</span>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-1 bg-slate-50/70 rounded-xl border border-slate-100">
-                              {displayedVouchers.map(v => (
-                                <div
-                                  key={v.id}
-                                  className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
-                                    v.status === 'AVAILABLE'
-                                      ? 'bg-white text-slate-800 border-slate-200 shadow-2xs hover:border-emerald-300'
-                                      : 'bg-slate-200/80 text-slate-400 line-through border-slate-300'
-                                  }`}
-                                >
-                                  <span className="font-mono font-bold">{v.code}</span>
-                                  {v.password && (
-                                    <span className="font-mono text-[10px] text-slate-500 font-normal">
-                                      ({v.password})
+                          return (
+                            <div key={b.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4 hover:border-slate-300 transition-colors">
+                              {/* Batch Top Header */}
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-extrabold text-base text-slate-900">{b.name}</h3>
+                                    <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                                      SSID: {b.location}
                                     </span>
-                                  )}
+                                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
+                                      ⚡ {b.speedProfile}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 block mt-0.5">
+                                    Dibuat {formatDateWIB(b.createdAt)} • Total {batchTotal} Voucher
+                                  </span>
+                                </div>
 
-                                  {/* Toggle Status Clickable */}
-                                  <button
-                                    onClick={() => handleToggleVoucherStatus(b.id, v.id)}
-                                    className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
-                                      v.status === 'AVAILABLE'
-                                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                                        : 'bg-slate-300 text-slate-600 hover:bg-slate-400'
-                                    }`}
-                                    title="Klik untuk ubah status Tersedia / Terpakai"
-                                  >
-                                    {v.status === 'AVAILABLE' ? 'Ready' : 'Used'}
-                                  </button>
-
-                                  {/* Copy Button */}
+                                {/* Batch Action Buttons */}
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <button
                                     onClick={() => {
-                                      navigator.clipboard.writeText(v.password ? `${v.code} (Pass: ${v.password})` : v.code);
-                                      onShowToast('Disalin', `Kode ${v.code} disalin`, 'info');
+                                      setSelectedBatchForAdd(b);
+                                      setShowAddVoucherModal(true);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-slate-700 transition-opacity"
-                                    title="Salin kode ini"
+                                    className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Tambah voucher ke batch ini"
                                   >
-                                    <Copy size={11} />
+                                    <Plus size={13} />
+                                    <span>Tambah</span>
                                   </button>
 
-                                  {/* Delete Voucher Button */}
                                   <button
-                                    onClick={() => handleDeleteVoucher(b.id, v.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 transition-opacity"
-                                    title="Hapus voucher ini"
+                                    onClick={() => {
+                                      setSelectedBatchForPrint(b);
+                                      setShowPrintModal(true);
+                                    }}
+                                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Cetak slip kartu voucher batch ini"
                                   >
-                                    <X size={11} />
+                                    <Printer size={13} />
+                                    <span>Cetak</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleCopyAllAvailable(b)}
+                                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Salin kode yang siap pakai di batch ini"
+                                  >
+                                    <Copy size={13} />
+                                    <span>Salin ({availableCount})</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleExportMikrotikScript(b)}
+                                    className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="Salin script MikroTik CLI untuk Winbox Terminal"
+                                  >
+                                    <Code size={13} />
+                                    <span>Script MikroTik</span>
+                                  </button>
+
+                                  {usedCount > 0 && (
+                                    <button
+                                      onClick={() => handleCleanUsedVouchers(b.id)}
+                                      className="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                      title="Bersihkan voucher yang sudah terpakai dari batch ini"
+                                    >
+                                      Bersihkan Terpakai ({usedCount})
+                                    </button>
+                                  )}
+
+                                  <button
+                                    onClick={() => handleDeleteBatch(b.id)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Hapus seluruh batch ini"
+                                  >
+                                    <Trash2 size={15} />
                                   </button>
                                 </div>
+                              </div>
+
+                              {/* Availability Progress Bar */}
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-bold text-emerald-600 flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      Tersedia: {availableCount} pcs
+                                    </span>
+                                    <span className="text-slate-500 flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                                      Terpakai: {usedCount} pcs
+                                    </span>
+                                  </div>
+                                  <span className="font-bold text-slate-700">{percentAvailable}% Tersedia</span>
+                                </div>
+
+                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300" 
+                                    style={{ width: `${percentAvailable}%` }}
+                                  />
+                                  <div 
+                                    className="h-full bg-slate-200 transition-all duration-300" 
+                                    style={{ width: `${100 - percentAvailable}%` }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Interactive Voucher Chips Grid */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                  <span>Menampilkan {displayedVouchers.length} dari {batchTotal} voucher</span>
+                                  <span className="text-[10px] text-slate-400 italic">Klik status [Ready/Used] untuk ubah status pemakaian</span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 max-h-56 overflow-y-auto p-1.5 bg-slate-50/70 rounded-xl border border-slate-100">
+                                  {displayedVouchers.map(v => (
+                                    <div
+                                      key={v.id}
+                                      className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs transition-all ${
+                                        v.status === 'AVAILABLE'
+                                          ? 'bg-white text-slate-800 border-slate-200 shadow-2xs hover:border-emerald-300'
+                                          : 'bg-slate-200/80 text-slate-400 line-through border-slate-300'
+                                      }`}
+                                    >
+                                      <span className="font-mono font-bold tracking-wide">{v.code}</span>
+                                      {v.password && (
+                                        <span className="font-mono text-[10px] text-slate-500 font-normal">
+                                          ({v.password})
+                                        </span>
+                                      )}
+
+                                      {/* Toggle Status Button */}
+                                      <button
+                                        onClick={() => handleToggleVoucherStatus(b.id, v.id)}
+                                        className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                          v.status === 'AVAILABLE'
+                                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                            : 'bg-slate-300 text-slate-600 hover:bg-slate-400'
+                                        }`}
+                                        title="Klik untuk ubah status Tersedia / Terpakai"
+                                      >
+                                        {v.status === 'AVAILABLE' ? 'Ready' : 'Used'}
+                                      </button>
+
+                                      {/* Copy Button */}
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(v.password ? `${v.code},${v.password}` : v.code);
+                                          onShowToast('Disalin', `Kode ${v.code} disalin`, 'info');
+                                        }}
+                                        className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-slate-700 transition-opacity cursor-pointer"
+                                        title="Salin kode ini"
+                                      >
+                                        <Copy size={11} />
+                                      </button>
+
+                                      {/* Delete Button */}
+                                      <button
+                                        onClick={() => handleDeleteVoucher(b.id, v.id)}
+                                        className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 transition-opacity cursor-pointer"
+                                        title="Hapus voucher ini"
+                                      >
+                                        <X size={11} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {/* SUB-TAB 2: KATALOG PAKET & VARIAN */}
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {wifiSubTab === 'CATALOG' && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-5 animate-fadeIn">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                      <div>
+                        <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                          <Package size={18} className="text-emerald-600" />
+                          <span>Katalog Produk & Varian Paket WiFi RT/RW Net</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Daftar paket internet hotspot warga yang dijual di halaman storefront. Setiap produk dapat memiliki beberapa varian (durasi, kecepatan, & harga masing-masing).
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleOpenAddWifiProduct}
+                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                      >
+                        <Plus size={14} />
+                        <span>Tambah Produk Baru</span>
+                      </button>
+                    </div>
+
+                    {wifiProducts.length === 0 ? (
+                      <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                        <Radio size={36} className="mx-auto text-slate-300" />
+                        <p className="text-sm font-bold text-slate-700">Belum ada paket produk WiFi</p>
+                        <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                          Buat paket WiFi warga pertama Anda untuk mulai menjual voucher secara otomatis.
+                        </p>
+                        <button
+                          onClick={handleOpenAddWifiProduct}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer mt-2"
+                        >
+                          Tambah Produk WiFi Pertama
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {wifiProducts.map(prod => {
+                          const hasVariants = Array.isArray(prod.variants) && prod.variants.length > 0;
+                          return (
+                            <div key={prod.id} className="bg-slate-50/70 hover:bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4 transition-colors">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-start gap-3.5">
+                                  <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs shrink-0">
+                                    <ProductLogo
+                                      provider={prod.provider}
+                                      name={prod.name}
+                                      category={prod.categoryId}
+                                      iconUrl={prod.iconUrl}
+                                      size="sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900">{prod.name}</h4>
+                                      {prod.badge && (
+                                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md">
+                                          {prod.badge}
+                                        </span>
+                                      )}
+                                      <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                                        SSID: {prod.networkLocation || 'Hotspot Warga'}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{prod.description}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleProductActive(prod)}
+                                    className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer transition-all ${
+                                      prod.isActive
+                                        ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
+                                        : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
+                                    }`}
+                                    title="Klik untuk ubah status aktif/nonaktif"
+                                  >
+                                    {prod.isActive ? '✓ Aktif' : '✗ Nonaktif'}
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleOpenEditWifiProduct(prod)}
+                                    className="px-3 py-1.5 bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                    title="Edit Produk, Harga & Kode Voucher"
+                                  >
+                                    <Edit3 size={13} />
+                                    <span>Edit Produk</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDeleteWifiProduct(prod.id, prod.name)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                    title="Hapus produk"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Variants Table / Cards */}
+                              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                <div className="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
+                                  <span>{hasVariants ? `Daftar ${prod.variants!.length} Varian Paket & Harga Jual` : 'Harga Tunggal Produk (Tanpa Varian)'}</span>
+                                  <span className="text-slate-500 font-mono">
+                                    {hasVariants ? 'Margin laba dihitung otomatis' : `Tarif: ${formatRupiah(prod.sellingPrice)}`}
+                                  </span>
+                                </div>
+
+                                {hasVariants ? (
+                                  <div className="divide-y divide-slate-100 text-xs">
+                                    {prod.variants!.map((v, idx) => {
+                                      const margin = Math.max(0, Number(v.sellingPrice) - Number(v.supplierPrice || 0));
+                                      const stockCount = v.voucherCodes?.length ?? v.stock ?? 0;
+                                      return (
+                                        <div key={v.id || idx} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center shrink-0">
+                                              {idx + 1}
+                                            </div>
+                                            <div>
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="font-extrabold text-slate-900">{v.name}</span>
+                                                {v.badge && (
+                                                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                                                    {v.badge}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <span className="text-[11px] text-slate-400 block mt-0.5">
+                                                ⏱️ {v.duration || '24 Jam'} • ⚡ {v.speed || 'Up to 10 Mbps'} • 📦 Stok: <b>{stockCount}</b> pcs
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-4 text-xs font-mono self-end sm:self-auto">
+                                            <div>
+                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Harga Modal</span>
+                                              <span className="text-slate-600">{formatRupiah(v.supplierPrice || 0)}</span>
+                                            </div>
+
+                                            <div>
+                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Harga Jual</span>
+                                              <span className="font-black text-emerald-700 text-sm">{formatRupiah(v.sellingPrice)}</span>
+                                            </div>
+
+                                            <div>
+                                              <span className="text-[9px] text-slate-400 block uppercase font-sans">Margin Laba</span>
+                                              <span className="font-extrabold text-indigo-600">
+                                                +{formatRupiah(margin)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="p-3.5 flex items-center justify-between text-xs">
+                                    <div>
+                                      <span className="text-slate-600 font-medium">Paket Reguler: </span>
+                                      <span className="font-bold text-slate-900">{prod.duration || '24 Jam'} ({prod.speed || 'Up to 10 Mbps'})</span>
+                                      <span className="text-slate-400 ml-2">📦 Stok: <b>{prod.voucherCodes?.length ?? prod.stock ?? 0}</b> pcs</span>
+                                    </div>
+                                    <div className="flex items-center gap-4 font-mono">
+                                      <span className="text-slate-500">Modal: {formatRupiah(prod.supplierPrice)}</span>
+                                      <span className="font-black text-emerald-700 text-sm">Jual: {formatRupiah(prod.sellingPrice)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {/* SUB-TAB: PRODUK & STOK MANUAL (WIFI) */}
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {wifiSubTab === 'MANUAL' && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <ManualProductManager
+                      category="wifi"
+                      title="Input Produk Manual & Stok Voucher WiFi"
+                      subtitle="Tambah produk paket hotspot RT/RW Net baru, buat varian durasi & kecepatan, serta input stok kode voucher individu atau massal."
+                      onRefreshData={onRefreshData}
+                      onShowToast={onShowToast}
+                    />
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {/* SUB-TAB 3: GENERATOR MIKROTIK & SCRIPT ROUTEROS */}
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {wifiSubTab === 'GENERATOR' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                              <Zap size={18} />
+                            </div>
+                            <h3 className="font-extrabold text-base text-slate-900">
+                              Generator Voucher MikroTik RouterOS
+                            </h3>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Generate puluhan/ratusan kode voucher acak secara instan, lengkap dengan export script CLI MikroTik (/ip hotspot user) siap paste di New Terminal Winbox!
+                          </p>
+                        </div>
+
+                        <span className="text-xs font-bold px-3 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200 self-start sm:self-auto">
+                          Mikhmon Compatible
+                        </span>
+                      </div>
+
+                      {/* Generator Form */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Jumlah */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Jumlah Voucher
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={500}
+                            value={genQty}
+                            onChange={(e) => setGenQty(Number(e.target.value))}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          />
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            {[10, 25, 50, 100].map(cnt => (
+                              <button
+                                key={cnt}
+                                type="button"
+                                onClick={() => setGenQty(cnt)}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer ${
+                                  genQty === cnt ? 'bg-amber-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                }`}
+                              >
+                                {cnt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Prefix Kode */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Prefix / Awalan Kode
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Misal: WF- atau MLT-"
+                            value={genPrefix}
+                            onChange={(e) => setGenPrefix(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">Kosongkan jika ingin kode acak penuh.</p>
+                        </div>
+
+                        {/* Panjang Karakter */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Panjang Kode Acak
+                          </label>
+                          <select
+                            value={genLength}
+                            onChange={(e) => setGenLength(Number(e.target.value))}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          >
+                            <option value={4}>4 Karakter (Mudah Dihafal)</option>
+                            <option value={6}>6 Karakter (Standar Direkomendasikan)</option>
+                            <option value={8}>8 Karakter (Super Aman)</option>
+                          </select>
+                        </div>
+
+                        {/* Pola Karakter */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Pola Karakter
+                          </label>
+                          <select
+                            value={genCharset}
+                            onChange={(e) => setGenCharset(e.target.value as any)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          >
+                            <option value="ALPHANUMERIC_UPPER">Huruf Kapital + Angka (ABC123)</option>
+                            <option value="NUMERIC_ONLY">Angka Saja (123456 - Ramah Anak)</option>
+                            <option value="ALPHANUMERIC_LOWER">Huruf Kecil + Angka (abc123)</option>
+                          </select>
+                        </div>
+
+                        {/* Mode Password */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Mode Password Hotspot
+                          </label>
+                          <select
+                            value={genPassMode}
+                            onChange={(e) => setGenPassMode(e.target.value as any)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          >
+                            <option value="SAME_AS_CODE">Username = Password (Standar Mikhmon)</option>
+                            <option value="RANDOM_PIN">PIN Angka 4-Digit Acak</option>
+                            <option value="CUSTOM">Password Tetap / Statis</option>
+                            <option value="NO_PASS">Tanpa Password</option>
+                          </select>
+                        </div>
+
+                        {/* Custom Password jika mode custom */}
+                        {genPassMode === 'CUSTOM' && (
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Password Tetap
+                            </label>
+                            <input
+                              type="text"
+                              value={genCustomPass}
+                              onChange={(e) => setGenCustomPass(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Profil Kecepatan MikroTik */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Profil MikroTik (Profile)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Misal: 10M-Unlimited atau default"
+                            value={genProfile}
+                            onChange={(e) => setGenProfile(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Durasi / Masa Aktif */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Durasi Masa Aktif
+                          </label>
+                          <select
+                            value={genDuration}
+                            onChange={(e) => setGenDuration(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                          >
+                            <option value="1 Jam">1 Jam</option>
+                            <option value="3 Jam">3 Jam</option>
+                            <option value="6 Jam">6 Jam</option>
+                            <option value="12 Jam">12 Jam</option>
+                            <option value="24 Jam">24 Jam (1 Hari)</option>
+                            <option value="3 Hari">3 Hari</option>
+                            <option value="7 Hari">7 Hari (1 Minggu)</option>
+                            <option value="30 Hari">30 Hari (1 Bulan)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Target Simpan */}
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                        <span className="text-xs font-extrabold text-slate-800 block">
+                          Tujuan Penyimpanan Voucher:
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">Target Batch</label>
+                            <select
+                              value={genBatchTarget}
+                              onChange={(e) => setGenBatchTarget(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                            >
+                              <option value="NEW_BATCH">➕ Buat Batch Baru</option>
+                              {batches.map(b => (
+                                <option key={b.id} value={b.id}>Masukkan ke: {b.name}</option>
                               ))}
+                            </select>
+                          </div>
+
+                          {genBatchTarget === 'NEW_BATCH' && (
+                            <>
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nama Batch Baru</label>
+                                <input
+                                  type="text"
+                                  value={genNewBatchName}
+                                  onChange={(e) => setGenNewBatchName(e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-600 mb-1">Lokasi / SSID Hotspot</label>
+                                <input
+                                  type="text"
+                                  value={genNewBatchLocation}
+                                  onChange={(e) => setGenNewBatchLocation(e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Optional Sync to WiFi Product */}
+                        <div className="pt-2 border-t border-slate-200/60 flex flex-col sm:flex-row sm:items-center gap-3">
+                          <span className="text-[11px] text-slate-600 font-bold shrink-0">
+                            Sinkronkan langsung ke Produk Katalog (Opsional):
+                          </span>
+                          <select
+                            value={genTargetProductId}
+                            onChange={(e) => setGenTargetProductId(e.target.value)}
+                            className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 bg-white max-w-xs"
+                          >
+                            <option value="">-- Jangan Sinkron ke Produk Tertentu --</option>
+                            {wifiProducts.map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.duration})</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Generate Trigger Button */}
+                      <div className="flex items-center justify-end gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={handleGenerateVouchers}
+                          className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white font-black text-xs rounded-xl transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Zap size={15} />
+                          <span>⚡ Generate {genQty} Kode Sekarang</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Preview Box & RouterOS Script Area */}
+                    {genPreviewVouchers.length > 0 && (
+                      <div className="bg-white rounded-3xl border-2 border-amber-300/80 shadow-md p-5 sm:p-6 space-y-5 animate-scale-up">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <h4 className="font-black text-base text-slate-900">
+                                Hasil Generator: {genPreviewVouchers.length} Kode Voucher Siap Simpan
+                              </h4>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              Kode siap disimpan ke sistem dan script RouterOS siap di-copy ke Winbox Terminal.
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(genMikrotikScript);
+                                onShowToast('Script Disalin', 'Script RouterOS disalin! Tempelkan di New Terminal Winbox.', 'success');
+                              }}
+                              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Code size={14} />
+                              <span>Salin Script Winbox</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const blob = new Blob([genMikrotikScript], { type: 'text/plain;charset=utf-8' });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `hotspot-vouchers-${Date.now()}.rsc`;
+                                link.click();
+                                URL.revokeObjectURL(url);
+                                onShowToast('File Diunduh', 'File script .rsc berhasil diunduh', 'success');
+                              }}
+                              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Download size={14} />
+                              <span>Unduh .rsc</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleSaveGeneratedVouchers}
+                              disabled={isSubmittingModal}
+                              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                            >
+                              <CheckCircle2 size={14} />
+                              <span>Simpan ke Database Stok</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Chips Preview */}
+                        <div className="space-y-2">
+                          <span className="text-xs font-bold text-slate-700 block">
+                            Preview Kode ({genPreviewVouchers.length} items):
+                          </span>
+                          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            {genPreviewVouchers.map((v, idx) => (
+                              <div
+                                key={idx}
+                                className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 text-xs font-mono font-bold text-slate-800 shadow-2xs flex items-center gap-1.5"
+                              >
+                                <span className="text-emerald-700">{v.code}</span>
+                                {v.password && <span className="text-slate-400 font-normal">({v.password})</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Terminal Style Script RouterOS */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                              <Terminal size={14} className="text-slate-500" />
+                              Script MikroTik RouterOS CLI (/ip hotspot user):
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              Buka Winbox → New Terminal → Paste & Enter
+                            </span>
+                          </div>
+
+                          <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-xs p-4 shadow-inner">
+                            <pre className="max-h-48 overflow-y-auto custom-scrollbar select-all whitespace-pre-wrap leading-relaxed">
+                              {genMikrotikScript}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {/* SUB-TAB 4: KONFIGURASI HOTSPOT & CAPTIVE PORTAL */}
+                {/* ══════════════════════════════════════════════════════════════════════ */}
+                {wifiSubTab === 'CONFIG' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
+                    {/* Kolom Kiri: Formulir Pengaturan */}
+                    <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-5">
+                      <div className="pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                            <Settings size={18} />
+                          </div>
+                          <h3 className="font-extrabold text-base text-slate-900">
+                            Pengaturan Hotspot Captive Portal RT/RW Net
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Informasi ini akan otomatis tercantum pada slip cetak voucher, bukti transaksi resmi (invoice pembeli), dan panduan login WiFi warga.
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleSaveHotspotConfig} className="space-y-4">
+                        {/* SSID WiFi */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Nama Sinyal WiFi (SSID) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Misal: MelatiNet_Warga_Hotspot"
+                            value={hotspotSsid}
+                            onChange={(e) => setHotspotSsid(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">Nama hotspot yang akan dihubungi oleh HP warga di sekitar rumah.</p>
+                        </div>
+
+                        {/* URL Portal Login */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            URL Portal Login Captive Hotspot *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Misal: http://hotspot.wayahedigital.id atau http://10.0.0.1"
+                            value={hotspotLoginUrl}
+                            onChange={(e) => setHotspotLoginUrl(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">Alamat IP / DNS captive portal MikroTik router (misal http://10.0.0.1 atau domain lokal router).</p>
+                        </div>
+
+                        {/* Password Default & Mode */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Mode Password Default
+                            </label>
+                            <select
+                              value={hotspotPasswordMode}
+                              onChange={(e) => setHotspotPasswordMode(e.target.value as any)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                            >
+                              <option value="SAME_AS_CODE">Username = Password</option>
+                              <option value="RANDOM_PIN">PIN Acak 4 Digit</option>
+                              <option value="CUSTOM">Password Tetap / Statis</option>
+                              <option value="NO_PASSWORD">Tanpa Password</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Password Default Fallback
+                            </label>
+                            <input
+                              type="text"
+                              value={hotspotDefaultPassword}
+                              onChange={(e) => setHotspotDefaultPassword(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* CS Support WhatsApp */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Kontak Dukungan / WhatsApp Admin Hotspot
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="0812-3456-7890"
+                            value={hotspotContactSupport}
+                            onChange={(e) => setHotspotContactSupport(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Instruksi Login */}
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Petunjuk Cara Menggunakan Voucher Hotspot
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={hotspotLoginInstructions}
+                            onChange={(e) => setHotspotLoginInstructions(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            type="submit"
+                            disabled={isSavingHotspotConfig}
+                            className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black shadow-md shadow-teal-600/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                          >
+                            <Save size={15} />
+                            <span>Simpan Konfigurasi Hotspot</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* Kolom Kanan: Live Preview Tampilan Voucher di Invoice Pembeli */}
+                    <div className="lg:col-span-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                          <Eye size={14} className="text-indigo-600" />
+                          Live Preview di Invoice Pembeli
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Real-time
+                        </span>
+                      </div>
+
+                      {/* Mock Voucher Hero Card persis seperti InvoiceModal */}
+                      <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-amber-500/10 border-2 border-emerald-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/30">
+                              <Wifi size={22} className="animate-pulse" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                                Kode Voucher WiFi Anda
+                                <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                  <CheckCircle2 size={10} /> Aktif Siap Pakai
+                                </span>
+                              </h3>
+                              <p className="text-[11px] text-slate-500">Gunakan kode voucher di bawah untuk login ke jaringan Hotspot.</p>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+
+                        {/* Box Kode Voucher */}
+                        <div className="bg-white rounded-2xl p-4 border border-emerald-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
+                              KODE VOUCHER HOTSPOT:
+                            </span>
+                            <span className="font-mono text-2xl font-black text-emerald-700 tracking-widest select-all">
+                              WF-283965
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onShowToast('Disalin', 'Kode voucher disalin', 'info')}
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                          >
+                            <Copy size={13} />
+                            <span>Salin Kode</span>
+                          </button>
+                        </div>
+
+                        {/* Rincian Login & SSID */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-100 shadow-2xs">
+                            <span className="text-[10px] text-slate-400 block">Nama WiFi (SSID):</span>
+                            <span className="font-bold text-slate-800 truncate block">{hotspotSsid || 'MelatiNet_Warga_Hotspot'}</span>
+                          </div>
+                          <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-100 shadow-2xs">
+                            <span className="text-[10px] text-slate-400 block">Password / Sandi:</span>
+                            <span className="font-mono font-bold text-slate-800">{hotspotDefaultPassword || '1234'}</span>
+                          </div>
+                        </div>
+
+                        {/* Portal Login Direct Link */}
+                        <div className="text-xs text-slate-600 bg-white/90 p-3 rounded-xl border border-emerald-100 flex items-center justify-between shadow-2xs">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block">Portal Login:</span>
+                            <span className="text-emerald-700 font-bold font-mono text-xs truncate max-w-[180px] block">
+                              {hotspotLoginUrl || 'http://hotspot.wayahedigital.id'}
+                            </span>
+                          </div>
+                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold">
+                            Buka Portal
+                          </span>
+                        </div>
+
+                        {/* Petunjuk Pemakaian */}
+                        <div className="bg-slate-50/90 rounded-2xl p-3 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
+                          <p className="font-bold text-slate-800 text-xs">Cara Menggunakan Voucher:</p>
+                          <div className="whitespace-pre-line text-slate-600 leading-relaxed font-sans text-[11px]">
+                            {hotspotLoginInstructions}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -9430,157 +10776,395 @@ export function AdminDashboard({
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-black shadow-xs shrink-0">
-                    <ImageIcon size={22} />
+                    <Sliders size={22} />
                   </div>
                   <div>
                     <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                      <span>Kelola Banner & Slider Promo Halaman Utama</span>
-                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                        {bannersList.length} Banner
-                      </span>
+                      <span>Kelola Slider Promo & Banner Halaman Utama</span>
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Upload foto, atur slider gerak slide kanan & kiri di halaman depan, ganti judul promo, dan link penawaran.
+                      Ganti teks headline, promo badge, 3 tag fitur, tombol aksi, serta 3 paket produk di kartu kanan hero carousel.
                     </p>
                   </div>
                 </div>
 
+                <div className="flex items-center gap-2">
+                  {bannerTabMode === 'SLIDER' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleResetHeroSlides}
+                        className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="Kembalikan semua slide ke bawaan default"
+                      >
+                        <RotateCcw size={14} />
+                        <span className="hidden sm:inline">Reset Default</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenAddHeroSlide}
+                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Plus size={15} />
+                        <span>+ Tambah Slide Promo</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleOpenAddBanner}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Plus size={15} />
+                      <span>+ Tambah Banner Baru</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sub-Tab Selector */}
+              <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit">
                 <button
                   type="button"
-                  onClick={handleOpenAddBanner}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => setBannerTabMode('SLIDER')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                    bannerTabMode === 'SLIDER'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <Plus size={15} />
-                  <span>+ Tambah Banner Baru</span>
+                  <Sliders size={14} className={bannerTabMode === 'SLIDER' ? 'text-emerald-600' : 'text-slate-400'} />
+                  <span>Hero Carousel Slider</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    bannerTabMode === 'SLIDER' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {heroSlidesList.length} Slide
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBannerTabMode('IMAGE')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                    bannerTabMode === 'IMAGE'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ImageIcon size={14} className={bannerTabMode === 'IMAGE' ? 'text-emerald-600' : 'text-slate-400'} />
+                  <span>Banner Gambar Billboard</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    bannerTabMode === 'IMAGE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {bannersList.length}
+                  </span>
                 </button>
               </div>
 
-              {/* Banners Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {bannersList.map((banner, index) => {
-                  return (
-                    <div 
-                      key={banner.id}
-                      className={`bg-white rounded-2xl border transition-all overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md ${
-                        banner.isActive ? 'border-slate-200 hover:border-emerald-300' : 'border-slate-200 opacity-60 bg-slate-50'
-                      }`}
-                    >
-                      {/* Image Preview & Badges */}
-                      <div className="relative w-full h-44 sm:h-48 bg-slate-900 overflow-hidden group">
-                        {banner.imageUrl ? (
-                          <img 
-                            src={banner.imageUrl} 
-                            alt={banner.title}
-                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 text-xs">
-                            <ImageIcon size={32} className="mb-1 text-slate-600" />
-                            <span>Tidak ada foto</span>
+              {/* SUB TAB 1: HERO CAROUSEL SLIDES */}
+              {bannerTabMode === 'SLIDER' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {heroSlidesList.map((slide, index) => {
+                      return (
+                        <div
+                          key={slide.id}
+                          className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md ${
+                            slide.isActive ? 'border-slate-200 hover:border-emerald-300' : 'border-slate-200 opacity-60 bg-slate-50'
+                          }`}
+                        >
+                          {/* Live Hero Slide Style Preview Header */}
+                          <div className="bg-[#0b1329] text-white p-5 relative overflow-hidden">
+                            {/* Background Glow */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                            <div className="relative z-10 space-y-3">
+                              {/* Top Bar: Slide Index, Badge, & Active Toggle */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                  <span className="px-2.5 py-0.5 rounded-lg bg-white/10 backdrop-blur-md text-white font-mono text-[11px] font-bold">
+                                    Slide #{index + 1}
+                                  </span>
+                                  <span className="px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 font-bold text-[10px] tracking-wide">
+                                    {slide.badge || 'PROMO RESMI'}
+                                  </span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleHeroSlideActive(slide.id)}
+                                  className={`px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer backdrop-blur-md ${
+                                    slide.isActive
+                                      ? 'bg-emerald-500 text-white shadow-xs'
+                                      : 'bg-rose-500 text-white'
+                                  }`}
+                                >
+                                  {slide.isActive ? '● Aktif di Beranda' : '○ Nonaktif'}
+                                </button>
+                              </div>
+
+                              {/* Title & Subtitle */}
+                              <div className="space-y-1">
+                                <h3 className="text-lg font-black text-white leading-snug">
+                                  {slide.title}
+                                </h3>
+                                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                                  {slide.subtitle}
+                                </p>
+                              </div>
+
+                              {/* Tags Pills */}
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {slide.tags?.map((tag, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="px-2 py-0.5 rounded-md bg-white/10 border border-white/10 text-slate-200 text-[10px] font-medium"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* CTA Buttons preview */}
+                              <div className="flex items-center gap-2 pt-2 text-[11px]">
+                                <span className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-black">
+                                  ⚡ {slide.ctaText}
+                                </span>
+                                <span className="px-3 py-1.5 rounded-xl bg-white/10 text-white font-bold border border-white/20">
+                                  {slide.secondaryCtaText} &gt;
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                        {/* Top Overlays */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                          <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white font-mono text-[10px] font-bold">
-                            Slide #{index + 1}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-white font-black text-[9px] uppercase tracking-wider">
-                            {banner.badge || 'PROMO'}
-                          </span>
+                          {/* Showcase Products Card Preview (Right side on Homepage) */}
+                          <div className="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+                            <div className="bg-[#111c3a] text-white rounded-2xl p-3.5 space-y-2.5 border border-slate-700/60 shadow-inner">
+                              <div className="flex items-center justify-between pb-2 border-b border-slate-700/50">
+                                <span className="text-[11px] font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                                  <Sparkles size={12} className="text-amber-400" />
+                                  {slide.cardTitle || 'Produk Populer'}
+                                </span>
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                                  {slide.cardSubtitle || 'Legal & Bergaransi'}
+                                </span>
+                              </div>
+
+                              {/* Product Items */}
+                              <div className="space-y-1.5">
+                                {slide.cardItems?.map((item, itemIdx) => (
+                                  <div
+                                    key={itemIdx}
+                                    className="p-2 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-2"
+                                  >
+                                    <div>
+                                      <div className="font-bold text-xs text-white leading-tight">
+                                        {item.name}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400">
+                                        {item.sub}
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <div className="font-black text-amber-400 text-xs font-mono">
+                                        {item.price}
+                                      </div>
+                                      {item.discount && (
+                                        <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">
+                                          {item.discount}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Footer Status */}
+                              <div className="pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-slate-400">
+                                <span>{slide.serverStatus || '🔒 Bergaransi Resmi'}</span>
+                                <span className="text-amber-400 font-bold">Beli Sekarang &gt;</span>
+                              </div>
+                            </div>
+
+                            {/* Toolbar Buttons */}
+                            <div className="pt-2 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveHeroSlideOrder(index, 'up')}
+                                  disabled={index === 0}
+                                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
+                                  title="Geser urutan ke atas / sebelumnya"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveHeroSlideOrder(index, 'down')}
+                                  disabled={index === heroSlidesList.length - 1}
+                                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
+                                  title="Geser urutan ke bawah / sesudahnya"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditHeroSlide(slide)}
+                                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                >
+                                  <Edit3 size={13} />
+                                  <span>Edit Konten Slide</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteHeroSlide(slide.id)}
+                                  className="p-2 text-rose-500 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
+                                  title="Hapus slide ini"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-                        <div className="absolute top-3 right-3 flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleBannerActive(banner.id)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer backdrop-blur-md ${
-                              banner.isActive 
-                                ? 'bg-emerald-500/90 text-white shadow-xs' 
-                                : 'bg-rose-500/90 text-white'
-                            }`}
-                          >
-                            {banner.isActive ? '● Aktif di Slider' : '○ Nonaktif'}
-                          </button>
-                        </div>
+              {/* SUB TAB 2: BILLBOARD IMAGE BANNERS */}
+              {bannerTabMode === 'IMAGE' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {bannersList.map((banner, index) => {
+                    return (
+                      <div 
+                        key={banner.id}
+                        className={`bg-white rounded-2xl border transition-all overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md ${
+                          banner.isActive ? 'border-slate-200 hover:border-emerald-300' : 'border-slate-200 opacity-60 bg-slate-50'
+                        }`}
+                      >
+                        {/* Image Preview & Badges */}
+                        <div className="relative w-full h-44 sm:h-48 bg-slate-900 overflow-hidden group">
+                          {banner.imageUrl ? (
+                            <img 
+                              src={banner.imageUrl} 
+                              alt={banner.title}
+                              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 text-xs">
+                              <ImageIcon size={32} className="mb-1 text-slate-600" />
+                              <span>Tidak ada foto</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                        {/* Bottom image overlay info */}
-                        <div className="absolute bottom-3 left-3 right-3 text-white">
-                          <h3 className="font-syne font-black text-base drop-shadow-md truncate">
-                            {banner.title}
-                          </h3>
-                          <p className="text-[11px] text-slate-200 line-clamp-1 drop-shadow-sm">
-                            {banner.subtitle || banner.tagline}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Card Content Details */}
-                      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1.5 text-xs text-slate-600">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-400">Target Tombol:</span>
-                            <span className="font-bold text-slate-800 uppercase font-mono px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
-                              {banner.ctaCategory || 'game'}
+                          {/* Top Overlays */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                            <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white font-mono text-[10px] font-bold">
+                              Slide #{index + 1}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-white font-black text-[9px] uppercase tracking-wider">
+                              {banner.badge || 'PROMO'}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-400">Teks Tombol CTA:</span>
-                            <span className="font-semibold text-slate-700">
-                              {banner.ctaText || 'Klaim Sekarang'}
-                            </span>
+
+                          <div className="absolute top-3 right-3 flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleBannerActive(banner.id)}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer backdrop-blur-md ${
+                                banner.isActive 
+                                  ? 'bg-emerald-500/90 text-white shadow-xs' 
+                                  : 'bg-rose-500/90 text-white'
+                              }`}
+                            >
+                              {banner.isActive ? '● Aktif di Slider' : '○ Nonaktif'}
+                            </button>
+                          </div>
+
+                          {/* Bottom image overlay info */}
+                          <div className="absolute bottom-3 left-3 right-3 text-white">
+                            <h3 className="font-syne font-black text-base drop-shadow-md truncate">
+                              {banner.title}
+                            </h3>
+                            <p className="text-[11px] text-slate-200 line-clamp-1 drop-shadow-sm">
+                              {banner.subtitle || banner.tagline}
+                            </p>
                           </div>
                         </div>
 
-                        {/* Actions Toolbar */}
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleMoveBannerOrder(index, 'up')}
-                              disabled={index === 0}
-                              className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
-                              title="Geser ke kiri / urutan sebelumnya"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveBannerOrder(index, 'down')}
-                              disabled={index === bannersList.length - 1}
-                              className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
-                              title="Geser ke kanan / urutan selanjutnya"
-                            >
-                              ▼
-                            </button>
+                        {/* Card Content Details */}
+                        <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                          <div className="space-y-1.5 text-xs text-slate-600">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-slate-400">Target Tombol:</span>
+                              <span className="font-bold text-slate-800 uppercase font-mono px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                                {banner.ctaCategory || 'game'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-slate-400">Teks Tombol CTA:</span>
+                              <span className="font-semibold text-slate-700">
+                                {banner.ctaText || 'Klaim Sekarang'}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditBanner(banner)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Edit3 size={13} />
-                              <span>Ganti Foto & Edit</span>
-                            </button>
+                          {/* Actions Toolbar */}
+                          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveBannerOrder(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
+                                title="Geser ke kiri / urutan sebelumnya"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveBannerOrder(index, 'down')}
+                                disabled={index === bannersList.length - 1}
+                                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors text-xs"
+                                title="Geser ke kanan / urutan selanjutnya"
+                              >
+                                ▼
+                              </button>
+                            </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteBanner(banner.id)}
-                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                              title="Hapus banner"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditBanner(banner)}
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Edit3 size={13} />
+                                <span>Ganti Foto & Edit</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBanner(banner.id)}
+                                className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                title="Hapus banner"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -9818,6 +11402,404 @@ export function AdminDashboard({
             </div>
           )}
         </main>
+
+      {/* MODAL: EDIT / TAMBAH HERO CAROUSEL SLIDE (TEKS & KARTU PRODUK) */}
+      {(editingHeroSlide || isAddingHeroSlide) && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 space-y-5 shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                  <Sliders size={20} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 leading-tight">
+                    {editingHeroSlide ? 'Edit Konten Slider Promo Halaman Utama' : 'Tambah Slider Promo Baru'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Atur headline, badge garansi, 3 tag fitur, tombol aksi, serta 3 paket produk kartu kanan
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingHeroSlide(null);
+                  setIsAddingHeroSlide(false);
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Form Scrollable */}
+            <div className="space-y-5 max-h-[72vh] overflow-y-auto pr-1">
+              {/* SECTION 1: KONTEN KIRI (HEADLINE & DESKRIPSI) */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  1. Konten Kiri (Headline, Badge & Deskripsi)
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Teks Badge Garansi / Promo</label>
+                    <input
+                      type="text"
+                      value={slideFormBadge}
+                      onChange={(e) => setSlideFormBadge(e.target.value)}
+                      placeholder="Contoh: ★ AKUN RESMI RESELLER • GARANSI PENUH"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Warna Aksen Badge</label>
+                    <select
+                      value={slideFormBadgeColor}
+                      onChange={(e) => setSlideFormBadgeColor(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    >
+                      <option value="emerald">Emerald (Hijau)</option>
+                      <option value="amber">Amber (Kuning / Emas)</option>
+                      <option value="sky">Sky (Biru Terang)</option>
+                      <option value="violet">Violet (Ungu)</option>
+                      <option value="rose">Rose (Merah Muda)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-600">Judul Utama H1 Promo *</label>
+                  <input
+                    type="text"
+                    value={slideFormTitle}
+                    onChange={(e) => setSlideFormTitle(e.target.value)}
+                    placeholder="Contoh: Streaming 4K UHD & Musik Bebas Iklan"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-600">Deskripsi / Subtitle Promo</label>
+                  <textarea
+                    rows={2}
+                    value={slideFormSubtitle}
+                    onChange={(e) => setSlideFormSubtitle(e.target.value)}
+                    placeholder="Contoh: Nikmati Netflix 4K UHD Ultra, Spotify Family, YouTube Premium & Canva Pro tanpa kartu kredit luar negeri..."
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* SECTION 2: 3 FITUR TAG MINI */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  2. Tiga Tag Keunggulan (Pill Kecil di Bawah Deskripsi)
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Tag #1</label>
+                    <input
+                      type="text"
+                      value={slideFormTag1}
+                      onChange={(e) => setSlideFormTag1(e.target.value)}
+                      placeholder="Contoh: 🛡️ Garansi Full 30 Hari"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Tag #2</label>
+                    <input
+                      type="text"
+                      value={slideFormTag2}
+                      onChange={(e) => setSlideFormTag2(e.target.value)}
+                      placeholder="Contoh: 🎬 Kualitas 4K UHD Ultra"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Tag #3</label>
+                    <input
+                      type="text"
+                      value={slideFormTag3}
+                      onChange={(e) => setSlideFormTag3(e.target.value)}
+                      placeholder="Contoh: ⚡ Pengiriman Instan Detik Ini"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: TOMBOL AKSI */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  3. Tombol Aksi (Call To Action)
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Tombol Utama */}
+                  <div className="space-y-2 p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[11px] font-black text-amber-600 uppercase">Tombol Utama (Kuning)</span>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500">Teks Tombol</label>
+                      <input
+                        type="text"
+                        value={slideFormCtaText}
+                        onChange={(e) => setSlideFormCtaText(e.target.value)}
+                        placeholder="Contoh: ⚡ Pilih Akun Premium"
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500">Target Kategori Halaman</label>
+                      <select
+                        value={slideFormCtaCategory}
+                        onChange={(e) => setSlideFormCtaCategory(e.target.value)}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        <option value="premium">Akun Premium</option>
+                        <option value="game">Games Top Up</option>
+                        <option value="kuota">Paket Data / Kuota</option>
+                        <option value="wifi">Voucher WiFi</option>
+                        <option value="ai">AI / ChatGPT</option>
+                        <option value="pulsa">Pulsa Reguler</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Tombol Sekunder */}
+                  <div className="space-y-2 p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[11px] font-black text-slate-700 uppercase">Tombol Sekunder (Garis Outline)</span>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500">Teks Tombol</label>
+                      <input
+                        type="text"
+                        value={slideFormSecondaryCtaText}
+                        onChange={(e) => setSlideFormSecondaryCtaText(e.target.value)}
+                        placeholder="Contoh: Lihat Semua Aplikasi"
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500">Target Aksi Kategori</label>
+                      <select
+                        value={slideFormSecondaryCtaAction}
+                        onChange={(e) => setSlideFormSecondaryCtaAction(e.target.value)}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        <option value="premium">Akun Premium</option>
+                        <option value="game">Games Top Up</option>
+                        <option value="kuota">Paket Data / Kuota</option>
+                        <option value="wifi">Voucher WiFi</option>
+                        <option value="ai">AI / ChatGPT</option>
+                        <option value="pulsa">Pulsa Reguler</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: KARTU PRODUK KANAN (3 PRODUK & HARGA) */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    4. Kartu Produk Unggulan Kanan (Seperti di Screenshot)
+                  </h4>
+                  <span className="text-[10px] text-slate-400 font-bold">3 Baris Produk & Harga</span>
+                </div>
+
+                {/* Judul & Subtitle Kartu */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Judul Header Kartu</label>
+                    <input
+                      type="text"
+                      value={slideFormCardTitle}
+                      onChange={(e) => setSlideFormCardTitle(e.target.value)}
+                      placeholder="Contoh: LANGGANAN PREMIUM POPULER"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-600">Badge Kanan Kartu</label>
+                    <input
+                      type="text"
+                      value={slideFormCardSubtitle}
+                      onChange={(e) => setSlideFormCardSubtitle(e.target.value)}
+                      placeholder="Contoh: Legal & Bergaransi Resmi"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Produk #1 */}
+                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-[10px] font-black text-emerald-600 uppercase">Produk Baris #1</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <input
+                      type="text"
+                      value={slideFormItem1Name}
+                      onChange={(e) => setSlideFormItem1Name(e.target.value)}
+                      placeholder="Nama: Netflix 4K UHD"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem1Sub}
+                      onChange={(e) => setSlideFormItem1Sub(e.target.value)}
+                      placeholder="Sub: 1 Bulan Private Profile"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem1Price}
+                      onChange={(e) => setSlideFormItem1Price(e.target.value)}
+                      placeholder="Harga: Rp 28.000"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold font-mono text-emerald-600"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem1Discount}
+                      onChange={(e) => setSlideFormItem1Discount(e.target.value)}
+                      placeholder="Tag: Garansi"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Produk #2 */}
+                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-[10px] font-black text-emerald-600 uppercase">Produk Baris #2</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <input
+                      type="text"
+                      value={slideFormItem2Name}
+                      onChange={(e) => setSlideFormItem2Name(e.target.value)}
+                      placeholder="Nama: Spotify Family"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem2Sub}
+                      onChange={(e) => setSlideFormItem2Sub(e.target.value)}
+                      placeholder="Sub: 1 Bulan Akun Pribadi"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem2Price}
+                      onChange={(e) => setSlideFormItem2Price(e.target.value)}
+                      placeholder="Harga: Rp 15.000"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold font-mono text-emerald-600"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem2Discount}
+                      onChange={(e) => setSlideFormItem2Discount(e.target.value)}
+                      placeholder="Tag: Bebas Iklan"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Produk #3 */}
+                <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-[10px] font-black text-emerald-600 uppercase">Produk Baris #3</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <input
+                      type="text"
+                      value={slideFormItem3Name}
+                      onChange={(e) => setSlideFormItem3Name(e.target.value)}
+                      placeholder="Nama: YouTube Premium"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem3Sub}
+                      onChange={(e) => setSlideFormItem3Sub(e.target.value)}
+                      placeholder="Sub: 1 Bulan Bebas Iklan + Music"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem3Price}
+                      onChange={(e) => setSlideFormItem3Price(e.target.value)}
+                      placeholder="Harga: Rp 12.000"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold font-mono text-emerald-600"
+                    />
+                    <input
+                      type="text"
+                      value={slideFormItem3Discount}
+                      onChange={(e) => setSlideFormItem3Discount(e.target.value)}
+                      placeholder="Tag: Hemat"
+                      className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Status Kartu */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-600">Teks Keamanan / Footer Kartu Kanan</label>
+                  <input
+                    type="text"
+                    value={slideFormServerStatus}
+                    onChange={(e) => setSlideFormServerStatus(e.target.value)}
+                    placeholder="Contoh: 🔒 Garansi Full 30 Hari Ganti Baru"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Status Aktif */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-800">Status Publikasi Slide</div>
+                  <div className="text-[11px] text-slate-500">
+                    Jika diaktifkan, slide ini langsung tampil berputar otomatis di carousel beranda
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={slideFormIsActive}
+                    onChange={(e) => setSlideFormIsActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingHeroSlide(null);
+                  setIsAddingHeroSlide(false);
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveHeroSlide}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Check size={14} />
+                <span>Simpan Slide Promo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: EDIT / TAMBAH BANNER PROMO DENGAN UPLOAD FOTO */}
       {(editingBanner || isAddingBanner) && (
@@ -11070,111 +13052,288 @@ export function AdminDashboard({
         </div>
       )}
 
-      {/* MODAL: CETAK SLIP KARTU VOUCHER (PRINT READY / THERMAL) */}
+      {/* MODAL: CETAK SLIP KARTU VOUCHER (PRINT READY / THERMAL / A4) */}
       {showPrintModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-100 shrink-0">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:fixed print:inset-0">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col print:max-h-none print:h-auto print:border-none print:shadow-none print:p-0">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100 shrink-0 print:hidden">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                  <Printer size={18} className="text-indigo-600" />
+                  <Printer size={18} className="text-emerald-600" />
                   <span>Cetak Slip Voucher WiFi RT/RW Net</span>
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Kartu voucher siap potong / print thermal untuk penjualan langsung offline
+                  Pilih tata letak kartu modern, struk printer thermal bluetooth, atau lembar kupon A4 siap potong.
                 </p>
               </div>
               <button
                 onClick={() => setShowPrintModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Filter print batch */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/80 shrink-0 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-700">Pilih Batch:</span>
-                <select
-                  value={selectedBatchForPrint ? selectedBatchForPrint.id : 'ALL'}
-                  onChange={(e) => {
-                    if (e.target.value === 'ALL') {
-                      setSelectedBatchForPrint(null);
-                    } else {
-                      const found = batches.find(b => b.id === e.target.value);
-                      setSelectedBatchForPrint(found || null);
-                    }
-                  }}
-                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 font-medium text-slate-800"
-                >
-                  <option value="ALL">Semua Batch ({batches.length})</option>
-                  {batches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name} ({b.vouchers.filter(v => v.status === 'AVAILABLE').length} ready)</option>
-                  ))}
-                </select>
+            {/* Filter print batch & Template Options (Hidden on Print) */}
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-3 shrink-0 text-xs print:hidden">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-700">Pilih Batch:</span>
+                  <select
+                    value={selectedBatchForPrint ? selectedBatchForPrint.id : 'ALL'}
+                    onChange={(e) => {
+                      if (e.target.value === 'ALL') {
+                        setSelectedBatchForPrint(null);
+                      } else {
+                        const found = batches.find(b => b.id === e.target.value);
+                        setSelectedBatchForPrint(found || null);
+                      }
+                    }}
+                    className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-800 text-xs"
+                  >
+                    <option value="ALL">Semua Batch ({batches.length} Batch)</option>
+                    {batches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name} ({b.vouchers.filter(v => v.status === 'AVAILABLE').length} stok ready)</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Print Layout Selector */}
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setPrintLayout('MODERN_CARD')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                      printLayout === 'MODERN_CARD'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    🎴 Kartu Modern
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintLayout('THERMAL')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                      printLayout === 'THERMAL'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    🧾 Struk Thermal POS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintLayout('A4_GRID')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                      printLayout === 'A4_GRID'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    📄 Grid Kupon A4
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+                  >
+                    <Printer size={15} />
+                    <span>Cetak Sekarang (Print)</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Printer size={14} />
-                  <span>Cetak Sekarang (Print)</span>
-                </button>
+              {/* Toggles */}
+              <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-200/70 text-[11px]">
+                <label className="flex items-center gap-2 text-slate-700 font-semibold cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={printShowQr}
+                    onChange={(e) => setPrintShowQr(e.target.checked)}
+                    className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5"
+                  />
+                  <span>Tampilkan QR Code Login Captive Portal</span>
+                </label>
+                <label className="flex items-center gap-2 text-slate-700 font-semibold cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={printShowPassword}
+                    onChange={(e) => setPrintShowPassword(e.target.checked)}
+                    className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5"
+                  />
+                  <span>Tampilkan Baris Password</span>
+                </label>
               </div>
             </div>
 
             {/* Preview Printable Cards Area */}
-            <div className="flex-1 overflow-y-auto p-4 bg-slate-100 rounded-xl border border-slate-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 print:grid-cols-3 print:gap-2">
-                {(selectedBatchForPrint ? [selectedBatchForPrint] : batches).flatMap(b => 
-                  b.vouchers.filter(v => v.status === 'AVAILABLE').map(v => (
-                    <div
-                      key={v.id}
-                      className="bg-white p-3.5 rounded-xl border-2 border-dashed border-indigo-200 space-y-2 shadow-2xs relative print:border-black print:shadow-none"
-                    >
-                      {/* Top Header Card */}
-                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                        <div className="flex items-center gap-1.5">
-                          <Radio size={14} className="text-indigo-600 print:text-black" />
-                          <span className="font-extrabold text-[11px] text-slate-900 tracking-tight">
-                            {settings.siteName || 'WayaheDigital'}
+            <div className="flex-1 overflow-y-auto p-4 bg-slate-100 rounded-xl border border-slate-200 print:bg-white print:border-none print:p-0 print:overflow-visible">
+              {/* LAYOUT 1: MODERN COLORFUL CARDS */}
+              {printLayout === 'MODERN_CARD' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 print:grid-cols-3 print:gap-3">
+                  {(selectedBatchForPrint ? [selectedBatchForPrint] : batches).flatMap(b => 
+                    b.vouchers.filter(v => v.status === 'AVAILABLE').map(v => (
+                      <div
+                        key={v.id}
+                        className="bg-white p-4 rounded-2xl border-2 border-dashed border-emerald-300 space-y-2.5 shadow-xs relative print:border-slate-800 print:shadow-none break-inside-avoid"
+                      >
+                        {/* Top Header Card */}
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                          <div className="flex items-center gap-1.5">
+                            <Radio size={15} className="text-emerald-600" />
+                            <span className="font-extrabold text-xs text-slate-900 tracking-tight">
+                              {settings.siteName || 'WayaheDigital WiFi'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 print:border-slate-800">
+                            {b.location || 'Hotspot Area'}
                           </span>
                         </div>
-                        <span className="text-[9px] font-bold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded print:border print:border-black">
-                          {b.location}
-                        </span>
-                      </div>
 
-                      {/* Code & Pass */}
-                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center space-y-0.5 print:bg-white print:border-black">
-                        <span className="text-[9px] font-bold text-slate-400 block uppercase">Kode Voucher</span>
-                        <div className="font-mono text-base font-black text-indigo-700 tracking-wider print:text-black">
-                          {v.code}
+                        {/* Middle Content */}
+                        <div className="flex items-center gap-3 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100">
+                          {printShowQr && printQrCodeMap[v.code] && (
+                            <div className="shrink-0 bg-white p-1 rounded-lg border border-emerald-200 shadow-2xs">
+                              <img
+                                src={printQrCodeMap[v.code]}
+                                alt="QR Code"
+                                className="w-14 h-14 object-contain"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0 text-center">
+                            <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">KODE VOUCHER</span>
+                            <div className="font-mono text-base font-black text-emerald-800 tracking-wider select-all break-all">
+                              {v.code}
+                            </div>
+                            {printShowPassword && (
+                              <div className="text-[10px] text-slate-600 font-mono font-semibold pt-0.5">
+                                Pass: <strong className="text-slate-900">{v.password || v.code}</strong>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {v.password && (
-                          <div className="text-[10px] text-slate-600 font-mono font-medium">
-                            Password: <strong className="text-slate-900">{v.password}</strong>
+
+                        {/* Footer Info */}
+                        <div className="text-[10px] text-slate-500 space-y-1 pt-1">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-slate-700">{b.name}</span>
+                            <span className="text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded text-[9px]">{b.speedProfile || 'Up to 10 Mbps'}</span>
+                          </div>
+                          <div className="flex justify-between text-[9px] text-slate-500 font-medium">
+                            <span>SSID: <strong>{settings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot'}</strong></span>
+                            <span>Masa Aktif: <strong>{b.duration || 'Aktif 24 Jam'}</strong></span>
+                          </div>
+                          <div className="text-center text-slate-400 font-mono text-[8px] pt-1 border-t border-slate-100">
+                            Portal: {settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id'}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* LAYOUT 2: THERMAL POS RECEIPT */}
+              {printLayout === 'THERMAL' && (
+                <div className="flex flex-col items-center gap-4 print:block">
+                  {(selectedBatchForPrint ? [selectedBatchForPrint] : batches).flatMap(b => 
+                    b.vouchers.filter(v => v.status === 'AVAILABLE').map(v => (
+                      <div
+                        key={v.id}
+                        className="w-[280px] bg-white p-4 text-black font-mono text-[11px] leading-tight border border-slate-300 shadow-xs mb-4 print:border-none print:shadow-none print:p-2 print:mb-6 break-inside-avoid"
+                      >
+                        <div className="text-center space-y-1 pb-2 border-b border-dashed border-slate-400">
+                          <div className="font-extrabold text-sm uppercase tracking-wide">
+                            {settings.siteName || 'WAYAHE DIGITAL'}
+                          </div>
+                          <div className="text-[10px]">LAYANAN WIFI RT/RW NET</div>
+                          <div className="text-[9px] text-slate-600">SSID: {settings.wifiHotspotSsid || 'MelatiNet_Warga'}</div>
+                        </div>
+
+                        <div className="text-center py-3 space-y-1">
+                          <div className="text-[9px] uppercase font-bold tracking-wider text-slate-500">*** KODE VOUCHER ***</div>
+                          <div className="text-lg font-black tracking-widest py-1 border-y border-dashed border-slate-400 my-1">
+                            {v.code}
+                          </div>
+                          {printShowPassword && (
+                            <div className="text-[10px]">
+                              Password: <strong>{v.password || v.code}</strong>
+                            </div>
+                          )}
+                        </div>
+
+                        {printShowQr && printQrCodeMap[v.code] && (
+                          <div className="flex justify-center py-2">
+                            <img
+                              src={printQrCodeMap[v.code]}
+                              alt="QR Code"
+                              className="w-24 h-24 object-contain"
+                            />
                           </div>
                         )}
-                      </div>
 
-                      {/* Footer Info */}
-                      <div className="text-[9px] text-slate-500 space-y-0.5 pt-1">
-                        <div className="flex justify-between">
-                          <span>Paket: <strong>{b.name}</strong></span>
-                          <span>Speed: <strong>{b.speedProfile}</strong></span>
+                        <div className="space-y-1 pt-2 border-t border-dashed border-slate-400 text-[10px]">
+                          <div className="flex justify-between">
+                            <span>Paket:</span>
+                            <span className="font-bold">{b.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Masa Aktif:</span>
+                            <span>{b.duration || '24 Jam'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Kecepatan:</span>
+                            <span>{b.speedProfile || 'Up to 10 Mbps'}</span>
+                          </div>
                         </div>
-                        <div className="text-center text-slate-400 font-mono text-[8px] pt-0.5">
-                          Login: hotspot.wayahedigital.id
+
+                        <div className="text-center pt-3 text-[9px] text-slate-600 space-y-0.5">
+                          <div>Login: {settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id'}</div>
+                          <div className="text-[8px] italic">Terima kasih atas kunjungan Anda</div>
                         </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* LAYOUT 3: A4 GRID COUPONS */}
+              {printLayout === 'A4_GRID' && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 print:grid-cols-4 print:gap-2">
+                  {(selectedBatchForPrint ? [selectedBatchForPrint] : batches).flatMap(b => 
+                    b.vouchers.filter(v => v.status === 'AVAILABLE').map(v => (
+                      <div
+                        key={v.id}
+                        className="bg-white p-2.5 rounded-lg border border-dashed border-slate-400 text-[10px] space-y-1.5 shadow-none break-inside-avoid relative"
+                      >
+                        <div className="flex justify-between items-center text-[9px] font-bold border-b border-slate-200 pb-1">
+                          <span className="truncate max-w-[90px]">{settings.siteName || 'WayaheWiFi'}</span>
+                          <span className="text-[8px] bg-slate-100 px-1 rounded">{b.duration || '1 Hari'}</span>
+                        </div>
+                        <div className="text-center py-1 bg-slate-50 rounded">
+                          <div className="text-[8px] text-slate-500 font-semibold">KODE LOGIN</div>
+                          <div className="font-mono text-xs font-black tracking-wider text-slate-900 select-all">
+                            {v.code}
+                          </div>
+                          {printShowPassword && (
+                            <div className="text-[8px] text-slate-600 font-mono">
+                              Pass: {v.password || v.code}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center text-[8px] text-slate-500">
+                          <span>SSID: {settings.wifiHotspotSsid || 'MelatiNet'}</span>
+                          <span>{b.speedProfile || '10M'}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

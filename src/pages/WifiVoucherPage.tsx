@@ -55,13 +55,20 @@ export function WifiVoucherPage({
     }
   }, []);
 
-  const totalAvailableVouchers = useMemo(() => {
-    return batches.reduce((acc, b) => acc + (b.vouchers?.filter(v => v.status === 'AVAILABLE')?.length || 0), 0);
-  }, [batches]);
-
   const wifiProducts = useMemo(() => {
     return products.filter(p => p.categoryId === 'wifi' && p.isActive);
   }, [products]);
+
+  const totalAvailableVouchers = useMemo(() => {
+    const fromBatches = batches.reduce((acc, b) => acc + (b.vouchers?.filter(v => v.status === 'AVAILABLE')?.length || 0), 0);
+    const fromProducts = wifiProducts.reduce((acc, p) => {
+      if (p.hasVariants && p.variants) {
+        return acc + p.variants.reduce((vSum, v) => vSum + (v.voucherCodes?.length || v.stock || 0), 0);
+      }
+      return acc + (p.voucherCodes?.length || p.stock || 0);
+    }, 0);
+    return fromBatches + fromProducts;
+  }, [batches, wifiProducts]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -146,7 +153,7 @@ export function WifiVoucherPage({
           invoice: matchingOrder.invoiceNumber,
           product: matchingOrder.items[0]?.productName || 'Voucher WiFi RT/RW Net',
           date: matchingOrder.paidAt || matchingOrder.createdAt,
-          ssid: matchingOrder.fulfillmentResult.wifiSsid || 'MelatiNet_Warga_Hotspot',
+          ssid: matchingOrder.fulfillmentResult.wifiSsid || storage.getSettings().wifiHotspotSsid || 'MelatiNet_Warga_Hotspot',
           status: matchingOrder.fulfillmentStatus === 'SUCCESS' ? 'Aktif' : 'Menunggu Aktivasi',
         }
       });

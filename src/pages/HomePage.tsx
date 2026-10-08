@@ -34,10 +34,10 @@ import {
   Wrench,
   AlertTriangle
 } from 'lucide-react';
-import { Product, Order, PromoBanner, User } from '../types';
+import { Product, Order, PromoBanner, User, HeroPromoSlide } from '../types';
 import { formatRupiah, detectOperator } from '../utils/operator';
 import { ProductLogo } from '../components/ProductLogo';
-import { storage, INITIAL_BANNERS, INITIAL_PREMIUM_PRODUCTS, INITIAL_AI_TOKEN_PRODUCTS } from '../services/storage';
+import { storage, INITIAL_BANNERS, INITIAL_PREMIUM_PRODUCTS, INITIAL_AI_TOKEN_PRODUCTS, INITIAL_HERO_SLIDES } from '../services/storage';
 import { GameTopUpModal, SelectedGameInfo } from '../components/GameTopUpModal';
 import { useTheme } from '../context/ThemeContext';
 
@@ -243,144 +243,72 @@ export function HomePage({
     return () => clearInterval(timer);
   }, []);
 
-  // Interactive Promo Products Carousel Slides (Sliding banner promo produk)
-  const promoSlides = useMemo(() => [
-    {
-      id: 'slide-game',
-      badge: '🔥 FLASH SALE GAME • DISKON S/D 25%',
-      badgeColor: 'amber',
-      title: 'Pesta Top Up Game & Diamond Tercepat',
-      subtitle: 'Bonus diamond melimpah dan cashback koin instan untuk Mobile Legends, Free Fire, Valorant, & Genshin. Otomatis masuk 1-3 detik non-stop 24 jam.',
-      tags: ['⚡ Proses 1-3 Detik Masuk', '🛡️ Garansi 100% Legal', '💰 Cashback Koin Member'],
-      ctaText: 'Top Up Game Sekarang',
-      ctaAction: () => {
-        const el = document.getElementById('katalog-game-unggulan');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Jelajahi Semua Game',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('katalog-game-unggulan');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Promo Game Terpopuler',
-      cardSubtitle: 'Harga Spesial Hari Ini',
-      cardItems: [
-        { name: 'Mobile Legends', sub: '86 💎 Diamond', price: 'Rp 21.000', discount: '-18%' },
-        { name: 'Free Fire', sub: '140 💎 Diamond', price: 'Rp 19.500', discount: '-22%' },
-        { name: 'Valorant Point', sub: '1125 VP Points', price: 'Rp 135.000', discount: '-15%' },
-      ],
-      serverStatus: '🟢 Server Otomatis 1-3 Detik',
-      accentGlow: 'from-amber-500/20 via-orange-500/10 to-transparent',
-    },
-    {
-      id: 'slide-kuota',
-      badge: '🌐 HARGA AGEN RESMI • BEBAS FUP',
-      badgeColor: 'sky',
-      title: 'Paket Data Kuota Sakti 24 Jam All Operator',
-      subtitle: 'Telkomsel, Indosat Ooredoo, XL Axiata, Tri & Smartfren tanpa pembagian waktu malam. Harga agen langsung hemat hingga 35%!',
-      tags: ['📶 Semua Operator Resmi', '⏱️ Kuota 24 Jam Full', '🏷️ Harga Distributor Termurah'],
-      ctaText: 'Beli Paket Kuota Murah',
-      ctaAction: () => {
-        setPulsaOrKuotaTab('kuota');
-        const el = document.getElementById('pulsa-kuota-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Isi Pulsa Reguler',
-      secondaryCtaAction: () => {
-        setPulsaOrKuotaTab('pulsa');
-        const el = document.getElementById('pulsa-kuota-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Paket Kuota Paling Laris',
-      cardSubtitle: 'Semua Operator Siap Isi',
-      cardItems: [
-        { name: 'Telkomsel Data', sub: '35 GB / 30 Hari Full', price: 'Rp 45.000', discount: '-30%' },
-        { name: 'Indosat Freedom', sub: '50 GB / 30 Hari Bebas FUP', price: 'Rp 58.000', discount: '-25%' },
-        { name: 'XL Xtra Combo', sub: '40 GB / 30 Hari 24 Jam', price: 'Rp 49.000', discount: '-28%' },
-      ],
-      serverStatus: '⚡ Jalur Host-to-Host Resmi Digiflazz',
-      accentGlow: 'from-sky-500/20 via-blue-500/10 to-transparent',
-    },
-    {
-      id: 'slide-premium',
-      badge: '⭐ AKUN RESMI RESELLER • GARANSI PENUH',
-      badgeColor: 'emerald',
-      title: 'Streaming 4K UHD & Musik Bebas Iklan',
-      subtitle: 'Nikmati Netflix 4K UHD Ultra, Spotify Family, YouTube Premium & Canva Pro tanpa kartu kredit luar negeri. Akun langsung aktif & garansi ganti baru.',
-      tags: ['🛡️ Garansi Full 30 Hari', '🎬 Kualitas 4K UHD Ultra', '⚡ Pengiriman Instan Detik Ini'],
-      ctaText: 'Pilih Akun Premium',
-      ctaAction: () => {
-        const el = document.getElementById('katalog-akun-premium');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Lihat Semua Aplikasi',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('katalog-akun-premium');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Langganan Premium Populer',
-      cardSubtitle: 'Legal & Bergaransi Resmi',
-      cardItems: [
-        { name: 'Netflix 4K UHD', sub: '1 Bulan Private Profile', price: 'Rp 28.000', discount: 'Garansi' },
-        { name: 'Spotify Family', sub: '1 Bulan Akun Pribadi', price: 'Rp 15.000', discount: 'Bebas Iklan' },
-        { name: 'YouTube Premium', sub: '1 Bulan Bebas Iklan + Music', price: 'Rp 12.000', discount: 'Hemat' },
-      ],
-      serverStatus: '🔒 Garansi Full 30 Hari Ganti Baru',
-      accentGlow: 'from-emerald-500/20 via-teal-500/10 to-transparent',
-    },
-    {
-      id: 'slide-ai',
-      badge: '🤖 DEVELOPER AI SANDBOX • SIAP PAKAI',
-      badgeColor: 'violet',
-      title: 'Token API Key AI Terjangkau untuk Developer',
-      subtitle: 'Akses OpenAI GPT-4o, Claude 3.5 Sonnet & DeepSeek R1 tanpa perlu kartu kredit internasional. Latensi rendah, saldo otomatis terisi dan siap request.',
-      tags: ['🚀 Latency Cepat <300ms', '🔑 Saldo Token Siap Pakai', '💻 Ready cURL/Node/Python'],
-      ctaText: 'Beli Saldo Token AI',
-      ctaAction: () => {
-        const el = document.getElementById('api-gateway-ai');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Coba Sandbox API',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('api-gateway-ai');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Pilihan Model AI Populer',
-      cardSubtitle: 'Saldo Token Langsung Aktif',
-      cardItems: [
-        { name: 'OpenAI GPT-4o', sub: 'Saldo $5 (~78rb Token)', price: 'Rp 82.500', discount: 'Populer' },
-        { name: 'Claude 3.5 Sonnet', sub: 'Saldo $10 Instant Token', price: 'Rp 165.000', discount: 'Ready Key' },
-        { name: 'DeepSeek R1/V3', sub: '20 Juta Token Output', price: 'Rp 45.000', discount: 'Hemat' },
-      ],
-      serverStatus: '🚀 Uptime 99.98% Latensi Rendah',
-      accentGlow: 'from-violet-500/20 via-purple-500/10 to-transparent',
-    },
-    {
-      id: 'slide-wifi',
-      badge: '📡 INTERNET WARGA CEPAT • TANPA KUOTA',
-      badgeColor: 'yellow',
-      title: 'Voucher WiFi Hotspot Unlimited Warga & RT/RW Net',
-      subtitle: 'Akses internet warga tanpa batas kuota mulai Rp 2.000 / hari. Kecepatan stabil hingga 50 Mbps untuk streaming video, belajar, dan usaha online.',
-      tags: ['🚀 Speed Up to 50 Mbps', '💵 Mulai Rp 2.000/hari', '📶 Unlimited Bebas FUP'],
-      ctaText: 'Pilih Voucher WiFi',
-      ctaAction: () => {
-        onNavigate('wifi');
-      },
-      secondaryCtaText: 'Cek Lokasi Hotspot',
-      secondaryCtaAction: () => {
-        onNavigate('wifi');
-      },
-      cardTitle: 'Paket Voucher Hotspot Desa',
-      cardSubtitle: 'Langsung Konek Sekali Klik',
-      cardItems: [
-        { name: 'WiFi Harian', sub: '24 Jam Non-Stop Full Speed', price: 'Rp 2.000', discount: 'Favorit' },
-        { name: 'WiFi Mingguan', sub: '7 Hari Unlimited Tanpa FUP', price: 'Rp 10.000', discount: 'Hemat' },
-        { name: 'WiFi Bulanan', sub: '30 Hari Unlimited Puas', price: 'Rp 35.000', discount: 'Best Value' },
-      ],
-      serverStatus: '📶 Jaringan Hotspot Siaga 24 Jam',
-      accentGlow: 'from-amber-400/20 via-yellow-500/10 to-transparent',
-    },
-  ], [onNavigate]);
+  // Interactive Promo Products Carousel Slides (Dikelola dinamis dari Admin & Storage)
+  const [heroSlidesList, setHeroSlidesList] = useState<HeroPromoSlide[]>(() => storage.getHeroSlides());
+
+  useEffect(() => {
+    const handleSync = () => {
+      setHeroSlidesList(storage.getHeroSlides());
+    };
+    window.addEventListener('storage_synced', handleSync);
+    return () => window.removeEventListener('storage_synced', handleSync);
+  }, []);
+
+  const promoSlides = useMemo(() => {
+    const activeList = heroSlidesList.filter(s => s.isActive !== false);
+    const list = activeList.length > 0 ? activeList : INITIAL_HERO_SLIDES;
+
+    const resolveAction = (target?: string) => {
+      const t = (target || '').toLowerCase().trim();
+      if (t === 'game' || t.includes('game')) {
+        return () => {
+          const el = document.getElementById('katalog-game-unggulan');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'kuota' || t.includes('kuota')) {
+        return () => {
+          setPulsaOrKuotaTab('kuota');
+          const el = document.getElementById('pulsa-kuota-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'pulsa' || t.includes('pulsa')) {
+        return () => {
+          setPulsaOrKuotaTab('pulsa');
+          const el = document.getElementById('pulsa-kuota-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'premium' || t.includes('premium') || t.includes('aplikasi') || t.includes('akun')) {
+        return () => {
+          const el = document.getElementById('katalog-akun-premium');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'ai' || t.includes('ai') || t.includes('token') || t.includes('api')) {
+        return () => {
+          const el = document.getElementById('api-gateway-ai');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'wifi' || t.includes('wifi') || t.includes('hotspot')) {
+        return () => {
+          onNavigate('wifi');
+        };
+      }
+      if (t === 'transaksi' || t.includes('transaksi')) {
+        return () => onNavigate('transaksi');
+      }
+      return () => {};
+    };
+
+    return list.map(slide => ({
+      ...slide,
+      ctaAction: resolveAction(slide.ctaCategory),
+      secondaryCtaAction: resolveAction(slide.secondaryCtaAction || slide.ctaCategory),
+    }));
+  }, [heroSlidesList, onNavigate]);
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
   const [isBannerHovered, setIsBannerHovered] = useState<boolean>(false);
@@ -1272,117 +1200,6 @@ export function HomePage({
           </div>
         </section>
 
-        {/* 5. PROMO SPESIAL HARI INI (TAGIHAN BERKURANG PAKAI INI) */}
-        <section className="rounded-3xl p-5 sm:p-7 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0B132B] text-white shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-l-2 border-amber-400 pl-3">
-            <div>
-              <span className="text-[10px] font-space font-bold text-amber-400 uppercase tracking-wider block">
-                TAGIHAN BERKURANG PAKAI INI
-              </span>
-              <h2 className="text-base sm:text-lg font-bold font-space text-white tracking-tight">
-                Promo Spesial Hari Ini
-              </h2>
-            </div>
-            <span className="text-xs text-slate-300 font-space font-medium hidden sm:inline">
-              VOUCHER DISKON AKTIF
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {/* Promo Card 1: QRIS Cashback */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold font-space">
-                  FLASH SALE 20%
-                </span>
-                <span className="text-[10px] text-slate-400">Exp. Hari Ini</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Cashback 20% Pembayaran QRIS
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Gunakan saluran QRIS UNIK untuk transaksi pertama semua server game mobile.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">WAYAHEQRIS</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('WAYAHEQRIS')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Promo Card 2: MLBB Starlight Discount */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold font-space">
-                  DISCOUNT 15.000
-                </span>
-                <span className="text-[10px] text-slate-400">Jam Begadang</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Diskon Kilat Malam MLBB
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Khusus pukul 21:00-05:00 WIB hemat Rp 15.000 untuk Starlight &amp; Weekly Pass.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">BEGADANGMLBB</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('BEGADANGMLBB')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Promo Card 3: Saldo Deposit Bonus */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold font-space">
-                  CASHBACK TOP UP SALDO
-                </span>
-                <span className="text-[10px] text-slate-400">VIP Only</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Bonus Top Up Saldo Deposit 5%
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Bonus ekstra masuk saldo hingga Rp 50.000 untuk user reseller aktif Wayahe Digital.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">WAYAHEDEPOSIT</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('WAYAHEDEPOSIT')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* 6. KATALOG PRODUK GAME UNGGULAN (10 GAME CARDS MATRIX) */}
         <section id="katalog-game-unggulan" className="space-y-4 scroll-mt-20">
@@ -1609,14 +1426,15 @@ export function HomePage({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2.5">
-                        {/* Icon Gambar Akun Premium (Bisa diedit admin) */}
-                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center bg-slate-900 border border-slate-700/60">
+                        {/* Icon Gambar Akun Premium */}
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-slate-900 border border-slate-700/60">
                           <ProductLogo
                             provider={app.provider || app.name}
+                            name={app.name}
                             iconUrl={app.iconUrl}
                             category="premium"
-                            size="lg"
-                            className="w-full h-full object-cover"
+                            size="xl"
+                            className="w-full h-full"
                           />
                         </div>
                         <div className="flex items-center gap-1">

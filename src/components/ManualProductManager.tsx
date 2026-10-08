@@ -1,0 +1,1114 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  Box, 
+  Layers, 
+  Save, 
+  Plus, 
+  Trash2, 
+  Copy, 
+  Check, 
+  ChevronDown, 
+  ChevronUp, 
+  Eye, 
+  EyeOff, 
+  Sparkles, 
+  CheckCircle2, 
+  AlertCircle,
+  Database,
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  Tag
+} from 'lucide-react';
+import { Product, ProductVariant, WifiVoucherBatch } from '../types';
+import { storage } from '../services/storage';
+import { formatRupiah } from '../utils/operator';
+
+interface ManualProductManagerProps {
+  category: 'premium' | 'wifi';
+  title?: string;
+  subtitle?: string;
+  onRefreshData?: () => void;
+  onShowToast: (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
+}
+
+export function ManualProductManager({
+  category,
+  title,
+  subtitle,
+  onRefreshData,
+  onShowToast,
+}: ManualProductManagerProps) {
+  // Collapsible accordion toggles
+  const [isAddProductOpen, setIsAddProductOpen] = useState(true);
+  const [isAddVariantOpen, setIsAddVariantOpen] = useState(true);
+  const [isStocksOpen, setIsStocksOpen] = useState(true);
+
+  // Form 1: Tambah Produk Baru
+  const [newProductName, setNewProductName] = useState('');
+  const [newProductId, setNewProductId] = useState('');
+  const [newProductDesc, setNewProductDesc] = useState('');
+
+  // Form 2: Tambah Variant Baru
+  const [newVariantName, setNewVariantName] = useState('');
+  const [newVariantPrice, setNewVariantPrice] = useState<string>('');
+  const [variantProductId, setVariantProductId] = useState<string>('');
+  const [newVariantDesc, setNewVariantDesc] = useState('');
+  const [newVariantSnk, setNewVariantSnk] = useState('');
+
+  // Form 3: Tambah Stock Individu
+  const [stockProductSingle, setStockProductSingle] = useState<string>('');
+  const [stockVariantSingle, setStockVariantSingle] = useState<string>('');
+  const [stockAccountInfo, setStockAccountInfo] = useState('');
+  const [stockExpirySingle, setStockExpirySingle] = useState<string>('7');
+
+  // Form 4: Tambah Stock Massal
+  const [stockProductBulk, setStockProductBulk] = useState<string>('');
+  const [stockVariantBulk, setStockVariantBulk] = useState<string>('');
+  const [stockExpiryBulk, setStockExpiryBulk] = useState<string>('30');
+  const [stockBulkData, setStockBulkData] = useState('');
+
+  // Stock inspection modal
+  const [inspectingVariant, setInspectingVariant] = useState<{
+    product: Product;
+    variant: ProductVariant;
+  } | null>(null);
+  const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Trigger re-render when local storage updates
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Get products of current category
+  const products = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _ = reloadKey;
+    return storage.getProducts().filter(p => p.categoryId === category && !p.isDeleted);
+  }, [category, reloadKey]);
+
+  // Derived variants for Form 3
+  const singleProductVariants = useMemo(() => {
+    if (!stockProductSingle) return [];
+    const prod = products.find(p => p.id === stockProductSingle);
+    return prod?.variants || [];
+  }, [stockProductSingle, products]);
+
+  // Derived variants for Form 4
+  const bulkProductVariants = useMemo(() => {
+    if (!stockProductBulk) return [];
+    const prod = products.find(p => p.id === stockProductBulk);
+    return prod?.variants || [];
+  }, [stockProductBulk, products]);
+
+  // Total statistics
+  const totalStockCount = useMemo(() => {
+    return products.reduce((acc, p) => {
+      if (p.hasVariants && p.variants) {
+        return acc + p.variants.reduce((vAcc, v) => vAcc + (v.voucherCodes?.length || v.stock || 0), 0);
+      }
+      return acc + (p.voucherCodes?.length || p.stock || 0);
+    }, 0);
+  }, [products]);
+
+  // 1. Simpan Produk Baru
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProductName.trim()) {
+      onShowToast('Gagal', 'Nama produk (display name) wajib diisi', 'error');
+      return;
+    }
+
+    let finalId = newProductId.trim();
+    if (!finalId) {
+      finalId = (category === 'premium' ? 'prem-' : 'wifi-') + newProductName.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20);
+    }
+
+    const allProducts = storage.getProducts();
+    if (allProducts.some(p => p.id === finalId && !p.isDeleted)) {
+      onShowToast('Gagal', `Produk ID "${finalId}" sudah terdaftar. Gunakan ID unik lainnya.`, 'error');
+      return;
+    }
+
+    const newProd: Product = {
+      id: finalId,
+      categoryId: category,
+      provider: newProductName.trim(),
+      name: newProductName.trim(),
+      sku: (category === 'premium' ? 'PRM-' : 'WF-') + Math.floor(1000 + Math.random() * 9000),
+      description: newProductDesc.trim() || (category === 'premium' ? 'Akun & Lisensi Premium Resmi' : 'Voucher Hotspot RT/RW Net'),
+      supplierPrice: 0,
+      basePrice: 0,
+      sellingPrice: 0,
+      deliveryMethod: 'AUTOMATIC',
+      isActive: true,
+      hasVariants: true,
+      variants: [],
+      stock: 0,
+      isManualCustom: true,
+    };
+
+    allProducts.unshift(newProd);
+    storage.saveProducts(allProducts);
+    storage.addAuditLog(
+      'MANUAL_PRODUCT_CREATED',
+      category === 'premium' ? 'Admin Premium' : 'Admin WiFi',
+      `Produk manual ${newProd.name} (${newProd.id}) berhasil dibuat.`
+    );
+
+    setNewProductName('');
+    setNewProductId('');
+    setNewProductDesc('');
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Berhasil', `Produk "${newProd.name}" berhasil disimpan!`, 'success');
+  };
+
+  // 2. Simpan Variant Baru
+  const handleSaveVariant = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVariantName.trim()) {
+      onShowToast('Gagal', 'Nama variant wajib diisi', 'error');
+      return;
+    }
+    const priceNum = Number(newVariantPrice);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      onShowToast('Gagal', 'Harga (IDR) harus berupa nominal angka valid', 'error');
+      return;
+    }
+    if (!variantProductId) {
+      onShowToast('Gagal', 'Silakan pilih Kategori (Produk) induk terlebih dahulu', 'error');
+      return;
+    }
+
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === variantProductId);
+    if (prodIdx === -1) {
+      onShowToast('Gagal', 'Produk induk tidak ditemukan', 'error');
+      return;
+    }
+
+    const variantId = 'var-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900);
+    const newVariant: ProductVariant = {
+      id: variantId,
+      name: newVariantName.trim(),
+      sellingPrice: priceNum,
+      supplierPrice: 0,
+      description: newVariantDesc.trim() || undefined,
+      snk: newVariantSnk.trim() || undefined,
+      stock: 0,
+      voucherCodes: [],
+      isActive: true,
+      sku: 'SKU-' + Math.floor(1000 + Math.random() * 9000),
+    };
+
+    const targetProduct = { ...allProducts[prodIdx] };
+    const curVariants = targetProduct.variants ? [...targetProduct.variants] : [];
+    curVariants.push(newVariant);
+    targetProduct.hasVariants = true;
+    targetProduct.variants = curVariants;
+    if (!targetProduct.sellingPrice || targetProduct.sellingPrice === 0) {
+      targetProduct.sellingPrice = priceNum;
+    }
+    allProducts[prodIdx] = targetProduct;
+
+    storage.saveProducts(allProducts);
+    storage.addAuditLog(
+      'MANUAL_VARIANT_CREATED',
+      category === 'premium' ? 'Admin Premium' : 'Admin WiFi',
+      `Varian ${newVariant.name} untuk produk ${targetProduct.name} berhasil ditambahkan.`
+    );
+
+    // If WiFi, optionally create a linked batch
+    if (category === 'wifi') {
+      try {
+        const curBatches = storage.getVoucherBatches();
+        const newBatch: WifiVoucherBatch = {
+          id: 'batch-' + Date.now().toString(36),
+          name: `${targetProduct.name} - ${newVariant.name}`,
+          productId: targetProduct.id,
+          variantId: newVariant.id,
+          speedProfile: 'Up to 10 Mbps',
+          duration: newVariant.name,
+          quotaLimit: 'Unlimited FUP',
+          location: 'Hotspot Area RT/RW',
+          vouchers: [],
+          createdAt: new Date().toISOString(),
+        };
+        curBatches.unshift(newBatch);
+        storage.saveVoucherBatches(curBatches);
+      } catch (_) {}
+    }
+
+    setNewVariantName('');
+    setNewVariantPrice('');
+    setNewVariantDesc('');
+    setNewVariantSnk('');
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Berhasil', `Variant "${newVariant.name}" berhasil disimpan ke produk ${targetProduct.name}!`, 'success');
+  };
+
+  // 3. Tambah Stock Individu
+  const handleAddStockSingle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stockProductSingle) {
+      onShowToast('Gagal', 'Pilih Produk terlebih dahulu', 'error');
+      return;
+    }
+    if (!stockVariantSingle) {
+      onShowToast('Gagal', 'Pilih Variant terlebih dahulu', 'error');
+      return;
+    }
+    const trimmedInfo = stockAccountInfo.trim();
+    if (!trimmedInfo) {
+      onShowToast('Gagal', category === 'premium' ? 'Data info akun (email|pass) wajib diisi' : 'Kode voucher hotspot wajib diisi', 'error');
+      return;
+    }
+
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === stockProductSingle);
+    if (prodIdx === -1) {
+      onShowToast('Gagal', 'Produk tidak ditemukan', 'error');
+      return;
+    }
+
+    const prod = { ...allProducts[prodIdx] };
+    const variants = prod.variants ? [...prod.variants] : [];
+    const varIdx = variants.findIndex(v => v.id === stockVariantSingle);
+    if (varIdx === -1) {
+      onShowToast('Gagal', 'Variant tidak ditemukan', 'error');
+      return;
+    }
+
+    const variant = { ...variants[varIdx] };
+    const codes = variant.voucherCodes ? [...variant.voucherCodes] : [];
+    codes.push(trimmedInfo);
+    variant.voucherCodes = codes;
+    variant.stock = codes.length;
+    variant.expiredDays = Number(stockExpirySingle) || 7;
+    variants[varIdx] = variant;
+    prod.variants = variants;
+    prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
+    allProducts[prodIdx] = prod;
+
+    storage.saveProducts(allProducts);
+
+    // If WiFi, also sync to WifiVoucherBatches
+    if (category === 'wifi') {
+      try {
+        const curBatches = storage.getVoucherBatches();
+        let targetBatch = curBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
+        if (!targetBatch) {
+          targetBatch = {
+            id: 'batch-' + Date.now().toString(36),
+            name: `${prod.name} - ${variant.name}`,
+            productId: prod.id,
+            variantId: variant.id,
+            speedProfile: 'Up to 10 Mbps',
+            duration: variant.name,
+            quotaLimit: 'Unlimited',
+            location: 'Hotspot Area RT/RW',
+            vouchers: [],
+            createdAt: new Date().toISOString(),
+          };
+          curBatches.unshift(targetBatch);
+        }
+        const [code, pass] = trimmedInfo.includes('|') ? trimmedInfo.split('|') : [trimmedInfo, trimmedInfo];
+        targetBatch.vouchers.push({
+          id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
+          code: code.trim(),
+          password: pass ? pass.trim() : undefined,
+          status: 'AVAILABLE',
+          createdAt: new Date().toISOString(),
+        });
+        storage.saveVoucherBatches(curBatches);
+      } catch (_) {}
+    }
+
+    setStockAccountInfo('');
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Berhasil', `1 Stok baru berhasil ditambahkan ke ${prod.name} - ${variant.name}!`, 'success');
+  };
+
+  // 4. Tambah Stock Massal
+  const handleAddStockBulk = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stockProductBulk) {
+      onShowToast('Gagal', 'Pilih Produk terlebih dahulu', 'error');
+      return;
+    }
+    if (!stockVariantBulk) {
+      onShowToast('Gagal', 'Pilih Variant terlebih dahulu', 'error');
+      return;
+    }
+    const lines = stockBulkData
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    if (lines.length === 0) {
+      onShowToast('Gagal', 'Masukkan minimal 1 baris data stok akun/voucher', 'error');
+      return;
+    }
+
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === stockProductBulk);
+    if (prodIdx === -1) {
+      onShowToast('Gagal', 'Produk tidak ditemukan', 'error');
+      return;
+    }
+
+    const prod = { ...allProducts[prodIdx] };
+    const variants = prod.variants ? [...prod.variants] : [];
+    const varIdx = variants.findIndex(v => v.id === stockVariantBulk);
+    if (varIdx === -1) {
+      onShowToast('Gagal', 'Variant tidak ditemukan', 'error');
+      return;
+    }
+
+    const variant = { ...variants[varIdx] };
+    const codes = variant.voucherCodes ? [...variant.voucherCodes] : [];
+    codes.push(...lines);
+    variant.voucherCodes = codes;
+    variant.stock = codes.length;
+    if (stockExpiryBulk) {
+      variant.expiredDays = Number(stockExpiryBulk);
+    }
+    variants[varIdx] = variant;
+    prod.variants = variants;
+    prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
+    allProducts[prodIdx] = prod;
+
+    storage.saveProducts(allProducts);
+
+    // If WiFi, also sync into WifiVoucherBatches
+    if (category === 'wifi') {
+      try {
+        const curBatches = storage.getVoucherBatches();
+        let targetBatch = curBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
+        if (!targetBatch) {
+          targetBatch = {
+            id: 'batch-' + Date.now().toString(36),
+            name: `${prod.name} - ${variant.name}`,
+            productId: prod.id,
+            variantId: variant.id,
+            speedProfile: 'Up to 10 Mbps',
+            duration: variant.name,
+            quotaLimit: 'Unlimited',
+            location: 'Hotspot Area RT/RW',
+            vouchers: [],
+            createdAt: new Date().toISOString(),
+          };
+          curBatches.unshift(targetBatch);
+        }
+        lines.forEach(line => {
+          const [c, p] = line.includes('|') ? line.split('|') : [line, line];
+          targetBatch?.vouchers.push({
+            id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
+            code: c.trim(),
+            password: p ? p.trim() : undefined,
+            status: 'AVAILABLE',
+            createdAt: new Date().toISOString(),
+          });
+        });
+        storage.saveVoucherBatches(curBatches);
+      } catch (_) {}
+    }
+
+    setStockBulkData('');
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Berhasil', `${lines.length} Stok berhasil diunggah secara massal ke ${prod.name} - ${variant.name}!`, 'success');
+  };
+
+  // Delete product
+  const handleDeleteProduct = (prodId: string, prodName: string) => {
+    if (!window.confirm(`Hapus produk "${prodName}" beserta semua varian dan stoknya?`)) return;
+    const allProducts = storage.getProducts().filter(p => p.id !== prodId);
+    storage.saveProducts(allProducts);
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Dihapus', `Produk "${prodName}" berhasil dihapus.`, 'info');
+  };
+
+  // Delete variant
+  const handleDeleteVariant = (prodId: string, variantId: string, variantName: string) => {
+    if (!window.confirm(`Hapus varian "${variantName}"?`)) return;
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === prodId);
+    if (prodIdx !== -1) {
+      const prod = { ...allProducts[prodIdx] };
+      prod.variants = (prod.variants || []).filter(v => v.id !== variantId);
+      prod.stock = (prod.variants || []).reduce((acc, v) => acc + (v.stock || 0), 0);
+      allProducts[prodIdx] = prod;
+      storage.saveProducts(allProducts);
+      setReloadKey(prev => prev + 1);
+      if (onRefreshData) onRefreshData();
+      onShowToast('Dihapus', `Varian "${variantName}" berhasil dihapus.`, 'info');
+    }
+  };
+
+  // Delete single stock item from inspection modal
+  const handleDeleteStockItem = (itemIndex: number) => {
+    if (!inspectingVariant) return;
+    const allProducts = storage.getProducts();
+    const prodIdx = allProducts.findIndex(p => p.id === inspectingVariant.product.id);
+    if (prodIdx === -1) return;
+
+    const prod = { ...allProducts[prodIdx] };
+    const variants = [...(prod.variants || [])];
+    const varIdx = variants.findIndex(v => v.id === inspectingVariant.variant.id);
+    if (varIdx === -1) return;
+
+    const variant = { ...variants[varIdx] };
+    const codes = [...(variant.voucherCodes || [])];
+    codes.splice(itemIndex, 1);
+    variant.voucherCodes = codes;
+    variant.stock = codes.length;
+    variants[varIdx] = variant;
+    prod.variants = variants;
+    prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
+    allProducts[prodIdx] = prod;
+
+    storage.saveProducts(allProducts);
+    setInspectingVariant({
+      product: prod,
+      variant: variant,
+    });
+    setReloadKey(prev => prev + 1);
+    if (onRefreshData) onRefreshData();
+    onShowToast('Dihapus', '1 Item stok berhasil dihapus.', 'info');
+  };
+
+  const handleCopyStock = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  return (
+    <div className="space-y-6 animate-fadeInUp">
+      {/* Top Banner / Statistics Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0d1527] border border-blue-900/40 p-4 rounded-2xl shadow-lg">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400">
+              <Box size={18} />
+            </span>
+            <h2 className="text-base sm:text-lg font-black text-white tracking-wide">
+              {title || (category === 'premium' ? 'Kelola Produk Manual & Stok Akun Premium' : 'Kelola Produk Manual & Stok Voucher WiFi')}
+            </h2>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            {subtitle || (category === 'premium' 
+              ? 'Input produk, buat varian langganan, dan kelola stok akun digital (email|pass / lisensi) siap kirim instan.'
+              : 'Input produk paket WiFi, varian durasi kecepatan, dan kelola stok voucher/login hotspot langsung.')}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="bg-[#090d18] border border-blue-800/40 px-3 py-1.5 rounded-xl text-right">
+            <span className="text-[10px] text-slate-400 block font-bold">TOTAL STOK TERSEDIA</span>
+            <span className="text-sm font-black text-blue-400 font-mono">
+              {totalStockCount} <span className="text-[10px] text-slate-400 font-normal">{category === 'premium' ? 'Akun' : 'Voucher'}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 1. SECTION: TAMBAH PRODUK BARU */}
+      <div className="bg-[#0d1527] border border-blue-950/80 rounded-2xl shadow-lg overflow-hidden transition-all">
+        <button
+          type="button"
+          onClick={() => setIsAddProductOpen(!isAddProductOpen)}
+          className="w-full flex items-center justify-between px-5 py-3.5 bg-[#0b1324] hover:bg-[#111c33] transition-colors border-b border-blue-950/60 text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5 text-blue-400 font-extrabold text-xs tracking-wider uppercase font-mono">
+            <Box size={16} className="text-blue-400" />
+            <span>TAMBAH PRODUK BARU</span>
+          </div>
+          <span className="text-slate-400 hover:text-white">
+            {isAddProductOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </span>
+        </button>
+
+        {isAddProductOpen && (
+          <form onSubmit={handleSaveProduct} className="p-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* NAMA PRODUK */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  NAMA PRODUK (DISPLAY NAME)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  placeholder={category === 'premium' ? 'Contoh: Netflix' : 'Contoh: WiFi Melati Net'}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors"
+                />
+              </div>
+
+              {/* PRODUK ID */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  PRODUK ID (unik / kode kategori)
+                </label>
+                <input
+                  type="text"
+                  value={newProductId}
+                  onChange={(e) => setNewProductId(e.target.value)}
+                  placeholder={category === 'premium' ? 'Contoh: netflix-prem' : 'Contoh: wifi-melati'}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors font-mono"
+                />
+              </div>
+
+              {/* DESKRIPSI */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  DESKRIPSI
+                </label>
+                <input
+                  type="text"
+                  value={newProductDesc}
+                  onChange={(e) => setNewProductDesc(e.target.value)}
+                  placeholder={category === 'premium' ? 'Contoh: Layanan Streaming' : 'Contoh: Hotspot Warga Kecepatan Tinggi'}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-600/20 cursor-pointer transition-all active:scale-95"
+              >
+                <Save size={14} />
+                <span>Simpan Produk</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* 2. SECTION: TAMBAH VARIANT BARU */}
+      <div className="bg-[#0d1527] border border-blue-950/80 rounded-2xl shadow-lg overflow-hidden transition-all">
+        <button
+          type="button"
+          onClick={() => setIsAddVariantOpen(!isAddVariantOpen)}
+          className="w-full flex items-center justify-between px-5 py-3.5 bg-[#0b1324] hover:bg-[#111c33] transition-colors border-b border-blue-950/60 text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5 text-blue-400 font-extrabold text-xs tracking-wider uppercase font-mono">
+            <Layers size={16} className="text-blue-400" />
+            <span>TAMBAH VARIANT BARU</span>
+          </div>
+          <span className="text-slate-400 hover:text-white">
+            {isAddVariantOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </span>
+        </button>
+
+        {isAddVariantOpen && (
+          <form onSubmit={handleSaveVariant} className="p-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* NAMA VARIANT */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  NAMA VARIANT
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newVariantName}
+                  onChange={(e) => setNewVariantName(e.target.value)}
+                  placeholder={category === 'premium' ? 'Contoh: Netflix Premium 1 Bulan' : 'Contoh: Paket 24 Jam Unlimited'}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors"
+                />
+              </div>
+
+              {/* HARGA (IDR) */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  HARGA (IDR)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={newVariantPrice}
+                  onChange={(e) => setNewVariantPrice(e.target.value)}
+                  placeholder="50000"
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors font-mono"
+                />
+              </div>
+
+              {/* KATEGORI (PRODUK) */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  KATEGORI (PRODUK)
+                </label>
+                <select
+                  required
+                  value={variantProductId}
+                  onChange={(e) => setVariantProductId(e.target.value)}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 outline-hidden transition-colors"
+                >
+                  <option value="">-- Pilih Produk --</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* DESKRIPSI */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  DESKRIPSI
+                </label>
+                <textarea
+                  rows={2}
+                  value={newVariantDesc}
+                  onChange={(e) => setNewVariantDesc(e.target.value)}
+                  placeholder="Deskripsi singkat..."
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors resize-none"
+                />
+              </div>
+
+              {/* SNK (SYARAT & KETENTUAN) */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  SNK (SYARAT & KETENTUAN)
+                </label>
+                <textarea
+                  rows={2}
+                  value={newVariantSnk}
+                  onChange={(e) => setNewVariantSnk(e.target.value)}
+                  placeholder="Syarat klaim garansi..."
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-600/20 cursor-pointer transition-all active:scale-95"
+              >
+                <Save size={14} />
+                <span>Simpan Variant</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* 3. SECTION: STOCKS */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white tracking-wide">Stocks</h2>
+          <span className="text-xs text-slate-400">
+            Total {products.length} Produk • {products.reduce((acc, p) => acc + (p.variants?.length || 0), 0)} Varian
+          </span>
+        </div>
+
+        {/* SUBSECTION 1: TAMBAH STOCK INDIVIDU */}
+        <div className="bg-[#0d1527] border border-blue-950/80 rounded-2xl shadow-lg p-5 space-y-3">
+          <div className="text-sm font-bold text-slate-200">Tambah Stock Individu</div>
+          <form onSubmit={handleAddStockSingle}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+              {/* PILIH PRODUCT */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  PILIH PRODUCT
+                </label>
+                <select
+                  required
+                  value={stockProductSingle}
+                  onChange={(e) => {
+                    setStockProductSingle(e.target.value);
+                    setStockVariantSingle('');
+                  }}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 outline-hidden"
+                >
+                  <option value="">-- Pilih Product --</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* PILIH VARIANT */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  PILIH VARIANT
+                </label>
+                <select
+                  required
+                  disabled={!stockProductSingle}
+                  value={stockVariantSingle}
+                  onChange={(e) => setStockVariantSingle(e.target.value)}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 outline-hidden disabled:opacity-40"
+                >
+                  <option value="">-- Pilih Variant --</option>
+                  {singleProductVariants.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({formatRupiah(v.sellingPrice)}) - {v.voucherCodes?.length || v.stock || 0} stok
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* INFO (DATA AKUN) */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  {category === 'premium' ? 'INFO (DATA AKUN)' : 'INFO (KODE VOUCHER)'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={stockAccountInfo}
+                  onChange={(e) => setStockAccountInfo(e.target.value)}
+                  placeholder={category === 'premium' ? 'email|pass' : 'WF-283965|1234'}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden font-mono"
+                />
+              </div>
+
+              {/* EXPIRED (HARI) */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  EXPIRED (HARI)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={stockExpirySingle}
+                  onChange={(e) => setStockExpirySingle(e.target.value)}
+                  placeholder="7"
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden font-mono"
+                />
+              </div>
+
+              {/* SUBMIT BUTTON */}
+              <div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-2 px-4 text-xs font-bold transition-all shadow-md shadow-blue-600/20 cursor-pointer active:scale-95"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* SUBSECTION 2: TAMBAH STOCK MASSAL */}
+        <div className="bg-[#0d1527] border border-blue-950/80 rounded-2xl shadow-lg p-5 space-y-4">
+          <div className="text-sm font-bold text-slate-200">Tambah Stock Massal</div>
+          <form onSubmit={handleAddStockBulk} className="space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* PILIH PRODUCT */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  PILIH PRODUCT
+                </label>
+                <select
+                  required
+                  value={stockProductBulk}
+                  onChange={(e) => {
+                    setStockProductBulk(e.target.value);
+                    setStockVariantBulk('');
+                  }}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 outline-hidden"
+                >
+                  <option value="">-- Pilih Product --</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* PILIH VARIANT */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                  PILIH VARIANT
+                </label>
+                <select
+                  required
+                  disabled={!stockProductBulk}
+                  value={stockVariantBulk}
+                  onChange={(e) => setStockVariantBulk(e.target.value)}
+                  className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 outline-hidden disabled:opacity-40"
+                >
+                  <option value="">-- Pilih Variant --</option>
+                  {bulkProductVariants.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({formatRupiah(v.sellingPrice)}) - {v.voucherCodes?.length || v.stock || 0} stok
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* EXPIRED (HARI) — OPSIONAL */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                EXPIRED (HARI) — OPSIONAL
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={stockExpiryBulk}
+                onChange={(e) => setStockExpiryBulk(e.target.value)}
+                placeholder="Contoh: 30"
+                className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 placeholder:text-slate-600 outline-hidden font-mono"
+              />
+            </div>
+
+            {/* DATA STOCK (1 BARIS = 1 STOCK) */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 font-mono">
+                DATA STOCK (1 BARIS = 1 STOCK)
+              </label>
+              <textarea
+                rows={5}
+                required
+                value={stockBulkData}
+                onChange={(e) => setStockBulkData(e.target.value)}
+                placeholder={category === 'premium' ? "user1|pass1\nuser2|pass2\nuser3|pass3" : "WF-283965|1234\nWF-283966|1234\nWF-283967|1234"}
+                className="w-full bg-[#080d19] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-mono font-medium text-slate-100 placeholder:text-slate-600 outline-hidden resize-none leading-relaxed"
+              />
+            </div>
+
+            <div className="pt-1">
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 cursor-pointer transition-all active:scale-95"
+              >
+                Upload Massal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* 4. INVENTORY OVERVIEW LIST */}
+      <div className="bg-[#0d1527] border border-blue-950/80 rounded-2xl shadow-lg p-5 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Database size={16} className="text-blue-400" />
+              <span>Daftar Produk & Stok Tersimpan</span>
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Semua produk manual yang aktif di katalog dan siap dialokasikan otomatis saat checkout.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReloadKey(prev => prev + 1)}
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw size={14} />
+          </button>
+        </div>
+
+        {products.length === 0 ? (
+          <div className="py-12 text-center text-slate-500 text-xs">
+            Belum ada produk manual tersimpan. Silakan gunakan form "TAMBAH PRODUK BARU" di atas.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {products.map(prod => {
+              const variants = prod.variants || [];
+              const totalProdStock = variants.reduce((acc, v) => acc + (v.voucherCodes?.length || v.stock || 0), 0);
+
+              return (
+                <div
+                  key={prod.id}
+                  className="bg-[#090d18] border border-slate-800 rounded-xl p-4 space-y-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="p-1 rounded bg-blue-500/10 text-blue-400">
+                        <Box size={16} />
+                      </span>
+                      <div>
+                        <span className="font-bold text-white text-xs">{prod.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono ml-2">ID: {prod.id}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold bg-blue-950 text-blue-300 border border-blue-800/60 px-2 py-0.5 rounded-md">
+                        {totalProdStock} Stok Ready
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProduct(prod.id, prod.name)}
+                        className="text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-950/40 rounded transition-colors cursor-pointer"
+                        title="Hapus Produk"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {variants.length === 0 ? (
+                    <div className="text-[11px] text-slate-500 italic pl-6">
+                      Belum ada varian untuk produk ini. Tambahkan varian baru pada formulir di atas.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 pl-2 sm:pl-6">
+                      {variants.map(variant => {
+                        const vStock = variant.voucherCodes?.length || variant.stock || 0;
+                        return (
+                          <div
+                            key={variant.id}
+                            className="bg-[#0d1527] border border-slate-800/80 rounded-xl p-3 space-y-2 hover:border-slate-700 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-1">
+                              <div>
+                                <div className="font-bold text-slate-200 text-xs">{variant.name}</div>
+                                <div className="text-emerald-400 font-mono font-black text-xs">
+                                  {formatRupiah(variant.sellingPrice)}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteVariant(prod.id, variant.id, variant.name)}
+                                className="text-slate-500 hover:text-rose-400 p-1 rounded transition-colors cursor-pointer"
+                                title="Hapus Variant"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+
+                            {variant.description && (
+                              <div className="text-[10px] text-slate-400 truncate">
+                                {variant.description}
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-800/70 text-[10px]">
+                              <span className={`font-bold font-mono px-1.5 py-0.5 rounded ${
+                                vStock > 0 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                              }`}>
+                                {vStock} Stok
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setInspectingVariant({ product: prod, variant: variant })}
+                                className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer underline hover:no-underline"
+                              >
+                                Lihat Akun ({vStock})
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: LIHAT / KELOLA ISI STOK AKUN */}
+      {inspectingVariant && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0d1527] border border-slate-700 rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl max-h-[85vh] flex flex-col text-xs font-mono">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-800 shrink-0">
+              <div>
+                <h4 className="text-sm font-bold text-white">
+                  Stok Akun / Voucher: {inspectingVariant.product.name}
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  Varian: <strong className="text-blue-400">{inspectingVariant.variant.name}</strong> • Total {inspectingVariant.variant.voucherCodes?.length || 0} unit
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectingVariant(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {(!inspectingVariant.variant.voucherCodes || inspectingVariant.variant.voucherCodes.length === 0) ? (
+                <div className="py-8 text-center text-slate-500">
+                  Stok kosong. Silakan gunakan form Tambah Stock Individu atau Massal di atas.
+                </div>
+              ) : (
+                inspectingVariant.variant.voucherCodes.map((codeItem, idx) => {
+                  const isRevealed = revealedIndex === idx;
+                  const isCopied = copiedIndex === idx;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-[#090d18] border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-slate-500 font-bold w-5">{idx + 1}.</span>
+                        <div className="font-semibold text-slate-200 select-all truncate">
+                          {isRevealed ? codeItem : codeItem.slice(0, 4) + '••••••••' + codeItem.slice(-3)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setRevealedIndex(isRevealed ? null : idx)}
+                          className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 cursor-pointer"
+                          title={isRevealed ? 'Sembunyikan' : 'Lihat'}
+                        >
+                          {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyStock(codeItem, idx)}
+                          className="p-1 text-slate-400 hover:text-blue-400 rounded hover:bg-slate-800 cursor-pointer"
+                          title="Salin Data"
+                        >
+                          {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStockItem(idx)}
+                          className="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 cursor-pointer"
+                          title="Hapus Item"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setInspectingVariant(null)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

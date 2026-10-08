@@ -294,14 +294,14 @@ export function QuickBuyModal({
           {/* 1. Ringkasan Produk Terpilih */}
           <div className="bg-[#241D17] rounded-2xl p-3.5 border border-[#3E342B]/80 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-1 rounded-xl bg-[#181411] border border-[#3E342B] shrink-0">
+              <div className="rounded-xl bg-[#181411] border border-[#3E342B] shrink-0 w-12 h-12 flex items-center justify-center overflow-hidden">
                 <ProductLogo
                   provider={product.provider}
                   name={product.name}
                   category={product.categoryId}
                   iconUrl={product.iconUrl}
-                  size="sm"
-                  className="rounded-lg"
+                  size="md"
+                  className="w-full h-full"
                 />
               </div>
               <div className="min-w-0">

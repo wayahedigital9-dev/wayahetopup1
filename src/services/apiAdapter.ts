@@ -4,6 +4,7 @@ import { providerIntegrationService } from './providerIntegrationService';
 import { 
   Order, 
   Product, 
+  ProductVariant,
   PaymentStatus, 
   FulfillmentStatus, 
   WifiVoucherItem, 
@@ -940,10 +941,16 @@ export const apiAdapter = {
             `Transaksi Digiflazz ${order.category} untuk ${(item as any)?.productName || (order as any).productName} ke ${order.targetDestination} diproses.`
           );
         } else if (order.category === 'wifi') {
+          const wifiSettings = storage.getSettings();
+          const targetProduct = storage.getProducts().find(p => p.id === item.productId);
+          const targetSsid = targetProduct?.networkLocation || wifiSettings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot';
+          const targetLoginUrl = wifiSettings.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
+          const defaultWifiPass = wifiSettings.wifiDefaultPassword || '1234';
+
           // 1. Cek stok kode voucher langsung dari Varian Produk atau Produk Induk
           let allocatedCode = '';
+          let allocatedPassword = '';
           let allocatedVariantName = '';
-          const targetProduct = storage.getProducts().find(p => p.id === item.productId);
 
           if (targetProduct) {
             let matchedVar = item.variantId
@@ -955,13 +962,19 @@ export const apiAdapter = {
             }
 
             if (matchedVar && Array.isArray(matchedVar.voucherCodes) && matchedVar.voucherCodes.length > 0) {
-              allocatedCode = matchedVar.voucherCodes.shift()!.trim();
+              const rawStr = matchedVar.voucherCodes.shift()!.trim();
+              const parts = rawStr.split(/[,:|\t]/);
+              allocatedCode = parts[0]?.trim() || rawStr;
+              allocatedPassword = parts[1]?.trim() || defaultWifiPass;
               matchedVar.stock = matchedVar.voucherCodes.length;
               targetProduct.stock = targetProduct.variants!.reduce((sum, v) => sum + (v.stock || 0), 0);
               storage.updateProduct(targetProduct.id, targetProduct);
               allocatedVariantName = matchedVar.name;
             } else if (Array.isArray(targetProduct.voucherCodes) && targetProduct.voucherCodes.length > 0) {
-              allocatedCode = targetProduct.voucherCodes.shift()!.trim();
+              const rawStr = targetProduct.voucherCodes.shift()!.trim();
+              const parts = rawStr.split(/[,:|\t]/);
+              allocatedCode = parts[0]?.trim() || rawStr;
+              allocatedPassword = parts[1]?.trim() || defaultWifiPass;
               targetProduct.stock = targetProduct.voucherCodes.length;
               storage.updateProduct(targetProduct.id, targetProduct);
             }
@@ -971,14 +984,14 @@ export const apiAdapter = {
             order.fulfillmentStatus = 'SUCCESS';
             order.fulfilledAt = now;
             order.voucherCode = allocatedCode;
-            order.voucherPassword = 'Aktif Otomatis';
-            order.wifiSsid = targetProduct?.networkLocation || 'MelatiNet_Warga_Hotspot';
-            order.wifiLoginUrl = 'http://hotspot.wayahedigital.id';
+            order.voucherPassword = allocatedPassword;
+            order.wifiSsid = targetSsid;
+            order.wifiLoginUrl = targetLoginUrl;
             order.fulfillmentResult = {
               voucherCode: allocatedCode,
-              voucherPassword: 'Aktif Otomatis',
-              wifiSsid: targetProduct?.networkLocation || 'MelatiNet_Warga_Hotspot',
-              wifiLoginUrl: 'http://hotspot.wayahedigital.id',
+              voucherPassword: allocatedPassword,
+              wifiSsid: targetSsid,
+              wifiLoginUrl: targetLoginUrl,
               notes: `Kode voucher ${allocatedVariantName ? `paket ${allocatedVariantName}` : 'WiFi'} aktif siap pakai. Silakan masukkan kode pada halaman login Hotspot warga.`,
             };
 
@@ -988,85 +1001,148 @@ export const apiAdapter = {
               `Kode voucher ${allocatedCode} (${allocatedVariantName || 'Produk Induk'}) berhasil diserahkan untuk order ${order.invoiceNumber}`
             );
           } else {
-            // 2. Fallback: Alokasikan Voucher dari database inventory batch
-            const vouchers = storage.getWifiVouchers();
-            let allocated = vouchers.find(v => v.orderId === order.id && v.status === 'RESERVED');
+            // 2. Alokasikan Voucher dari Batch Gudang Stok RT/RW Net (storage.getVoucherBatches)
+            const batches = storage.getVoucherBatches();
+            let allocatedFromBatch: { code: string; password?: string } | null = null;
+            let allocatedBatchName = '';
 
-            if (!allocated) {
-              allocated = vouchers.find(v => v.status === 'AVAILABLE');
+            // Cari batch yang cocok dengan produk/lokasi atau batch apa pun yang memiliki voucher ready
+            for (const batch of batches) {
+              const avail = batch.vouchers.find(v => v.status === 'AVAILABLE');
+              if (avail) {
+                avail.status = 'USED';
+                avail.usedAt = now;
+                avail.orderId = order.id;
+                allocatedFromBatch = {
+                  code: avail.code,
+                  password: avail.password || defaultWifiPass,
+                };
+                allocatedBatchName = batch.name;
+                break;
+              }
             }
 
-            if (allocated) {
-              allocated.status = 'SOLD';
-              allocated.orderId = order.id;
-              storage.saveWifiVouchers(vouchers);
+            if (allocatedFromBatch) {
+              storage.saveVoucherBatches(batches);
 
               order.fulfillmentStatus = 'SUCCESS';
               order.fulfilledAt = now;
-              order.voucherCode = allocated.code;
-              order.voucherPassword = allocated.password || '1234';
-              order.wifiSsid = 'MelatiNet_Warga_Hotspot';
-              order.wifiLoginUrl = 'http://hotspot.wayahedigital.id';
+              order.voucherCode = allocatedFromBatch.code;
+              order.voucherPassword = allocatedFromBatch.password || defaultWifiPass;
+              order.wifiSsid = targetSsid;
+              order.wifiLoginUrl = targetLoginUrl;
               order.fulfillmentResult = {
-                voucherCode: allocated.code,
-                voucherPassword: allocated.password || '1234',
-                wifiSsid: 'MelatiNet_Warga_Hotspot',
-                wifiLoginUrl: 'http://hotspot.wayahedigital.id',
-                notes: 'Voucher aktif sejak pertama login. Gunakan kode dan password di atas pada portal login WiFi.',
+                voucherCode: allocatedFromBatch.code,
+                voucherPassword: allocatedFromBatch.password || defaultWifiPass,
+                wifiSsid: targetSsid,
+                wifiLoginUrl: targetLoginUrl,
+                notes: `Voucher aktif siap pakai dari gudang ${allocatedBatchName}. Masukkan kode pada halaman login Hotspot warga.`,
               };
 
               storage.addAuditLog(
                 'WIFI_VOUCHER_ALLOCATED',
-                'WiFi Inventory Engine',
-                `Kode voucher ${allocated.code} dialokasikan untuk order ${order.invoiceNumber}`
+                'WiFi Batch Warehouse Engine',
+                `Kode voucher ${allocatedFromBatch.code} dari batch "${allocatedBatchName}" dialokasikan untuk order ${order.invoiceNumber}`
               );
             } else {
               // 3. Auto-Generate Kode Voucher WiFi Instan (Menjamin pembeli langsung menerima kode voucher)
-              const autoCode = 'WF-' + Math.floor(100000 + Math.random() * 900000);
-              const autoPass = String(Math.floor(1000 + Math.random() * 9000));
-              const autoSsid = targetProduct?.networkLocation || 'MelatiNet_Warga_Hotspot';
-              const autoLoginUrl = 'http://hotspot.wayahedigital.id';
+              const prefix = 'WF-';
+              const autoCode = prefix + Math.floor(100000 + Math.random() * 900000);
+              const autoPass = wifiSettings.wifiPasswordMode === 'SAME_AS_CODE' ? autoCode : (defaultWifiPass || String(Math.floor(1000 + Math.random() * 9000)));
 
-              const newVoucher: any = {
-                id: 'wv-auto-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-                batchId: 'batch-auto-instant',
+              // Masukkan ke batch auto-instant di batches agar tercatat di dashboard
+              const existingAutoBatch = batches.find(b => b.id === 'batch-auto-instant');
+              const autoVoucherItem = {
+                id: 'vch-auto-' + Date.now(),
                 code: autoCode,
                 password: autoPass,
-                status: 'SOLD',
+                status: 'USED' as const,
+                usedAt: now,
                 orderId: order.id,
-                sellingPrice: order.totalAmount || 5000,
-                duration: targetProduct?.duration || '24 Jam',
-                packageDuration: targetProduct?.duration || '24 Jam',
                 createdAt: now,
-                soldAt: now,
               };
-              vouchers.push(newVoucher);
-              storage.saveWifiVouchers(vouchers);
+
+              if (existingAutoBatch) {
+                existingAutoBatch.vouchers.unshift(autoVoucherItem);
+              } else {
+                batches.unshift({
+                  id: 'batch-auto-instant',
+                  name: 'Batch Auto-Generated (Real-time)',
+                  location: targetSsid,
+                  speedProfile: 'Up to 10 Mbps (Burstable)',
+                  createdAt: now,
+                  vouchers: [autoVoucherItem],
+                });
+              }
+              storage.saveVoucherBatches(batches);
 
               order.fulfillmentStatus = 'SUCCESS';
               order.fulfilledAt = now;
               order.voucherCode = autoCode;
               order.voucherPassword = autoPass;
-              order.wifiSsid = autoSsid;
-              order.wifiLoginUrl = autoLoginUrl;
+              order.wifiSsid = targetSsid;
+              order.wifiLoginUrl = targetLoginUrl;
               order.fulfillmentResult = {
                 voucherCode: autoCode,
                 voucherPassword: autoPass,
-                wifiSsid: autoSsid,
-                wifiLoginUrl: autoLoginUrl,
+                wifiSsid: targetSsid,
+                wifiLoginUrl: targetLoginUrl,
                 notes: 'Voucher WiFi berhasil dibuat dan aktif instan! Silakan masukkan kode pada halaman login Hotspot warga.',
               };
 
               storage.addAuditLog(
-                'WIFI_VOUCHER_AUTO_GENERATED',
-                'WiFi Instant Hotspot Engine',
-                `Kode voucher ${autoCode} dibuat instan untuk pesanan ${order.invoiceNumber}`
+                'WIFI_VOUCHER_ALLOCATED',
+                'WiFi Auto-Generation Engine',
+                `Kode voucher instan ${autoCode} dibuat otomatis untuk order ${order.invoiceNumber}`
               );
             }
           }
         } else if (order.category === 'premium') {
-          const targetProduct = storage.getProducts().find(p => p.id === item.productId);
-          if (targetProduct && (targetProduct.providerProductId || targetProduct.deliveryMethod === 'AUTOMATIC' || targetProduct.id.startsWith('prem-xav-'))) {
+          const allProducts = storage.getProducts();
+          const targetProduct = allProducts.find(p => p.id === item.productId);
+          let allocatedAccount: string | null = null;
+          let targetVariant: ProductVariant | undefined;
+
+          // Cek stok akun manual dari varian atau produk
+          if (targetProduct) {
+            if (targetProduct.variants && item.variantId) {
+              targetVariant = targetProduct.variants.find(v => v.id === item.variantId);
+              if (targetVariant && targetVariant.voucherCodes && targetVariant.voucherCodes.length > 0) {
+                allocatedAccount = targetVariant.voucherCodes.shift() || null;
+                targetVariant.stock = targetVariant.voucherCodes.length;
+                targetProduct.stock = targetProduct.variants.reduce((s, v) => s + (v.stock || v.voucherCodes?.length || 0), 0);
+                storage.saveProducts(allProducts);
+              }
+            } else if (targetProduct.voucherCodes && targetProduct.voucherCodes.length > 0) {
+              allocatedAccount = targetProduct.voucherCodes.shift() || null;
+              targetProduct.stock = targetProduct.voucherCodes.length;
+              storage.saveProducts(allProducts);
+            }
+          }
+
+          if (allocatedAccount) {
+            const [email, pass] = allocatedAccount.includes('|')
+              ? allocatedAccount.split('|')
+              : [allocatedAccount, ''];
+
+            order.fulfillmentStatus = 'SUCCESS';
+            order.fulfilledAt = now;
+            order.credentials = [{ email: email.trim(), password: pass ? pass.trim() : '' }];
+            order.fulfillmentResult = {
+              voucherCode: email.trim(),
+              voucherPassword: pass ? pass.trim() : undefined,
+              credentials: [{ email: email.trim(), password: pass ? pass.trim() : '' }],
+              notes: `Akun premium siap pakai dari stok manual: ${targetVariant ? targetVariant.name : targetProduct?.name}.`,
+              premiumInstructions: pass
+                ? `Email/User: ${email.trim()}\nPassword: ${pass.trim()}\nSilakan login ke aplikasi resmi.`
+                : `Kode Akun/Lisensi: ${email.trim()}\nSilakan gunakan data di atas untuk aktivasi.`,
+            };
+            storage.addAuditLog(
+              'MANUAL_PREMIUM_STOCK_FULFILLED',
+              'Admin Stock Warehouse',
+              `Akun manual untuk order ${order.invoiceNumber} (${targetProduct?.name}) berhasil dialokasikan.`
+            );
+          } else if (targetProduct && (targetProduct.providerProductId || targetProduct.deliveryMethod === 'AUTOMATIC' || targetProduct.id.startsWith('prem-xav-'))) {
             try {
               const premRes = await providerIntegrationService.executeOrderPremium(order, item, targetProduct);
               if (premRes.success && premRes.credentials && premRes.credentials.length > 0) {
