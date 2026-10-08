@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
 import { toPublicState } from './security/stateDto.js';
+import { createMemberAuth, memberDto } from './security/memberAuth.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import { hydrateDigiflazzRuntime } from './services/digiflazzRuntime.js';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -21,6 +23,7 @@ import { qiospayService } from './services/qiospay.js';
 import { ngrokService } from './services/ngrok.js';
 import { mongoDbService } from './services/mongodbService.js';
 import { supabaseService, sanitizeSupabaseUrl } from './services/supabaseService.js';
+import { mergeSettings } from './services/settingsMerge.js';
 import { createPaymentSession, detectActiveGateway, logGatewayStatus } from './services/paymentRouter.js';
 import { pushNotificationService } from './services/pushNotificationService.js';
 import { pakasirService } from './services/pakasir.js';
@@ -76,6 +79,7 @@ const PORT = CONSOLE_CONFIG.PORT;
 const allowedOrigins = new Set<string>([
   'https://wayahedigital.com',
   'https://www.wayahedigital.com',
+  'https://wayahetopup.my.id',
 ]);
 if (CONSOLE_CONFIG.SUPABASE_URL) allowedOrigins.add(CONSOLE_CONFIG.SUPABASE_URL);
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -119,6 +123,13 @@ const generalLimiter = rateLimit({
   message: { error: 'Terlalu banyak permintaan dari IP ini. Silakan coba lagi nanti.' },
 });
 app.use('/api/', generalLimiter);
+const memberAuth = createMemberAuth(async () => {
+  const client = await mongoDbService.getClient();
+  if (!client) throw new Error('Member database unavailable');
+  return client.db(mongoDbService.getPrimaryDbName());
+}, CONSOLE_CONFIG.isProduction, mongoDbService.getTransCollectionName() || 'orders');
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 40, skip: req => req.method === 'GET', message: { success: false, message: 'Terlalu banyak percobaan. Coba lagi nanti.' } }), memberAuth.router);
+
 
 // 1. GET CATALOG
 app.get('/api/products', async (req: Request, res: Response) => {
@@ -166,6 +177,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Produk dan tujuan transaksi wajib diisi.' });
     }
 
+    const member = await memberAuth.getMember(req);
     const state = await mongoDbService.getAllState();
 
     // 1. Dapatkan metadata produk (dari MongoDB/Local State jika Prisma tidak aktif)
@@ -213,6 +225,33 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     const invoiceNumber = customInvoice || `INV/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}/WD/${Math.floor(1000 + Math.random() * 9000)}`;
     const orderId = customId || `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
+    // Identity collisions are always conflicts, including owner/admin retries.
+    // No caller may recreate an existing identity through this creation endpoint.
+    if (typeof orderId !== 'string' || !orderId.trim() || typeof invoiceNumber !== 'string' || !invoiceNumber.trim()) {
+      return res.status(400).json({ success: false, message: 'Identitas pesanan tidak valid.' });
+    }
+    const existingOrders = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+    const collision = existingOrders.some((o: any) => o.id === orderId || o.invoiceNumber === invoiceNumber)
+      || await prisma.order.findFirst({ where: { OR: [{ id: orderId }, { invoiceNumber }] } })
+      || await supabaseService.getOrder(orderId, true)
+      || await supabaseService.getOrder(invoiceNumber, true);
+    if (collision) return res.status(409).json({ success: false, message: 'ID atau nomor invoice pesanan sudah digunakan.' });
+
+    const accessToken = typeof guestAccessToken === 'string' && guestAccessToken.length >= 20 ? guestAccessToken : `gst_${crypto.randomBytes(24).toString('hex')}`;
+    const reservation = {
+      id: orderId, invoiceNumber, ...(member ? { userId: member.id } : {}), guestAccessToken: accessToken,
+      targetDestination: targetDestination.trim(), customerName: customerName || 'Pelanggan Wayahe', customerPhone: customerPhone || targetDestination,
+      customerEmail: customerEmail || '', category: product.categoryId || 'PULSA', subtotal, adminFee, discount, totalAmount,
+      promoCode: promoCode || '', deliveryMethod: product.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
+      paymentStatus: 'FAILED', fulfillmentStatus: 'NOT_STARTED', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    };
+    // Durable insert-only reservations close concurrent races before payment/provider work.
+    const reserved = await mongoDbService.createOrder(reservation);
+    if (!reserved.success) return res.status(reserved.conflict ? 409 : 503).json({ success: false, message: reserved.conflict ? 'ID atau nomor invoice pesanan sudah digunakan.' : 'Database reservasi pesanan tidak tersedia.' });
+    await supabaseService.saveOrder(reservation, true);
+    const { userId: _owner, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
+    await prisma.order.create({ data: { ...prismaReservation, idempotencyKey: idempotencyKey || invoiceNumber } });
+
     // Tentukan gateway aktif dari request atau pengaturan tersimpan
     const activeGateway = (preferredGateway || paymentGatewayProvider || state?.settings?.paymentGatewayProvider || 'QIOSPAY') as any;
 
@@ -236,8 +275,9 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 
     const formattedOrder = {
       id: orderId,
+      ...(member ? { userId: member.id } : {}),
       invoiceNumber,
-      guestAccessToken: guestAccessToken || `gst_${Math.random().toString(36).substring(2, 12)}`,
+      guestAccessToken: accessToken,
       targetDestination: targetDestination.trim(),
       customerName: customerName || 'Pelanggan Wayahe',
       customerPhone: customerPhone || targetDestination,
@@ -288,32 +328,17 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       console.warn('⚠️ [Order] MongoDB save notice:', mongoSaveResult.error);
     }
 
-    // 3. Simpan ke Prisma jika tersedia
-    try {
-      await prisma.order.create({
-        data: {
-          id: formattedOrder.id,
-          invoiceNumber: formattedOrder.invoiceNumber,
-          guestAccessToken: formattedOrder.guestAccessToken,
-          targetDestination: formattedOrder.targetDestination,
-          customerName: formattedOrder.customerName,
-          customerPhone: formattedOrder.customerPhone,
-          customerEmail: formattedOrder.customerEmail,
-          category: formattedOrder.category,
-          subtotal: formattedOrder.subtotal,
-          adminFee: formattedOrder.adminFee,
-          discount: formattedOrder.discount,
-          promoCode: formattedOrder.promoCode,
-          totalAmount: formattedOrder.totalAmount,
-          paymentStatus: 'PENDING',
-          fulfillmentStatus: 'NOT_STARTED',
-          paymentMethod: formattedOrder.paymentMethod,
-          deliveryMethod: formattedOrder.deliveryMethod,
-          midtransSnapToken: paymentResult.token,
-          idempotencyKey: idempotencyKey || invoiceNumber,
-        },
-      }).catch(() => {});
-    } catch (_) {}
+    // 3. Update only the Prisma identity reserved before payment generation.
+    await prisma.order.update({
+      where: { id: formattedOrder.id },
+      data: {
+        paymentStatus: 'PENDING', fulfillmentStatus: 'NOT_STARTED',
+        paymentMethod: formattedOrder.paymentMethod,
+        midtransSnapToken: paymentResult.token,
+        qrString: paymentResult.qrString, paymentLink: paymentResult.redirectUrl,
+        fee: paymentResult.fee || 0, totalPayment: paymentResult.totalPayment || totalAmount,
+      },
+    });
 
     // 4. Trigger Web Push Notification ke HP/Browser Admin
     try {
@@ -343,51 +368,25 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       isSandbox: paymentResult.isSandbox,
     });
   } catch (error: any) {
+    if (['P2002', '23505', 11000].includes(error.code)) return res.status(409).json({ success: false, message: 'ID atau nomor invoice pesanan sudah digunakan.' });
     console.error('Create order error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// 2b. AUTH REGISTRATION ENDPOINT (Menyimpan user ke MongoDB & local storage)
-app.post('/api/auth/register', async (req: Request, res: Response) => {
-  try {
-    const { username, email, password, name, phone } = req.body || {};
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username dan Password wajib diisi.' });
-    }
-
-    const cleanUsername = String(username).trim().toLowerCase();
-    const cleanEmail = email ? String(email).trim().toLowerCase() : `${cleanUsername}@member.wayahedigital.id`;
-
-    const newUser = {
-      id: 'usr_' + Date.now(),
-      username: cleanUsername,
-      email: cleanEmail,
-      name: name || cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1),
-      phone: phone || '',
-      role: 'CUSTOMER',
-      memberTier: 'VIP_GOLD',
-      balance: 25000,
-      rewardPoints: 500,
-      createdAt: new Date().toISOString(),
-    };
-
-    await supabaseService.saveUser(newUser);
-    const saveResult = await mongoDbService.saveUser(newUser);
-    if (!saveResult.success) {
-      return res.status(500).json({ success: false, message: 'Gagal menyimpan data pengguna ke database.', error: saveResult.error });
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Registrasi pengguna berhasil disimpan ke database.',
-      data: newUser,
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+async function canReadOrder(req: Request, order: any): Promise<boolean> {
+  if (verifyAdminSession(req)) return true;
+  const client = await mongoDbService.getClient();
+  if (!client) return false;
+  const canonical = await client.db(mongoDbService.getPrimaryDbName()).collection(mongoDbService.getTransCollectionName() || 'orders').findOne({ id: order.id }, { projection: { userId: 1 } });
+  const owner = canonical?.userId || order.userId;
+  if (owner) {
+    const member = await memberAuth.getMember(req);
+    return !!member && member.id === owner;
   }
-});
-
+  const token = String(req.query.token || req.headers['x-guest-token'] || '');
+  return token.length >= 12 && typeof order.guestAccessToken === 'string' && sameSecret(token, order.guestAccessToken);
+}
 // 3. PUBLIC ORDER TRACKING & AUTO RECONCILIATION
 app.get('/api/orders/track', async (req: Request, res: Response) => {
   try {
@@ -406,16 +405,8 @@ app.get('/api/orders/track', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Invoice tidak ditemukan.' });
     }
 
-    // Keamanan: Cek token atau nomor HP yang cocok
-    const isTokenMatch = token && order.guestAccessToken === String(token).trim();
-    const isPhoneMatch = phone && (order.targetDestination.includes(String(phone).trim()) || order.customerPhone?.includes(String(phone).trim()));
-
-    if (!isTokenMatch && !isPhoneMatch) {
-      return res.status(403).json({
-        success: false,
-        message: 'Akses ditolak. Masukkan nomor HP tujuan atau akses token yang sesuai untuk melihat transaksi ini.',
-      });
-    }
+    if (!await canReadOrder(req, order)) return res.status(403).json({ success: false, message: 'Akses pesanan ditolak.' });
+    // canReadOrder is the sole ownership/token decision; phone is not authentication.
 
     // Jika masih PENDING, periksa apakah mutasi sudah masuk
     if (order.paymentStatus === 'PENDING') {
@@ -471,6 +462,7 @@ const handleOrderStatusCheck = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, paymentStatus: 'NOT_FOUND', fulfillmentStatus: 'NOT_STARTED', message: 'Pesanan tidak ditemukan.' });
     }
 
+    if (!await canReadOrder(req, order)) return res.status(403).json({ success: false, message: 'Akses pesanan ditolak.' });
     // Validasi kepemilikan jika token atau phone disertakan
     if (token || phone) {
       const isTokenMatch = token && order.guestAccessToken === String(token).trim();
@@ -557,6 +549,7 @@ app.get('/api/orders/:ref_id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Order tidak ditemukan.' });
     }
 
+    if (!await canReadOrder(req, order)) return res.status(403).json({ success: false, message: 'Akses pesanan ditolak.' });
     return res.json({
       success: true,
       data: order,
@@ -576,7 +569,7 @@ app.get('/api/orders/:ref_id', async (req: Request, res: Response) => {
 });
 
 // GET /api/orders (Semua Order dari Database)
-app.get('/api/orders', async (_req: Request, res: Response) => {
+app.get('/api/orders', requireAdmin, async (_req: Request, res: Response) => {
   try {
     let orders: any[] = [];
     try {
@@ -604,7 +597,7 @@ app.get('/api/orders', async (_req: Request, res: Response) => {
 });
 
 // 4a.2 DELETE ORDER
-app.delete('/api/orders/:id', async (req: Request, res: Response) => {
+app.delete('/api/orders/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const orderId = String(req.params.id || '').trim();
     if (!orderId) {
@@ -630,7 +623,7 @@ app.delete('/api/orders/:id', async (req: Request, res: Response) => {
 });
 
 // 4a.3 BULK DELETE ORDERS
-app.post('/api/orders/bulk-delete', async (req: Request, res: Response) => {
+app.post('/api/orders/bulk-delete', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { orderIds } = req.body || {};
     if (!Array.isArray(orderIds) || orderIds.length === 0) {
@@ -732,9 +725,10 @@ app.post('/api/digiflazz/transaction', requireAdmin, async (req: Request, res: R
 });
 
 // Sinkronisasi Katalog Produk Resmi dari Digiflazz ke Database
-export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count: number; message: string; timestamp: string }> {
+export async function syncDigiflazzCatalog(category?: 'game'): Promise<{ success: boolean; count: number; added?: number; updated?: number; message: string; timestamp: string }> {
   try {
-    const rawList = await digiflazzService.fetchPriceList();
+    const upstream = await digiflazzService.fetchPriceList({ allowCache: false });
+    const rawList = category === 'game' ? upstream.filter(p => ['game', 'games'].includes(String(p.category).toLowerCase())) : upstream;
     if (!Array.isArray(rawList) || rawList.length === 0) {
       return { success: false, count: 0, message: 'Tidak ada data produk dari Digiflazz.', timestamp: new Date().toISOString() };
     }
@@ -752,6 +746,7 @@ export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count:
 
     // Pertahankan produk non-Digiflazz (wifi & premium) serta produk custom manual buatan admin
     const preservedProducts = currentProducts.filter((p: any) => 
+      (category === 'game' && p.categoryId !== 'game') ||
       p.categoryId === 'wifi' || 
       p.categoryId === 'premium' ||
       p.isManualCustom === true ||
@@ -767,9 +762,12 @@ export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count:
     });
 
     const mergedProducts = [...preservedProducts, ...transformedDigiflazz];
+    const existingIds = new Set(currentProducts.map((p: any) => p.id));
+    const added = transformedDigiflazz.filter(p => !existingIds.has(p.id)).length;
+    const updated = transformedDigiflazz.length - added;
 
     // Simpan ke MongoDB / Local FileDb
-    await mongoDbService.syncEntity('products', mergedProducts);
+    if (!await mongoDbService.syncEntity('products', mergedProducts)) throw new Error('Database product sync rejected');
     
     // Simpan ke Prisma Memory Store
     for (const p of mergedProducts) {
@@ -786,6 +784,8 @@ export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count:
     return {
       success: true,
       count: transformedDigiflazz.length,
+      added,
+      updated,
       message: `Berhasil menyinkronkan ${transformedDigiflazz.length} produk dari Digiflazz Buyer API`,
       timestamp: new Date().toISOString(),
     };
@@ -801,7 +801,7 @@ export async function syncDigiflazzCatalog(): Promise<{ success: boolean; count:
 }
 
 app.all(['/api/digiflazz/sync-products', '/api/digiflazz/sync'], requireAdmin, async (req: Request, res: Response) => {
-  const result = await syncDigiflazzCatalog();
+  const result = await syncDigiflazzCatalog(req.query.category === 'game' ? 'game' : undefined);
   res.json(result);
 });
 
@@ -831,7 +831,7 @@ app.get('/api/digiflazz/products', async (req: Request, res: Response) => {
 app.get('/api/digiflazz/detect-live-ip', requireAdmin, async (req: Request, res: Response) => {
   try {
     const liveIp = await outboundIpService.detectLiveVpsIp();
-    const configuredWhitelistIp = (process.env.DIGIFLAZZ_WHITELIST_IP || '82.158.130.255').trim();
+    const configuredWhitelistIp = DIGIFLAZZ_CONFIG.WHITELIST_IP.trim();
     return res.json({
       success: true,
       data: {
@@ -859,21 +859,41 @@ app.get('/api/digiflazz/ip-status', requireAdmin, async (req: Request, res: Resp
   }
 });
 
+// Read-only fresh upstream catalog verification. No product/order/cache writes.
+app.get('/api/digiflazz/game-status', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const rows = await digiflazzService.fetchPriceList({ allowCache: false });
+    const games = rows.filter(p => ['game', 'games'].includes(String(p.category).toLowerCase()));
+    const client = await mongoDbService.getClient();
+    if (!client) throw new Error('Database products unavailable');
+    const savedGames = await client.db(mongoDbService.getPrimaryDbName()).collection('products')
+      .find({ categoryId: 'game' }, { projection: { supplierSku: 1, sku: 1 } }).toArray();
+    const upstreamBySku = new Map(games.map(p => [p.buyer_sku_code, p]));
+    const matched = savedGames.map((p: any) => upstreamBySku.get(p.supplierSku || p.sku)).filter(Boolean);
+    const available = (p: any) => p.buyer_product_status === true && p.seller_product_status === true && (p.unlimited_stock === true || Number(p.stock) > 0);
+    return res.json({ success: true, data: {
+      source: 'LIVE_DIGIFLAZZ', connectionStatus: 'CONNECTED', checkedAt: new Date().toISOString(),
+      upstreamGameCount: games.length, upstreamAvailableCount: games.filter(available).length,
+      savedGameCount: savedGames.length, matchedSavedGameCount: matched.length,
+      availableSavedGameCount: matched.filter(available).length,
+      fulfillmentVerified: false,
+    }, message: 'Katalog game terverifikasi langsung. Transaksi topup berbayar belum diuji.' });
+  } catch (err: any) {
+    return res.status(502).json({ success: false, data: { source: 'LIVE_DIGIFLAZZ', connectionStatus: 'FAILED', fulfillmentVerified: false }, message: err.message });
+  }
+});
+
 app.post('/api/digiflazz/update-ip-config', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { whitelistIp, outboundProxy } = req.body || {};
-    const result = await outboundIpService.updateConfig(whitelistIp, outboundProxy);
-    
-    // Simpan juga ke settings state
-    try {
-      const state = await mongoDbService.getAllState();
-      const settings = state.settings || {};
-      if (whitelistIp) settings.digiflazzWhitelistIp = String(whitelistIp).trim();
-      if (outboundProxy !== undefined) settings.digiflazzOutboundProxy = String(outboundProxy).trim();
-      await mongoDbService.syncEntity('settings', settings);
-    } catch (_) {}
-
-    return res.json(result);
+    const settings: Record<string, string> = {};
+    if (whitelistIp !== undefined) settings.digiflazzWhitelistIp = String(whitelistIp).trim();
+    if (outboundProxy !== undefined) settings.digiflazzOutboundProxy = String(outboundProxy).trim();
+    if (!await mongoDbService.syncEntity('settings', settings)) {
+      return res.status(503).json({ success: false, message: 'Database tidak tersedia. Konfigurasi jaringan belum disimpan.' });
+    }
+    await hydrateDigiflazzRuntime();
+    return res.json({ success: true, message: 'Konfigurasi jaringan Digiflazz tersimpan di database. Daftarkan IP whitelist secara terpisah di dashboard Digiflazz.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -1959,60 +1979,31 @@ app.get('/api/admin/events', async (req: Request, res: Response) => {
   }
 });
 
-// 4. Admin Qiospay Mutasi Reader (Upstream Proxy)
-// GET /api/admin/qiospay/mutasi (Bearer Token protected)
-app.get('/api/admin/qiospay/mutasi', async (req: Request, res: Response) => {
+// Read-only live mutations use authenticated server-side DB configuration.
+async function readQiospayMutasi(_req: Request, res: Response) {
   try {
-    const authHeader = req.headers.authorization;
-    const expectedToken = `Bearer ${QIOSPAY_CONFIG.ADMIN_TOKEN}`;
-    
-    const x = Buffer.from(String(authHeader ?? ''));
-    const y = Buffer.from(String(expectedToken));
-    const isAuth = x.length === y.length && crypto.timingSafeEqual(x, y);
-
-    if (!isAuth) {
-      return res.status(401).json({ status: 'reject', message: 'Unauthorized' });
+    const settings = await mongoDbService.getSettingsFromDatabase();
+    if (typeof settings.qiospayMerchantCode !== 'string' || !settings.qiospayMerchantCode.trim() || typeof settings.qiospayApiKey !== 'string' || !settings.qiospayApiKey.trim()) {
+      return res.status(422).json({ success: false, diagnosticCode: 'QIOSPAY_CONFIG_INCOMPLETE', message: 'Simpan Merchant Code dan API Key Qiospay lengkap di pengaturan database sebelum membaca mutasi.' });
     }
-
-    const result = await qiospayService.getMutasi();
+    const result = await qiospayService.getMutasi(settings.qiospayMerchantCode, settings.qiospayApiKey, fetch, true, true);
+    res.setHeader('Cache-Control', 'no-store');
     return res.status(result.statusCode).json(result.data);
-  } catch (error: any) {
-    res.status(500).json({ message: 'Terjadi kesalahan backend' });
-  }
-});
-
-// Direct alias for dashboard frontend & client reconciliation
-app.get('/api/qiospay/mutasi/:merchantCode/:apiKey', async (req: Request, res: Response) => {
+  } catch (_) { return res.status(503).json({ success: false, message: 'Database konfigurasi Qiospay tidak tersedia.' }); }
+}
+app.get('/api/qiospay/mutasi', requireAdmin, readQiospayMutasi);
+app.get('/api/admin/qiospay/mutasi', requireAdmin, readQiospayMutasi);
+// Do not expose credentials in request URLs or permit arbitrary provider feeds.
+app.get('/api/qiospay/mutasi/:merchantCode/:apiKey', requireAdmin, (_req: Request, res: Response) => res.status(410).json({ success: false, message: 'Gunakan endpoint mutasi dengan konfigurasi server.' }));
+app.post('/api/qiospay/sync', requireAdmin, async (_req: Request, res: Response) => {
   try {
-    const { merchantCode, apiKey } = req.params;
-    const result = await qiospayService.getMutasi(merchantCode, apiKey);
-    res.status(result.statusCode).json(result.data);
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-app.get('/api/qiospay/mutasi', async (req: Request, res: Response) => {
-  try {
-    const merchantCode = (req.query.merchant_code as string) || (req.query.merchantCode as string) || QIOSPAY_CONFIG.MERCHANT_CODE;
-    const apiKey = (req.query.api_key as string) || (req.query.apiKey as string) || QIOSPAY_CONFIG.API_KEY;
-    const result = await qiospayService.getMutasi(merchantCode, apiKey, fetch, true);
-    res.status(result.statusCode).json(result.data);
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// Endpoint Sinkronisasi Live Mutasi Otomatis (1-Click Sync & Background Cron)
-app.all('/api/qiospay/sync', async (req: Request, res: Response) => {
-  try {
-    const merchantCode = (req.query.merchant_code as string) || (req.body?.merchant_code as string) || QIOSPAY_CONFIG.MERCHANT_CODE;
-    const apiKey = (req.query.api_key as string) || (req.body?.api_key as string) || QIOSPAY_CONFIG.API_KEY;
-    const syncResult = await qiospayService.syncAllPendingOrders(prisma, fulfillmentService, merchantCode, apiKey);
-    res.json(syncResult);
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    const settings = await mongoDbService.getSettingsFromDatabase();
+    if (typeof settings.qiospayMerchantCode !== 'string' || !settings.qiospayMerchantCode.trim() || typeof settings.qiospayApiKey !== 'string' || !settings.qiospayApiKey.trim()) {
+      return res.status(422).json({ success: false, diagnosticCode: 'QIOSPAY_CONFIG_INCOMPLETE', message: 'Simpan Merchant Code dan API Key Qiospay lengkap di pengaturan database sebelum sinkronisasi.' });
+    }
+    const result = await qiospayService.syncAllPendingOrders(prisma, fulfillmentService, settings.qiospayMerchantCode, settings.qiospayApiKey, true);
+    return res.status(result.success ? 200 : result.diagnosticCode === 'UPSTREAM_AUTH_REJECTED' ? 422 : 502).json(result);
+  } catch (_) { return res.status(503).json({ success: false, message: 'Sinkronisasi Qiospay tidak tersedia; status pesanan tidak dikonfirmasi.' }); }
 });
 
 // 11. NGROK TUNNEL CONTROLLERS (Webhooks Exposer)
@@ -2142,36 +2133,11 @@ app.post('/api/mongodb/test', async (req: Request, res: Response) => {
 
 // 13. CLOUD DATABASE SYNCHRONIZATION (Cross-Device Realtime Sync)
 // Helper: sanitasi settings agar secret tidak bocor ke publik tanpa X-Admin-Token
-const SENSITIVE_SETTINGS_KEYS = new Set([
-  'qiospayApiKey', 'qiospaySecretKey',
-  'pakasirApiKey', 'pakasirWebhookSecret',
-  'digiflazzApiKey', 'digiflazzProductionKey', 'digiflazzSecretCode', 'digiflazzWebhookSecret',
-  'supabaseSecretKey', 'supabaseServiceRoleKey',
-  'telegramBotToken', 'whatsappBotApiKey',
-  'ngrokAuthtoken', 'adminPassword',
-  'mongodbUri',
-  'qiospayQrString', 'pakasirQrString',
-]);
 function isAdminRequest(req: Request): boolean {
   return verifyAdminSession(req);
 }
 function sanitizeSettingsForPublic(settings: any, isAdmin: boolean): any {
-  if (!settings || typeof settings !== 'object') return settings;
-  if (isAdmin) return settings; // admin boleh lihat penuh (sudah auth)
-  const out: any = { ...settings };
-  for (const k of SENSITIVE_SETTINGS_KEYS) {
-    if (k in out && typeof out[k] === 'string' && out[k]) {
-      // ganti nilai asli dengan flag hasX; frontend admin akan fetch ulang dengan token untuk edit
-      out[k] = '';
-      out[`has${k.charAt(0).toUpperCase()}${k.slice(1)}`] = true;
-    } else if (k in out) {
-      delete out[k];
-    }
-  }
-  // API provider configs contain nested credentials and must never be public.
-  delete out.apiConfigs;
-  // tetap expose has* untuk UI cek 'terkonfigurasi'
-  return out;
+  return isAdmin ? settings : toPublicState({ settings }).settings;
 }
 app.get('/api/sync/state', async (req: Request, res: Response) => {
   try {
@@ -2188,6 +2154,7 @@ app.get('/api/sync/state', async (req: Request, res: Response) => {
 app.post('/api/sync/state', requireAdmin, async (req: Request, res: Response) => {
   try {
     const fullState = req.body;
+    if (fullState?.users) return res.status(400).json({ success: false, message: 'Member accounts must use authenticated member endpoints.' });
     if (fullState?.settings?.mongodbUri) {
       delete fullState.settings.mongodbUri;
     }
@@ -2202,6 +2169,7 @@ app.post('/api/sync/entity', requireAdmin, async (req: Request, res: Response) =
   try {
     const { entity, data } = req.body || {};
     if (!entity) return res.status(400).json({ success: false, message: 'Entity name required' });
+    if (entity === 'users') return res.status(400).json({ success: false, message: 'Bulk member writes are disabled.' });
     
     let payloadData = data;
     // Sanitasi jika entity adalah settings
@@ -2229,12 +2197,20 @@ app.post('/api/sync/entity', requireAdmin, async (req: Request, res: Response) =
   }
 });
 
+app.get('/api/admin/members', requireAdmin, async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const client = await mongoDbService.getClient();
+    if (!client) throw new Error('unavailable');
+    const users = await client.db(mongoDbService.getPrimaryDbName()).collection('users').find({}, { projection: { password: 0, passwordHash: 0 } }).toArray();
+    return res.json({ success: true, data: users.map(memberDto) });
+  } catch { return res.status(503).json({ success: false, message: 'Database member tidak tersedia.' }); }
+});
 // Admin settings load — mirrors serverless fallback semantics (sanitized when not admin)
 app.get('/api/settings/load', async (req: Request, res: Response) => {
   try {
-    const raw = await mongoDbService.getAllState();
-    const settings = raw.settings || {};
     const isAdmin = isAdminRequest(req);
+    const settings = isAdmin ? await mongoDbService.getSettingsFromDatabase() : (await mongoDbService.getAllState()).settings || {};
     if (!isAdmin) {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
       return res.json({ success: true, _sanitized: true, data: sanitizeSettingsForPublic(settings, false) });
@@ -2247,7 +2223,11 @@ app.get('/api/settings/load', async (req: Request, res: Response) => {
 // Save Settings and persist to backend/.env + Supabase
 app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const settings = req.body.settings || req.body || {};
+    const settings = mergeSettings({}, req.body.settings || req.body || {});
+    // Reject before changing files or runtime services: MongoDB is the commit boundary.
+    const syncOk = await mongoDbService.syncEntity('settings', settings);
+    if (!syncOk) return res.status(503).json({ success: false, mongoPersisted: false, message: 'Database tidak tersedia. Pengaturan belum disimpan.' });
+    await hydrateDigiflazzRuntime();
     // SUPABASE DISABLED — tidak lagi simpan SUPABASE_* ke .env (MongoDB aktif)
     let envUpdated = false;
     try {
@@ -2480,66 +2460,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
           envUpdated = true;
         }
 
-        // Update Memory & .env untuk Digiflazz H2H
-        if (settings.digiflazzUsername !== undefined || settings.digiflazzUser !== undefined) {
-          const val = (settings.digiflazzUsername || settings.digiflazzUser || '').trim();
-          DIGIFLAZZ_CONFIG.USERNAME = val;
-          if (envContent.includes('DIGIFLAZZ_USERNAME=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_USERNAME=.*/, `DIGIFLAZZ_USERNAME="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_USERNAME="${val}"`;
-          }
-          if (envContent.includes('DIGIFLAZZ_USER=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_USER=.*/, `DIGIFLAZZ_USER="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_USER="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.digiflazzApiKey !== undefined || settings.digiflazzProductionKey !== undefined) {
-          const val = (settings.digiflazzApiKey || settings.digiflazzProductionKey || '').trim();
-          DIGIFLAZZ_CONFIG.API_KEY = val;
-          if (envContent.includes('DIGIFLAZZ_API_KEY=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_API_KEY=.*/, `DIGIFLAZZ_API_KEY="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_API_KEY="${val}"`;
-          }
-          if (envContent.includes('DIGIFLAZZ_PRODUCTION_KEY=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_PRODUCTION_KEY=.*/, `DIGIFLAZZ_PRODUCTION_KEY="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_PRODUCTION_KEY="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.digiflazzWebhookSecret !== undefined || settings.digiflazzSecretCode !== undefined) {
-          const val = (settings.digiflazzWebhookSecret || settings.digiflazzSecretCode || '').trim();
-          DIGIFLAZZ_CONFIG.WEBHOOK_SECRET = val;
-          DIGIFLAZZ_CONFIG.SECRET_CODE = val;
-          if (envContent.includes('DIGIFLAZZ_WEBHOOK_SECRET=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_WEBHOOK_SECRET=.*/, `DIGIFLAZZ_WEBHOOK_SECRET="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_WEBHOOK_SECRET="${val}"`;
-          }
-          if (envContent.includes('DIGIFLAZZ_SECRET_CODE=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_SECRET_CODE=.*/, `DIGIFLAZZ_SECRET_CODE="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_SECRET_CODE="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.digiflazzWebhookUrl !== undefined && typeof settings.digiflazzWebhookUrl === 'string') {
-          const val = settings.digiflazzWebhookUrl.trim();
-          DIGIFLAZZ_CONFIG.WEBHOOK_URL = val;
-          if (envContent.includes('DIGIFLAZZ_WEBHOOK_URL=')) {
-            envContent = envContent.replace(/DIGIFLAZZ_WEBHOOK_URL=.*/, `DIGIFLAZZ_WEBHOOK_URL="${val}"`);
-          } else {
-            envContent += `\nDIGIFLAZZ_WEBHOOK_URL="${val}"`;
-          }
-          envUpdated = true;
-        }
+        // Digiflazz remains database-first; hydration above is independent of .env writability.
 
         if (envUpdated) {
           fs.writeFileSync(envPath, envContent, 'utf8');
@@ -2590,8 +2511,6 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     }
 
     // Persist full settings ke MongoDB lokal (aaPanel) & file cache — merge menjaga secret lama
-    const syncOk = await mongoDbService.syncEntity('settings', settings);
-
     res.json({ 
       success: true, 
       mongoPersisted: syncOk,
@@ -2734,6 +2653,12 @@ app.get('/api/drizzle/info', (req: Request, res: Response) => {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'wayahedigital-api' }));
 
+try {
+  await hydrateDigiflazzRuntime();
+} catch {
+  console.error('[DIGIFLAZZ CONFIG] Database unavailable; Digiflazz disabled until confirmed settings reload.');
+}
+
 app.listen(PORT, '127.0.0.1', () => {
   console.log('\n══════════════════════════════════════════════════');
   console.log(`🚀 WayaheDigital Backend API running on port ${PORT}`);
@@ -2759,12 +2684,7 @@ app.listen(PORT, '127.0.0.1', () => {
     }
   }, 10000);
 
-  // Background Auto-Sync Digiflazz Product Catalog (Startup + Setiap 30 Menit)
-  setTimeout(() => {
-    console.log('🔄 [STARTUP] Menjalankan sinkronisasi awal produk Digiflazz...');
-    syncDigiflazzCatalog().catch((e: any) => console.error('Startup Digiflazz sync error:', e.message));
-  }, 3000);
-
+  // Restart hydrates config only; catalog writes require explicit sync or the normal 30-minute schedule.
   setInterval(() => {
     console.log('🔄 [CRON] Menjalankan pembaruan otomatis produk Digiflazz...');
     syncDigiflazzCatalog().catch((e: any) => console.error('Cron Digiflazz sync error:', e.message));

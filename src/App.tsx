@@ -143,6 +143,7 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+    storage.hydrateMemberFromBackend().then(() => storage.hydrateMemberOrders()).catch(() => {});
 
     // Sinkronisasi config gateway dari backend (penting saat deploy production)
     apiAdapter.syncGatewayConfigFromBackend().then((result) => {

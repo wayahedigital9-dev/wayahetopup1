@@ -2,6 +2,7 @@ import { db as prisma } from './db/client.js';
 import { FulfillmentService } from './services/fulfillment.js';
 import { digiflazzService } from './services/digiflazz.js';
 import { qiospayService } from './services/qiospay.js';
+import { hydrateDigiflazzRuntime } from './services/digiflazzRuntime.js';
 
 const fulfillmentService = new FulfillmentService(prisma);
 
@@ -10,6 +11,7 @@ const fulfillmentService = new FulfillmentService(prisma);
  */
 async function processPaidOrdersQueue() {
   try {
+    await hydrateDigiflazzRuntime();
     const pendingFulfillments = await prisma.order.findMany({
       where: {
         paymentStatus: 'PAID',
@@ -35,12 +37,13 @@ async function processPaidOrdersQueue() {
  */
 async function reconcilePendingDigiflazzOrders() {
   try {
+    await hydrateDigiflazzRuntime();
     const processingOrders = await prisma.order.findMany({
       where: {
         paymentStatus: 'PAID',
         fulfillmentStatus: 'PROCESSING',
         category: {
-          in: ['PULSA', 'KUOTA'],
+          in: ['PULSA', 'KUOTA', 'GAME', 'GAMES'],
         },
         supplierRefId: {
           not: null,

@@ -61,7 +61,19 @@ interface MutasiCacheEntry {
 const mutasiCache = new Map<string, MutasiCacheEntry>();
 const MUTASI_CACHE_TTL_MS = 6000; // 6 seconds debounce / cache
 
+function mutationRows(value: any, depth = 0): any[] | null {
+  if (depth > 5) return null;
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== 'object' || value.success === false || /^(error|fail|failed|reject)$/i.test(String(value.status || ''))) return null;
+  for (const key of ['data', 'result']) {
+    if (key in value) { const rows = mutationRows(value[key], depth + 1); if (rows) return rows; }
+  }
+  return null;
+}
+
 export class QiospayPaymentService {
+  private reconciliationQueue: Promise<void> = Promise.resolve();
+  private reconciliationInFlight = new Map<string, Promise<any>>();
   /**
    * 1. Memproses Webhook Callback Qiospay dengan Kontrak Aman
    * - Verifikasi timingSafeEqual untuk secret key (mendukung path param, header, query, dan body)
@@ -287,7 +299,31 @@ export class QiospayPaymentService {
     event: { nmid: string; refid: string; amount: number | null; receivedAt: Date; payload?: any; type?: string | null; issuer?: string | null; [key: string]: any },
     fulfillmentService?: any
   ): Promise<any | null> {
+    const key = JSON.stringify([event.nmid, event.refid]);
+    const running = this.reconciliationInFlight.get(key);
+    if (running) return running;
+    const attempt = this.reconciliationQueue.then(() => this.reconcileOrderForEventOnce(prisma, event, fulfillmentService));
+    this.reconciliationQueue = attempt.then(() => undefined, () => undefined);
+    this.reconciliationInFlight.set(key, attempt);
+    try { return await attempt; }
+    finally { if (this.reconciliationInFlight.get(key) === attempt) this.reconciliationInFlight.delete(key); }
+  }
+
+  private async reconcileOrderForEventOnce(
+    prisma: PrismaClient,
+    event: { nmid: string; refid: string; amount: number | null; receivedAt: Date; payload?: any; type?: string | null; issuer?: string | null; [key: string]: any },
+    fulfillmentService?: any
+  ): Promise<any | null> {
     if (!event.amount || event.amount <= 0) return null;
+    // A reference already verified is consumed, not credit for another order.
+    if (event.verificationStatus === 'verified') return null;
+    try {
+      const consumed = await prisma.qiospayEvent.findUnique({ where: { nmid_refid: { nmid: event.nmid, refid: event.refid } } });
+      if (consumed?.verificationStatus === 'verified') return null;
+    } catch (_) {}
+    // Mongo receipts remain authoritative if the legacy Prisma event store is offline.
+    const state = await mongoDbService.getAllState();
+    if ((state.orders || []).some((order: any) => order.paymentStatus === 'PAID' && order.qiospayRefid === event.refid && (!order.qiospayNmid || order.qiospayNmid === event.nmid))) return null;
 
     let targetOrder: any = null;
     let matchedOrders: any[] = [];
@@ -777,21 +813,24 @@ export class QiospayPaymentService {
     prisma: PrismaClient,
     fulfillmentService?: any,
     customMerchantCode?: string,
-    customApiKey?: string
+    customApiKey?: string,
+    databaseOnly = false
   ): Promise<{
     success: boolean;
     syncedCount: number;
     reconciledInvoices: string[];
     mutasiCount: number;
     message: string;
+    diagnosticCode?: string;
   }> {
-    const mutasiRes = await this.getMutasi(customMerchantCode, customApiKey, fetch, true);
+    const mutasiRes = await this.getMutasi(customMerchantCode, customApiKey, fetch, true, databaseOnly);
     if (mutasiRes.statusCode !== 200 || !mutasiRes.data) {
       return {
         success: false,
         syncedCount: 0,
         reconciledInvoices: [],
         mutasiCount: 0,
+        diagnosticCode: mutasiRes.data?.diagnosticCode,
         message: mutasiRes.data?.message || 'Gagal menghubungi server mutasi Qiospay',
       };
     }
@@ -938,10 +977,12 @@ export class QiospayPaymentService {
     customMerchantCode?: string,
     customApiKey?: string,
     fetchImpl: typeof fetch = fetch,
-    bypassCache = false
+    bypassCache = false,
+    databaseOnly = false
   ): Promise<{ statusCode: number; data: any }> {
-    const rawMerchantCode = (customMerchantCode || QIOSPAY_CONFIG.MERCHANT_CODE || '').trim();
-    const apiKey = (customApiKey || QIOSPAY_CONFIG.API_KEY || '').trim();
+    // DB-backed admin paths must never combine saved and runtime credentials.
+    const rawMerchantCode = (typeof customMerchantCode === 'string' && customMerchantCode || (!databaseOnly && QIOSPAY_CONFIG.MERCHANT_CODE) || '').trim();
+    const apiKey = (typeof customApiKey === 'string' && customApiKey || (!databaseOnly && QIOSPAY_CONFIG.API_KEY) || '').trim();
 
     if (!rawMerchantCode || !apiKey) {
       return {
@@ -950,14 +991,8 @@ export class QiospayPaymentService {
       };
     }
 
-    // Auto normalisasi format merchant code (misal QP48797 -> QP048797)
+    // Identifiers are literal provider credentials; never guess alternate merchants.
     const candidateCodes: string[] = [rawMerchantCode];
-    const upper = rawMerchantCode.toUpperCase();
-    if (upper.startsWith('QP') && upper.length === 7) {
-      candidateCodes.unshift('QP0' + upper.slice(2));
-    } else if (upper.startsWith('QP0')) {
-      candidateCodes.push('QP' + upper.slice(3));
-    }
 
     const cacheKey = `${candidateCodes[0]}:${apiKey}`;
     const now = Date.now();
@@ -979,17 +1014,15 @@ export class QiospayPaymentService {
             'User-Agent': 'WayaheDigital-Backend/1.0',
           },
         });
-        if (res.ok) {
-          upstreamRes = res;
-          break;
-        }
+        upstreamRes = res;
+        break;
       } catch (_) {}
     }
 
     if (!upstreamRes || !upstreamRes.ok) {
       return {
-        statusCode: 502,
-        data: { message: 'Qiospay mengembalikan error atau tidak terhubung', upstream_status: upstreamRes?.status || 502 },
+        statusCode: [401, 403].includes(upstreamRes?.status || 0) ? 422 : 502,
+        data: { success: false, diagnosticCode: [401, 403].includes(upstreamRes?.status || 0) ? 'UPSTREAM_AUTH_REJECTED' : 'UPSTREAM_UNAVAILABLE', message: [401, 403].includes(upstreamRes?.status || 0) ? 'Qiospay menolak Merchant Code atau API Key yang tersimpan. Periksa kredensial Qiospay.' : 'Qiospay mengembalikan error atau tidak terhubung', upstream_status: upstreamRes?.status || 502 },
       };
     }
 
@@ -1029,9 +1062,11 @@ export class QiospayPaymentService {
         };
       }
 
+      const rows = mutationRows(parsedData);
+      if (!rows) return { statusCode: 502, data: { success: false, diagnosticCode: 'UPSTREAM_INVALID_RESPONSE', message: 'Respons mutasi Qiospay gagal atau format tidak dikenali; sinkronisasi tidak dilakukan.' } };
       const resObj = {
         statusCode: 200,
-        data: { source: 'qiospay', data: parsedData },
+        data: { success: true, source: 'qiospay', data: rows, fetchedAt: new Date().toISOString() },
       };
 
       mutasiCache.set(cacheKey, {

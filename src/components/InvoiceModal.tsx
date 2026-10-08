@@ -116,7 +116,7 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
                     storage.saveRegisteredMember(matchedMember);
                     const activeUser = storage.getUser();
                     if (activeUser && activeUser.id === matchedMember.id) {
-                      storage.saveUser({ ...activeUser, balance: matchedMember.balance });
+                      void storage.hydrateMemberFromBackend();
                     }
                   }
                 }

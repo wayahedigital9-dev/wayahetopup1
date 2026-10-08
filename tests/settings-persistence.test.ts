@@ -31,6 +31,13 @@ test('Supabase save handler never displays success after backend rejection', asy
   assert.deepEqual(toasts, ['error']);
 });
 
+test('Pakasir mode change never shows success or calls provider after rejected settings save', async () => {
+  const toasts: string[] = []; let providerCalls = 0;
+  const context: any = { settings: {}, setPakasirIsSandbox() {}, setSettings() {}, storage: { saveSettings: async () => { throw new Error('fixture rejection'); } }, persistSettings: async () => { toasts.push('error'); return false; }, apiAdapter: { togglePakasirSandbox: async () => { providerCalls++; } }, onShowToast: (_a: string, _b: string, type: string) => toasts.push(type) };
+  await vm.runInNewContext(dashboardFunction('handleTogglePakasirMode'), context)(true);
+  assert.deepEqual(toasts, ['error']); assert.equal(providerCalls, 0);
+});
+
 // Import backend only after moving away from the live cwd/.env/data.
 const sandbox = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'settings-regression-'));
 process.chdir(sandbox);
@@ -40,14 +47,14 @@ const { storage } = await import('../src/services/storage.ts');
 const dbFile = path.join(sandbox, 'data/db.json');
 const fixture = { supabaseSecretKey: 'fixture-server-key', digiflazzProductionKey: 'fixture-df-key', pakasirApiKey: 'fixture-payment-key', siteName: 'Before' };
 
- test('Mongo settings patch preserves omitted and masked secrets across disk reload', async () => {
+ test('Mongo unavailable rejects settings patch without updating disk fallback', async () => {
   fs.writeFileSync(dbFile, JSON.stringify({ settings: fixture }));
   const service = new MongoDbService();
   service.getClient = async () => null;
   await service.syncEntity('settings', { siteName: 'After', supabaseSecretKey: '', digiflazzProductionKey: '********', pakasirApiKey: null });
   const reloaded = new MongoDbService();
   reloaded.getClient = async () => null;
-  assert.deepEqual((await reloaded.getAllState()).settings, { ...fixture, siteName: 'After' });
+  assert.deepEqual((await reloaded.getAllState()).settings, fixture);
 });
 
 test('Supabase settings patch preserves masked secrets across disk reload', async () => {
@@ -58,13 +65,13 @@ test('Supabase settings patch preserves masked secrets across disk reload', asyn
   assert.deepEqual(JSON.parse(fs.readFileSync(dbFile, 'utf8')).settings, fixture);
 });
 
-test('Mongo cloud refresh cannot overwrite newer server-local settings', async () => {
+test('Mongo cloud settings are authoritative over the local mirror', async () => {
   fs.writeFileSync(dbFile, JSON.stringify({ settings: { ...fixture, siteName: 'Newer' } }));
   const service = new MongoDbService();
   const cursor: any = { sort: () => cursor, limit: () => cursor, toArray: async () => [] };
   service.getClient = async () => ({ db: () => ({ collection: () => ({ find: () => cursor, findOne: async () => ({ data: { ...fixture, siteName: 'Stale' } }) }) }) }) as any;
-  assert.equal((await service.getAllState()).settings.siteName, 'Newer');
-  assert.equal(JSON.parse(fs.readFileSync(dbFile, 'utf8')).settings.siteName, 'Newer');
+  assert.equal((await service.getAllState()).settings.siteName, 'Stale');
+  assert.equal(JSON.parse(fs.readFileSync(dbFile, 'utf8')).settings.siteName, 'Stale');
 });
 
 test('Supabase does not report success when its durable local write fails', async () => {
@@ -82,6 +89,8 @@ test('Supabase does not report success when its durable local write fails', asyn
 test('frontend rejects failed settings save without changing confirmed cache', async () => {
   const cache = new Map<string, string>([['wd_admin_settings_v1', JSON.stringify(fixture)]]);
   globalThis.localStorage = { getItem: k => cache.get(k) ?? null, setItem: (k,v) => { cache.set(k,v); } } as Storage;
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: true, data: fixture }));
+  await storage.hydrateSettingsFromBackend();
   globalThis.fetch = async () => new Response(JSON.stringify({ success: false }), { status: 403, headers: { 'Content-Type': 'application/json' } });
   await assert.rejects(async () => { await storage.saveSettings({ ...storage.getSettings(), siteName: 'Unsaved' }); });
   assert.equal(storage.getSettings().siteName, 'Before');
@@ -92,6 +101,7 @@ test('save is not successful when server readback is stale', async () => {
   globalThis.localStorage = { getItem: k => cache.get(k) ?? null, setItem: (k,v) => { cache.set(k,v); } } as Storage;
   globalThis.fetch = async (_url, options) => new Response(JSON.stringify(options?.method === 'POST'
     ? { success: true } : { success: true, data: { settings: fixture } }), { headers: { 'Content-Type': 'application/json' } });
+  await storage.hydrateSettingsFromBackend();
   await assert.rejects(storage.saveSettings({ ...storage.getSettings(), siteName: 'After' }));
   assert.equal(storage.getSettings().siteName, 'Before');
 });
@@ -110,6 +120,7 @@ test('one confirmed save strips placeholders and survives fresh browser reload',
     }
     return new Response(JSON.stringify({ success: true, data: { settings: remote } }), { headers: { 'Content-Type': 'application/json' } });
   };
+  await storage.hydrateSettingsFromBackend();
   await storage.saveSettings({ ...storage.getSettings(), siteName: 'After', supabaseSecretKey: '********', digiflazzProductionKey: '' });
   assert.equal(writes.length, 1);
   assert.equal('supabaseSecretKey' in writes[0], false);

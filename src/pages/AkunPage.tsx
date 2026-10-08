@@ -99,190 +99,48 @@ export function AkunPage({
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(50000);
 
-  // Handle Registrasi Akun Member (Role: Daftar: nama, no. hp, username, email, password)
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanUsername = regUsername.trim().toLowerCase();
-    const cleanEmail = regEmail.trim().toLowerCase();
-    const cleanName = regName.trim() || (cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1));
-    const cleanPhone = regPhone.trim();
+  const [memberBusy, setMemberBusy] = useState(false);
+  useEffect(() => {
+    setProfileName(currentUser?.name || '');
+    setProfilePhone(currentUser?.phone || '');
+    if (currentUser) storage.hydrateMemberOrders().catch(() => {});
+  }, [currentUser?.id]);
 
-    if (!cleanUsername || cleanUsername.length < 3) {
-      onShowToast('Username Terlalu Pendek', 'Username minimal 3 karakter (huruf/angka).', 'warning');
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(cleanUsername)) {
-      onShowToast('Format Username', 'Username hanya boleh berisi huruf, angka, dan underscore (_).', 'warning');
-      return;
-    }
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      onShowToast('Email Tidak Valid', 'Masukkan alamat email yang valid (contoh: nama@gmail.com).', 'warning');
-      return;
-    }
-    if (!regPassword || regPassword.trim().length < 6) {
-      onShowToast('Kata Sandi Lemah', 'Kata sandi minimal 6 karakter demi keamanan akun Anda.', 'warning');
-      return;
-    }
-
-    // Cek duplikasi akun secara spesifik
-    const existingUsername = storage.findRegisteredMemberByUsername(cleanUsername);
-    if (existingUsername) {
-      onShowToast('Username Terpakai', 'Username tersebut sudah terdaftar. Silakan pilih username lain atau login.', 'warning');
-      return;
-    }
-
-    const existingEmail = storage.findRegisteredMemberByEmail(cleanEmail);
-    if (existingEmail) {
-      onShowToast('Email Terdaftar', 'Email tersebut sudah terdaftar. Silakan langsung masuk di tab Login.', 'warning');
-      return;
-    }
-
-    if (cleanPhone) {
-      const existingPhone = storage.findRegisteredMemberByPhone(cleanPhone);
-      if (existingPhone) {
-        onShowToast('Nomor HP Terdaftar', 'Nomor handphone tersebut sudah terdaftar. Silakan login dengan nomor tersebut.', 'warning');
-        return;
-      }
-    }
-
-    const newMember: RegisteredMemberAccount = {
-      id: 'usr-' + Date.now(),
-      username: cleanUsername,
-      email: cleanEmail,
-      password: regPassword.trim(),
-      name: cleanName,
-      phone: cleanPhone || ('08' + Math.floor(1000000000 + Math.random() * 9000000000)),
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
-      memberTier: 'VIP_GOLD',
-      balance: 10000,
-      rewardPoints: 100,
-      isGmailVerified: cleanEmail.includes('@gmail.com'),
-      createdAt: new Date().toISOString(),
-    };
-
-    const userSession: User = {
-      id: newMember.id,
-      name: newMember.name,
-      username: newMember.username,
-      email: newMember.email,
-      phone: newMember.phone || '',
-      role: 'CUSTOMER',
-      createdAt: newMember.createdAt,
-      memberTier: newMember.memberTier,
-      balance: newMember.balance,
-      rewardPoints: newMember.rewardPoints,
-      isGmailVerified: newMember.isGmailVerified,
-      avatar: newMember.avatar,
-    };
-
-    // Simpan user session sebelum memicu storage sync agar data session selalu konsisten
-    storage.saveUser(userSession);
-    storage.saveRegisteredMember(newMember);
-
-    onUserChange(userSession);
-    setProfileName(userSession.name);
-    setProfilePhone(userSession.phone);
-    onShowToast('Pendaftaran Berhasil!', `Selamat datang, ${userSession.name}! Akun member Anda aktif dengan bonus saldo Rp 10.000.`, 'success');
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); if (memberBusy) return; setMemberBusy(true);
+    try {
+      const user = await storage.registerMember({ username: regUsername.trim().toLowerCase(), email: regEmail.trim().toLowerCase(), password: regPassword, name: regName.trim(), phone: regPhone.trim() });
+      setRegPassword(''); onUserChange(user);
+      setProfileName(user.name); setProfilePhone(user.phone);
+      onShowToast('Pendaftaran Berhasil', 'Akun tersimpan di database dan dapat digunakan di perangkat lain. Saldo awal Rp 0.', 'success');
+    } catch (e) { onShowToast('Pendaftaran Gagal', e instanceof Error ? e.message : 'Silakan coba lagi.', 'error'); }
+    finally { setMemberBusy(false); }
   };
-
-  // Handle Login Akun Member (Bisa Username, Email, atau No. WhatsApp + Password)
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanId = loginIdentifier.trim().toLowerCase();
-    if (!cleanId) {
-      onShowToast('Data Kosong', 'Masukkan Username, Email, atau Nomor HP Anda.', 'warning');
-      return;
-    }
-    if (!loginPassword.trim()) {
-      onShowToast('Kata Sandi Kosong', 'Masukkan kata sandi akun Anda.', 'warning');
-      return;
-    }
-
-    const found = storage.findRegisteredMember(cleanId);
-    if (found) {
-      if (found.password && found.password.trim() !== loginPassword.trim()) {
-        onShowToast('Kata Sandi Salah', 'Kata sandi yang Anda masukkan tidak sesuai. Silakan coba lagi.', 'error');
-        return;
-      }
-
-      const userSession: User = {
-        id: found.id,
-        name: found.name,
-        username: found.username,
-        email: found.email,
-        phone: found.phone || '',
-        role: 'CUSTOMER',
-        createdAt: found.createdAt,
-        memberTier: found.memberTier || 'VIP_GOLD',
-        balance: found.balance ?? 0,
-        rewardPoints: found.rewardPoints ?? 0,
-        isGmailVerified: found.isGmailVerified ?? false,
-        avatar: found.avatar,
-      };
-
-      storage.saveUser(userSession);
-      onUserChange(userSession);
-      setProfileName(userSession.name);
-      setProfilePhone(userSession.phone);
-      onShowToast('Berhasil Masuk', `Selamat datang kembali, ${userSession.name}!`, 'success');
-    } else {
-      onShowToast(
-        'Akun Tidak Ditemukan',
-        'Username, Email, atau No. Handphone belum terdaftar. Silakan periksa kembali atau gunakan tab "Daftar Akun".',
-        'warning'
-      );
-    }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); if (memberBusy) return; setMemberBusy(true);
+    try {
+      const user = await storage.loginMember(loginIdentifier, loginPassword);
+      setLoginPassword(''); onUserChange(user);
+      setProfileName(user.name); setProfilePhone(user.phone);
+      onShowToast('Berhasil Masuk', `Selamat datang, ${user.name}.`, 'success');
+    } catch (e) { onShowToast('Login Gagal', e instanceof Error ? e.message : 'Silakan coba lagi.', 'error'); }
+    finally { setMemberBusy(false); }
   };
-
-
-
-  // Handle Logout
-  const handleLogout = () => {
-    storage.saveUser(null);
-    onUserChange(null);
-    onShowToast('Keluar Akun', 'Sesi akun member Anda telah berakhir.', 'info');
+  const handleLogout = async () => {
+    try { await storage.logoutMember(); onUserChange(null); onShowToast('Keluar Akun', 'Sesi server telah berakhir.', 'info'); }
+    catch (e) { onShowToast('Logout Gagal', e instanceof Error ? e.message : 'Silakan coba lagi.', 'error'); }
   };
-
-  // Update Profile
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    const updatedUser: User = {
-      ...currentUser,
-      name: profileName || currentUser.name,
-      phone: profilePhone || currentUser.phone,
-    };
-
-    storage.saveUser(updatedUser);
-    onUserChange(updatedUser);
-    onShowToast('Profil Disimpan', 'Informasi akun member berhasil diperbarui.', 'success');
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault(); if (!currentUser || memberBusy) return; setMemberBusy(true);
+    try { const user = await storage.updateMemberProfile(profileName); onUserChange(user); onShowToast('Profil Disimpan', 'Profil dikonfirmasi tersimpan di database.', 'success'); }
+    catch (e) { onShowToast('Simpan Gagal', e instanceof Error ? e.message : 'Silakan coba lagi.', 'error'); }
+    finally { setMemberBusy(false); }
   };
-
-  // Top Up Saldo
   const handleConfirmTopUp = () => {
-    if (!currentUser) return;
-    const updatedUser: User = {
-      ...currentUser,
-      balance: (currentUser.balance || 0) + topUpAmount,
-      rewardPoints: (currentUser.rewardPoints || 0) + Math.floor(topUpAmount / 100),
-    };
-    storage.saveUser(updatedUser);
-    onUserChange(updatedUser);
     setShowTopUpModal(false);
-    onShowToast('Top Up Berhasil', `Saldo Rp ${formatRupiah(topUpAmount)} berhasil ditambahkan ke dompet akun Anda!`, 'success');
+    onShowToast('Top Up Belum Tersedia', 'Saldo hanya berubah setelah pembayaran yang diverifikasi server. Simulasi saldo dinonaktifkan.', 'warning');
   };
-
-  // User Orders specifically for this member account
-  const userOrders = currentUser
-    ? orders.filter(
-        o =>
-          (o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email?.toLowerCase()) ||
-          (currentUser.phone && o.customerPhone && o.customerPhone === currentUser.phone) ||
-          (currentUser.username && o.customerName && o.customerName.toLowerCase().includes(currentUser.username.toLowerCase())) ||
-          (!o.customerEmail && !o.customerPhone)
-      )
-    : orders;
+  const userOrders = currentUser ? storage.getMemberOrders() : [];
 
   // User Vouchers (WiFi Hotspot & Akun Premium)
   const userVouchers = userOrders.filter(
@@ -453,13 +311,13 @@ export function AkunPage({
                     <div>
                       <label className="block text-xs font-bold text-[#D5CEBF] mb-1 flex items-center justify-between">
                         <span>Kata Sandi (Password)</span>
-                        <span className="text-[10px] text-[#A89F91]">Min. 6 karakter</span>
+                        <span className="text-[10px] text-[#A89F91]">Min. 8 karakter</span>
                       </label>
                       <div className="relative">
                         <input
                           type={showRegPassword ? 'text' : 'password'}
                           required
-                          placeholder="Minimal 6 karakter rahasia"
+                          placeholder="Minimal 8 karakter rahasia"
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
                           className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl bg-[#14100D] border border-[#3E342B] text-[#FAF4EB] focus:outline-none focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20"
@@ -481,9 +339,9 @@ export function AkunPage({
                         <Gift size={18} />
                       </div>
                       <div className="text-xs">
-                        <p className="font-black text-[#D4A359]">Bonus Saldo Rp 10.000 Member Baru!</p>
+                        <p className="font-black text-[#D4A359]">Akun tersimpan aman di database</p>
                         <p className="text-[11px] text-[#D5CEBF]">
-                          Langsung aktif dan dapat digunakan untuk belanja voucher WiFi, paket kuota & transaksi digital lainnya.
+                          Gunakan akun yang sama di perangkat lain. Saldo awal Rp 0; tidak ada bonus saldo otomatis.
                         </p>
                       </div>
                     </div>
@@ -491,10 +349,11 @@ export function AkunPage({
                     {/* Submit Register Button */}
                     <button
                       type="submit"
+                      disabled={memberBusy}
                       className="w-full py-3 px-4 rounded-2xl font-black text-xs sm:text-sm bg-gradient-to-r from-[#D4A359] via-[#E2B774] to-[#C08F47] text-[#181411] hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-[#D4A359]/20 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <UserPlus size={16} />
-                      <span>Daftar Akun & Klaim Bonus</span>
+                      <span>Daftar Akun</span>
                     </button>
                   </form>
                 )}
@@ -549,6 +408,7 @@ export function AkunPage({
                     {/* Submit Login Button */}
                     <button
                       type="submit"
+                      disabled={memberBusy}
                       className="w-full py-3 px-4 rounded-2xl font-black text-xs sm:text-sm bg-[#D4A359] hover:bg-[#C08F47] text-[#181411] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                     >
                       <LogIn size={16} />
@@ -628,7 +488,7 @@ export function AkunPage({
                     </h2>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#D4A359]/20 text-[#D4A359] border border-[#D4A359]/50 shadow-xs flex items-center gap-1">
                       <Crown size={11} />
-                      <span>{currentUser.memberTier || 'MEMBER VIP GOLD'}</span>
+                      <span>{currentUser.memberTier || 'MEMBER'}</span>
                     </span>
                   </div>
 
@@ -659,11 +519,11 @@ export function AkunPage({
                     <span>Saldo Dompet Member</span>
                   </div>
                   <div className="text-lg sm:text-xl font-black text-[#FAF4EB] mt-0.5">
-                    {formatRupiah(currentUser.balance || 25000)}
+                    {formatRupiah(currentUser.balance ?? 0)}
                   </div>
                   <div className="text-[10px] text-[#84A951] font-semibold flex items-center gap-1 mt-0.5">
                     <Star size={10} />
-                    <span>{currentUser.rewardPoints || 500} Poin Reward</span>
+                    <span>{currentUser.rewardPoints ?? 0} Poin Reward</span>
                   </div>
                 </div>
 
@@ -731,7 +591,7 @@ export function AkunPage({
                 </div>
               </div>
               <div className="text-xl font-black text-[#84A951]">100% Aman</div>
-              <p className="text-[10px] text-[#A89F91]">Terverifikasi Gmail</p>
+              <p className="text-[10px] text-[#A89F91]">Data tersimpan di server</p>
             </div>
           </div>
 
@@ -1085,7 +945,7 @@ export function AkunPage({
 
                 <div>
                   <label className="block text-xs font-bold text-[#D5CEBF] mb-1">
-                    Alamat Gmail Terverifikasi
+                    Alamat Email Akun
                   </label>
                   <div className="relative">
                     <input
@@ -1099,7 +959,7 @@ export function AkunPage({
                       <span>Verified</span>
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#A89F91] mt-1">Email Gmail akun Google Anda telah diverifikasi dengan aman.</p>
+                  <p className="text-[10px] text-[#A89F91] mt-1">Email identitas login tersimpan di server. Perubahan email atau nomor HP memerlukan bantuan admin.</p>
                 </div>
 
                 <div>
@@ -1110,6 +970,7 @@ export function AkunPage({
                     type="tel"
                     required
                     value={profilePhone}
+                      disabled
                     onChange={(e) => setProfilePhone(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-2xl bg-[#14100D] border border-[#3E342B] text-[#FAF4EB] text-xs sm:text-sm focus:outline-none focus:border-[#D4A359]"
                   />
@@ -1118,6 +979,7 @@ export function AkunPage({
                 <div className="pt-2">
                   <button
                     type="submit"
+                      disabled={memberBusy}
                     className="px-5 py-2.5 rounded-2xl bg-[#D4A359] hover:bg-[#C08F47] text-[#181411] font-bold text-xs transition-all shadow-md cursor-pointer flex items-center gap-1.5"
                   >
                     <Check size={14} />

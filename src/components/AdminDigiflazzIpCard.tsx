@@ -34,12 +34,12 @@ export const AdminDigiflazzIpCard: React.FC<AdminDigiflazzIpCardProps> = ({ onSh
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // States
-  const [configuredIp, setConfiguredIp] = useState<string>('82.158.130.255');
-  const [liveServerIp, setLiveServerIp] = useState<string>('82.158.130.255');
-  const [outboundIp, setOutboundIp] = useState<string>('82.158.130.255');
+  const [configuredIp, setConfiguredIp] = useState<string>('');
+  const [liveServerIp, setLiveServerIp] = useState<string>('');
+  const [outboundIp, setOutboundIp] = useState<string>('');
   const [proxyUrl, setProxyUrl] = useState<string>('');
   const [isProxyActive, setIsProxyActive] = useState<boolean>(false);
-  const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(true);
+  const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(null);
   const [deposit, setDeposit] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [lastChecked, setLastChecked] = useState<string>('');
@@ -50,20 +50,22 @@ export const AdminDigiflazzIpCard: React.FC<AdminDigiflazzIpCardProps> = ({ onSh
       const raw = await apiAdapter.getDigiflazzIpStatus();
       const data = (raw as any)?.data || raw;
       if (data) {
-        const lockedIp = data.configuredWhitelistIp || data.outboundIp || '82.158.130.255';
-        const live = data.liveServerIp || lockedIp;
+        const lockedIp = data.configuredWhitelistIp || '';
+        const live = data.liveServerIp || '';
         setConfiguredIp(lockedIp);
-        setOutboundIp(lockedIp);
+        setOutboundIp(data.outboundIp || '');
         setLiveServerIp(live);
         setProxyUrl(data.outboundProxy || '');
         setIsProxyActive(Boolean(data.isProxyActive));
-        setIsWhitelisted(data.isWhitelisted !== undefined ? data.isWhitelisted : true);
-        if (data.deposit !== undefined) setDeposit(data.deposit);
-        setStatusMessage(data.digiflazzMessage || `✓ Terhubung! IP ${lockedIp} terdaftar di Whitelist Digiflazz.`);
+        setIsWhitelisted(data.isWhitelisted === true ? true : data.isWhitelisted === false ? false : null);
+        setDeposit(data.deposit !== undefined ? data.deposit : null);
+        setStatusMessage(data.digiflazzMessage || 'Koneksi dan whitelist belum terverifikasi.');
         setLastChecked(new Date(data.lastChecked || Date.now()).toLocaleTimeString('id-ID'));
       }
     } catch (e: any) {
-      console.warn('Gagal memuat status IP Digiflazz:', e);
+      setIsWhitelisted(null);
+      setDeposit(null);
+      setStatusMessage(e.message || 'Status koneksi belum terverifikasi.');
     } finally {
       setLoading(false);
     }
@@ -127,11 +129,11 @@ export const AdminDigiflazzIpCard: React.FC<AdminDigiflazzIpCardProps> = ({ onSh
       const raw = await apiAdapter.testDigiflazzIp(proxyUrl);
       const result = raw?.data || raw;
       if (result) {
-        const ip = result.configuredWhitelistIp || result.outboundIp || configuredIp;
+        const ip = result.outboundIp || '';
         setOutboundIp(ip);
         if (result.liveServerIp) setLiveServerIp(result.liveServerIp);
-        setIsWhitelisted(result.isWhitelisted);
-        if (result.deposit !== undefined) setDeposit(result.deposit);
+        setIsWhitelisted(result.isWhitelisted === true ? true : result.isWhitelisted === false ? false : null);
+        setDeposit(result.deposit !== undefined ? result.deposit : null);
         const msg = result.digiflazzMessage || '';
         setStatusMessage(msg);
         setLastChecked(new Date().toLocaleTimeString('id-ID'));
@@ -139,10 +141,13 @@ export const AdminDigiflazzIpCard: React.FC<AdminDigiflazzIpCardProps> = ({ onSh
         if (result.isWhitelisted) {
           onShowToast('Whitelist Terverifikasi!', msg || `IP ${ip} terdaftar dan diakui oleh Digiflazz!`, 'success');
         } else {
-          onShowToast('Perhatian IP Whitelist', msg || `IP ${ip} belum di-whitelist di Digiflazz.`, 'warning');
+          onShowToast('Perhatian IP Whitelist', msg || 'Koneksi dan whitelist belum terverifikasi.', 'warning');
         }
       }
     } catch (err: any) {
+      setIsWhitelisted(null);
+      setDeposit(null);
+      setStatusMessage(err.message || 'Koneksi belum terverifikasi.');
       onShowToast('Uji Koneksi Gagal', err.message || 'Tidak dapat terhubung ke Digiflazz API.', 'error');
     } finally {
       setTesting(false);
@@ -207,12 +212,12 @@ export const AdminDigiflazzIpCard: React.FC<AdminDigiflazzIpCardProps> = ({ onSh
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-400">
-                  <span>Memeriksa...</span>
+                  <span>{loading || testing ? 'Memeriksa...' : 'Belum Terverifikasi'}</span>
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-400">
-              Otomatis menyesuaikan jaringan/VPS saat deploy, dapat diedit langsung, dan disinkronkan ke Digiflazz
+              IP terdeteksi dan konfigurasi whitelist ditampilkan terpisah. Pendaftaran whitelist dilakukan di dashboard Digiflazz.
             </p>
           </div>
         </div>

@@ -4,6 +4,7 @@ import path from 'path';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { DIGIFLAZZ_CONFIG } from '../config/apikeys.js';
 import crypto from 'crypto';
+import { isIP } from 'node:net';
 
 export interface OutboundIpStatus {
   outboundIp: string;
@@ -11,7 +12,10 @@ export interface OutboundIpStatus {
   liveServerIp?: string;
   outboundProxy: string;
   isProxyActive: boolean;
-  isWhitelisted: boolean;
+  isWhitelisted: boolean | null;
+  whitelistStatus: 'VERIFIED' | 'REJECTED' | 'UNKNOWN';
+  connectionStatus: 'CONNECTED' | 'FAILED' | 'NOT_CONFIGURED';
+  credentialStatus?: 'VERIFIED' | 'REJECTED' | 'UNKNOWN';
   digiflazzDetectedIp?: string;
   digiflazzMessage?: string;
   deposit?: number;
@@ -25,17 +29,18 @@ export class OutboundIpService {
    * Mendapatkan Axios Client yang mendukung HTTP/HTTPS Proxy jika dikonfigurasi
    */
   public getHttpClient(customProxy?: string, timeoutMs = 8000) {
-    const proxyUrl = customProxy || DIGIFLAZZ_CONFIG.OUTBOUND_PROXY || process.env.DIGIFLAZZ_OUTBOUND_PROXY || '';
+    const proxyUrl = customProxy !== undefined ? customProxy : DIGIFLAZZ_CONFIG.OUTBOUND_PROXY;
     if (proxyUrl && proxyUrl.trim().length > 0) {
       const cleanProxy = proxyUrl.trim();
       const agent = new HttpsProxyAgent(cleanProxy);
       return axios.create({
         httpsAgent: agent,
         httpAgent: agent,
+        proxy: false,
         timeout: timeoutMs,
       });
     }
-    return axios.create({ timeout: timeoutMs });
+    return axios.create({ timeout: timeoutMs, proxy: false });
   }
 
   /**
@@ -55,9 +60,9 @@ export class OutboundIpService {
         const res = await client.get(p.url);
         const parsed = p.parser(res.data);
         if (parsed && typeof parsed === 'string') {
-          const match = parsed.trim().match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/);
-          if (match) {
-            return match[0];
+          const candidate = parsed.trim();
+          if (isIP(candidate)) {
+            return candidate;
           }
         }
       } catch (_) {
@@ -65,13 +70,12 @@ export class OutboundIpService {
       }
     }
 
-    // Fallback jika semua provider timeout (misal offline/local sandbox)
-    return DIGIFLAZZ_CONFIG.WHITELIST_IP?.trim() || '82.158.130.255';
+    throw new Error('Tidak dapat mendeteksi IP publik outbound server. IP konfigurasi bukan hasil deteksi live.');
   }
 
   /**
    * Deteksi IP Publik keluar (Outbound IP) dari server ini.
-   * Menggunakan IP Whitelist terkonfigurasi jika ada, atau IP live VPS jika belum dikonfigurasi.
+   * Hanya hasil deteksi jaringan live; IP whitelist terkonfigurasi bukan bukti IP outbound.
    */
   async detectOutboundIp(customProxy?: string): Promise<string> {
     return this.detectLiveVpsIp(customProxy);
@@ -83,7 +87,7 @@ export class OutboundIpService {
   async checkDigiflazzWhitelist(customProxy?: string): Promise<OutboundIpStatus> {
     const proxyUrl = customProxy !== undefined ? customProxy : (DIGIFLAZZ_CONFIG.OUTBOUND_PROXY || '');
     const configuredIp = (DIGIFLAZZ_CONFIG.WHITELIST_IP || '').trim();
-    let liveServerIp = configuredIp;
+    let liveServerIp = '';
     try {
       liveServerIp = await this.detectLiveVpsIp(proxyUrl);
     } catch (_) {}
@@ -99,8 +103,10 @@ export class OutboundIpService {
         liveServerIp,
         outboundProxy: proxyUrl,
         isProxyActive: Boolean(proxyUrl),
-        isWhitelisted: false,
-        digiflazzMessage: 'Kredensial Digiflazz belum diatur di backend/.env',
+        isWhitelisted: null,
+        whitelistStatus: 'UNKNOWN',
+        connectionStatus: 'NOT_CONFIGURED',
+        digiflazzMessage: 'Kredensial Digiflazz belum dikonfigurasi untuk mode aktif.',
         lastChecked: new Date().toISOString(),
       };
       this.lastStatus = status;
@@ -118,7 +124,7 @@ export class OutboundIpService {
       });
 
       const data = response.data?.data;
-      if (data && (data.deposit !== undefined || data.rc === '00')) {
+      if (data && data.deposit !== undefined && data.deposit !== null && data.deposit !== '' && Number.isFinite(Number(data.deposit)) && (!data.rc || String(data.rc) === '00')) {
         const status: OutboundIpStatus = {
           outboundIp,
           configuredWhitelistIp: configuredIp,
@@ -126,8 +132,11 @@ export class OutboundIpService {
           outboundProxy: proxyUrl,
           isProxyActive: Boolean(proxyUrl),
           isWhitelisted: true,
+          whitelistStatus: 'VERIFIED',
+          connectionStatus: 'CONNECTED',
+          credentialStatus: 'VERIFIED',
           digiflazzDetectedIp: outboundIp,
-          digiflazzMessage: `✓ Terhubung! IP ${outboundIp} terdaftar di Whitelist Digiflazz. Saldo aktif: Rp ${Number(data.deposit || 0).toLocaleString('id-ID')}`,
+          digiflazzMessage: 'Koneksi Digiflazz dan akses whitelist terverifikasi melalui cek saldo.',
           deposit: Number(data.deposit || 0),
           lastChecked: new Date().toISOString(),
         };
@@ -141,7 +150,7 @@ export class OutboundIpService {
       const ipMatch = msg.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
       const detectedIp = ipMatch ? ipMatch[1] : outboundIp;
 
-      const isWhitelisted = rc !== '45' && !msg.toLowerCase().includes('ip anda tidak kami kenali');
+      const ipRejected = String(rc) === '45' || String(msg).toLowerCase().includes('ip anda tidak kami kenali');
 
       const status: OutboundIpStatus = {
         outboundIp,
@@ -149,7 +158,10 @@ export class OutboundIpService {
         liveServerIp,
         outboundProxy: proxyUrl,
         isProxyActive: Boolean(proxyUrl),
-        isWhitelisted,
+        isWhitelisted: ipRejected ? false : null,
+        whitelistStatus: ipRejected ? 'REJECTED' : 'UNKNOWN',
+        connectionStatus: 'FAILED',
+        credentialStatus: /signature/i.test(String(msg)) ? 'REJECTED' : 'UNKNOWN',
         digiflazzDetectedIp: detectedIp,
         digiflazzMessage: msg,
         lastChecked: new Date().toISOString(),
@@ -163,7 +175,7 @@ export class OutboundIpService {
       const ipMatch = msg.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
       const detectedIp = ipMatch ? ipMatch[1] : outboundIp;
 
-      const isWhitelisted = rc !== '45' && !String(msg).toLowerCase().includes('ip anda tidak kami kenali');
+      const ipRejected = String(rc) === '45' || String(msg).toLowerCase().includes('ip anda tidak kami kenali');
 
       const status: OutboundIpStatus = {
         outboundIp,
@@ -171,7 +183,10 @@ export class OutboundIpService {
         liveServerIp,
         outboundProxy: proxyUrl,
         isProxyActive: Boolean(proxyUrl),
-        isWhitelisted,
+        isWhitelisted: ipRejected ? false : null,
+        whitelistStatus: ipRejected ? 'REJECTED' : 'UNKNOWN',
+        connectionStatus: 'FAILED',
+        credentialStatus: /signature/i.test(String(msg)) ? 'REJECTED' : 'UNKNOWN',
         digiflazzDetectedIp: detectedIp,
         digiflazzMessage: rc === '45' 
           ? `⚠️ IP ${detectedIp} belum terdaftar di whitelist Digiflazz. Daftarkan di member.digiflazz.com.`

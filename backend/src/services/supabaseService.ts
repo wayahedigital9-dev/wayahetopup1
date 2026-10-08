@@ -381,17 +381,20 @@ export class SupabaseService {
   /**
    * Menyimpan Order ke Supabase (dengan fallback ke file lokal)
    */
-  async saveOrder(order: any): Promise<boolean> {
-    const local = this.loadLocalFile();
-    const idx = local.orders.findIndex((o: any) => o.id === order.id || o.invoiceNumber === order.invoiceNumber);
-    if (idx >= 0) {
-      local.orders[idx] = { ...local.orders[idx], ...order };
-    } else {
-      local.orders.unshift(order);
-    }
-    this.saveLocalFile(local);
-
+  async saveOrder(order: any, insertOnly = false): Promise<boolean> {
+    const persistLocal = () => {
+      const local = this.loadLocalFile();
+      const idx = local.orders.findIndex((o: any) => o.id === order.id || o.invoiceNumber === order.invoiceNumber);
+      if (idx >= 0) {
+        const { id, invoiceNumber, userId, guestAccessToken, ...mutable } = order;
+        if (local.orders[idx].id !== id || local.orders[idx].invoiceNumber !== invoiceNumber) throw Object.assign(new Error('Order identity conflict'), { code: '23505' });
+        local.orders[idx] = { ...local.orders[idx], ...mutable };
+      } else local.orders.unshift(order);
+      this.saveLocalFile(local);
+    };
+    if (!insertOnly) persistLocal();
     const client = this.getClient();
+    if (insertOnly && !client) { persistLocal(); return true; }
     if (client) {
       try {
         const invoiceNum = order.invoiceNumber || order.invoice_number || `INV-${order.id}`;
@@ -437,14 +440,19 @@ export class SupabaseService {
           updatedAt: new Date().toISOString(),
         };
 
-        const res1 = await client.from('orders').upsert(validPayload, { onConflict: 'id' });
+        const res1 = insertOnly
+          ? await client.from('orders').insert(validPayload)
+          : await client.from('orders').upsert(validPayload, { onConflict: 'id' });
+        if (insertOnly && res1.error) throw Object.assign(new Error('Supabase order reservation failed'), { code: res1.error.code });
         if (!res1.error) {
+          if (insertOnly) persistLocal();
           console.log(`✅ [Supabase] Order ${invoiceNum} tersimpan ke tabel 'orders'`);
           return true;
         }
 
         console.warn(`⚠️ [Supabase] Upsert order warning:`, res1.error?.message);
       } catch (err: any) {
+        if (insertOnly) throw err;
         console.warn(`⚠️ [Supabase] Gagal menyimpan order:`, err.message);
       }
     }
@@ -454,7 +462,7 @@ export class SupabaseService {
   /**
    * Mengambil satu data Order dari Supabase
    */
-  async getOrder(orderIdOrInvoice: string): Promise<any | null> {
+  async getOrder(orderIdOrInvoice: string, strict = false): Promise<any | null> {
     const cleanId = String(orderIdOrInvoice || '').trim();
     const local = this.loadLocalFile();
     const localOrder = (local.orders || []).find((o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase() || o.invoice_number?.toLowerCase() === cleanId.toLowerCase());
@@ -470,10 +478,11 @@ export class SupabaseService {
           .limit(1)
           .maybeSingle();
 
+        if (strict && error) throw new Error('Supabase collision lookup unavailable');
         if (!error && data) {
           return data;
         }
-      } catch (_) {}
+      } catch (error) { if (strict) throw error; }
     }
     return null;
   }

@@ -685,63 +685,15 @@ export const apiAdapter = {
     mutasiCount?: number;
     message: string;
   }> {
-    try {
-      const settings = storage.getSettings();
-      let merchantCode = (customMerchantCode || settings.qiospayMerchantCode || 'QP048797').trim();
-      let apiKey = (customApiKey || settings.qiospayApiKey || '1f35027cdf888c74c36063efcb93f69fc15f119419adf772e58629336c5228cf').trim();
-      if (merchantCode.toUpperCase().startsWith('QP') && merchantCode.length === 7) {
-        merchantCode = 'QP0' + merchantCode.slice(2).toUpperCase();
-      }
-      const query = (merchantCode && apiKey)
-        ? `?merchant_code=${encodeURIComponent(merchantCode)}&api_key=${encodeURIComponent(apiKey)}`
-        : '';
-
-      let res: Response | null = null;
-      try {
-        res = await fetch(`/api/qiospay/sync${query}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ merchant_code: merchantCode, api_key: apiKey }),
-        });
-      } catch (_) {}
-
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`http://localhost:4000/api/qiospay/sync${query}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ merchant_code: merchantCode, api_key: apiKey }),
-          });
-        } catch (_) {}
-      }
-
-      if (res && res.ok) {
-        const data = await res.json();
-        // Update local orders if any invoices were reconciled
-        if (Array.isArray(data?.reconciledInvoices) && data.reconciledInvoices.length > 0) {
-          const currOrders = storage.getOrders();
-          let changed = false;
-          for (const inv of data.reconciledInvoices) {
-            const idx = currOrders.findIndex(o => o.invoiceNumber === inv || o.id === inv);
-            if (idx >= 0 && currOrders[idx].paymentStatus !== 'PAID') {
-              currOrders[idx].paymentStatus = 'PAID';
-              currOrders[idx].paymentMethod = 'QRIS';
-              currOrders[idx].updatedAt = new Date().toISOString();
-              changed = true;
-            }
-          }
-          if (changed) storage.saveOrders(currOrders);
-        }
-        return data;
-      }
-    } catch (_) {}
-
-    // Fallback: check locally against mutasi endpoint
-    return {
-      success: true,
-      syncedCount: 0,
-      message: 'Sinkronisasi lokal selesai diproses.',
-    };
+    const res = await fetch('/api/qiospay/sync', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || data?.success !== true) throw new Error(data?.message || 'Sinkronisasi Qiospay gagal. Tidak ada status pesanan yang dikonfirmasi.');
+    // Server owns payment state. Never manufacture PAID orders in the browser.
+    return data;
   },
 
   // 5. PAYMENT GATEWAY (QIOSPAY QRIS) SIMULATION & WEBHOOK PROCESSOR (Idempotent)
@@ -801,7 +753,7 @@ export const apiAdapter = {
             storage.saveRegisteredMember(matchedMember);
             const activeUser = storage.getUser();
             if (activeUser && activeUser.id === matchedMember.id) {
-              storage.saveUser({ ...activeUser, balance: matchedMember.balance });
+              void storage.hydrateMemberFromBackend();
             }
           }
         } catch (_) {}
@@ -916,7 +868,7 @@ export const apiAdapter = {
                   storage.saveRegisteredMember(matchedMember);
                   const activeUser = storage.getUser();
                   if (activeUser && activeUser.id === matchedMember.id) {
-                    storage.saveUser({ ...activeUser, balance: matchedMember.balance });
+                    void storage.hydrateMemberFromBackend();
                   }
                   storage.addAuditLog(
                     'BALANCE_REFUNDED',
@@ -1433,7 +1385,7 @@ export const apiAdapter = {
     liveServerIp?: string;
     outboundProxy: string;
     isProxyActive: boolean;
-    isWhitelisted: boolean;
+    isWhitelisted: boolean | null;
     digiflazzDetectedIp?: string;
     digiflazzMessage?: string;
     deposit?: number;
@@ -1449,16 +1401,7 @@ export const apiAdapter = {
         }
       } catch (_) {}
     }
-    return {
-      outboundIp: '82.158.130.255',
-      configuredWhitelistIp: '82.158.130.255',
-      liveServerIp: '82.158.130.255',
-      outboundProxy: '',
-      isProxyActive: false,
-      isWhitelisted: true,
-      digiflazzMessage: '✓ Terhubung! IP 82.158.130.255 terdaftar di Whitelist Digiflazz.',
-      lastChecked: new Date().toISOString(),
-    };
+    throw new Error('Tidak dapat memuat status Digiflazz dari server. Koneksi dan whitelist belum terverifikasi.');
   },
 
   /**
@@ -1480,28 +1423,7 @@ export const apiAdapter = {
         }
       } catch (_) {}
     }
-    // Client-side fallback if backend endpoint unreachable
-    try {
-      const res = await fetch('https://api.ipify.org?format=json');
-      if (res.ok) {
-        const d = await res.json();
-        if (d && d.ip) {
-          return {
-            liveIp: d.ip,
-            configuredWhitelistIp: '82.158.130.255',
-            isMatch: d.ip === '82.158.130.255',
-            detectedAt: new Date().toISOString(),
-          };
-        }
-      }
-    } catch (_) {}
-
-    return {
-      liveIp: '82.158.130.255',
-      configuredWhitelistIp: '82.158.130.255',
-      isMatch: true,
-      detectedAt: new Date().toISOString(),
-    };
+    throw new Error('Tidak dapat mendeteksi IP outbound server. IP browser bukan IP VPS.');
   },
 
   async updateDigiflazzIpConfig(params: { whitelistIp?: string; outboundProxy?: string }): Promise<{ success: boolean; message: string }> {
@@ -1565,81 +1487,9 @@ export const apiAdapter = {
    * tapi frontend localStorage mungkin kosong / berbeda.
    */
   async syncGatewayConfigFromBackend(): Promise<{ synced: boolean; gateway?: string }> {
-    try {
-      const res = await fetch('/api/settings/gateway-info');
-      if (!res.ok) return { synced: false };
-
-      const data = await res.json();
-      if (!data?.success) return { synced: false };
-
-      const settings = storage.getSettings();
-      let changed = false;
-
-      // Sync active gateway
-      if (data.activeGateway) {
-        settings.paymentGatewayProvider = data.activeGateway;
-        changed = true;
-      }
-
-      // Sync Pakasir config
-      if (data.pakasir?.configured) {
-        if (data.pakasir.slug && !settings.pakasirSlug) {
-          settings.pakasirSlug = data.pakasir.slug;
-          changed = true;
-        }
-        if (data.pakasir.merchantName) {
-          settings.pakasirMerchantName = data.pakasir.merchantName;
-          changed = true;
-        }
-        if (data.pakasir.nmid) {
-          settings.pakasirNmid = data.pakasir.nmid;
-          changed = true;
-        }
-        if (data.pakasir.qrString && !settings.pakasirQrString) {
-          settings.pakasirQrString = data.pakasir.qrString;
-          changed = true;
-        }
-        if (data.pakasir.isSandbox !== undefined) {
-          settings.pakasirIsSandbox = data.pakasir.isSandbox;
-          changed = true;
-        }
-        if (data.pakasir.baseUrl) {
-          settings.pakasirBaseUrl = data.pakasir.baseUrl;
-          changed = true;
-        }
-      }
-
-      // Sync Qiospay config
-      if (data.qiospay?.configured) {
-        if (data.qiospay.merchantCode && !settings.qiospayMerchantCode) {
-          settings.qiospayMerchantCode = data.qiospay.merchantCode;
-          changed = true;
-        }
-        if (data.qiospay.merchantName) {
-          settings.qiospayMerchantName = data.qiospay.merchantName;
-          changed = true;
-        }
-        if (data.qiospay.nmid) {
-          settings.qiospayNmid = data.qiospay.nmid;
-          changed = true;
-        }
-        if (data.qiospay.qrString && !settings.qiospayQrString) {
-          settings.qiospayQrString = data.qiospay.qrString;
-          settings.staticQrisString = data.qiospay.qrString;
-          changed = true;
-        }
-      }
-
-      if (changed) {
-        storage.saveSettings(settings);
-        console.log('[Gateway Sync] Config berhasil disinkronisasi dari backend:', data.activeGateway);
-      }
-
-      return { synced: true, gateway: data.activeGateway };
-    } catch (err: any) {
-      console.warn('[Gateway Sync] Gagal sinkronisasi:', err.message);
-      return { synced: false };
-    }
+    // Hydration is read-only. Never write environment defaults back to the DB.
+    const settings = await storage.hydrateSettingsFromBackend();
+    return { synced: !!settings, gateway: settings?.paymentGatewayProvider };
   },
 
   async deleteOrder(orderId: string): Promise<boolean> {

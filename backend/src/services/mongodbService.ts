@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { mergeSettings } from './settingsMerge.js';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { MongoClient, ServerApiVersion, Db } from 'mongodb';
 import { CONSOLE_CONFIG } from '../config/console.js';
 
@@ -41,6 +42,14 @@ try {
 } catch (_) {}
 
 export class MongoDbService {
+  private settingsWrite: Promise<void> = Promise.resolve();
+
+  async getSettingsFromDatabase(): Promise<Record<string, any>> {
+    const client = await this.getClient();
+    if (!client) throw new Error('Database settings unavailable');
+    const doc = await client.db(this.getPrimaryDbName()).collection('settings').findOne({ _id: 'app_settings' as any });
+    return doc?.data || {};
+  }
   private client: MongoClient | null = null;
   private isConnecting: boolean = false;
 
@@ -52,7 +61,7 @@ export class MongoDbService {
 
   private readEnvFile(): { uri: string; dbName: string; dbNameTrans: string } {
     try {
-      const envPath = path.join(process.cwd(), '.env');
+      const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.env');
       if (fs.existsSync(envPath)) {
         const content = fs.readFileSync(envPath, 'utf8');
         const matchUri = content.match(/MONGODB_URI=["']?(.*?)["']?(\r?\n|$)/);
@@ -230,12 +239,12 @@ export class MongoDbService {
       const combined = {
         products: (products.length > 0 ? products : local.products || []).filter((p: any) => !isMockDigiflazz(p)),
         orders: orders.length > 0 ? orders : local.orders || [],
-        users: users.length > 0 ? users : local.users || [],
+        users: users.map(({ password, passwordHash, ...user }: any) => user),
         wifiBatches: wifiBatches.length > 0 ? wifiBatches : local.wifiBatches || [],
         promos: promos.length > 0 ? promos : local.promos || [],
         auditLogs: auditLogs.length > 0 ? auditLogs : local.auditLogs || [],
-        // Settings saves use the server file as the durable authority; Mongo may be an older mirror.
-        settings: mergeSettings(settingsDoc?.data, this.loadLocalFile().settings),
+        // MongoDB is authoritative; disk is only a mirror/fallback for public reads.
+        settings: settingsDoc?.data || local.settings || {},
         banners: banners.length > 0 ? banners : local.banners || [],
         catalogs: catalogs.length > 0 ? catalogs : local.catalogs || [],
         pushSubscriptions: pushSubscriptions.length > 0 ? pushSubscriptions : local.pushSubscriptions || [],
@@ -253,6 +262,10 @@ export class MongoDbService {
    * Sync all state to MongoDB & local file
    */
   async syncAllState(state: any): Promise<boolean> {
+    if (state.settings) {
+      if (!await this.syncEntity('settings', state.settings)) return false;
+      state = { ...state, settings: await this.getSettingsFromDatabase() };
+    }
     this.saveLocalFile(state);
 
     const client = await this.getClient();
@@ -263,14 +276,7 @@ export class MongoDbService {
       const transColl = this.getTransCollectionName();
       const db = client.db(dbName);
 
-      // 1. Save settings
-      if (state.settings) {
-        await db.collection('settings').updateOne(
-          { _id: 'app_settings' as any },
-          { $set: { data: state.settings, updatedAt: new Date().toISOString() } },
-          { upsert: true }
-        );
-      }
+      // Settings use the serialized database-first merge above.
 
       // 2. Save products
       if (Array.isArray(state.products) && state.products.length > 0) {
@@ -296,19 +302,7 @@ export class MongoDbService {
         }
       }
 
-      // 4. Save users
-      if (Array.isArray(state.users) && state.users.length > 0) {
-        for (const u of state.users) {
-          const uId = u.id || u.username || u.email;
-          if (uId) {
-            await db.collection('users').updateOne(
-              { $or: [{ id: u.id || '' }, { username: u.username || '' }, { email: u.email || '' }] },
-              { $set: u },
-              { upsert: true }
-            );
-          }
-        }
-      }
+      // Member accounts are only written by the authenticated database-first service.
 
       // 5. Save WiFi batches
       if (Array.isArray(state.wifiBatches) && state.wifiBatches.length > 0) {
@@ -360,8 +354,30 @@ export class MongoDbService {
    * Sync single entity to MongoDB & local file
    */
   async syncEntity(entity: string, data: any): Promise<boolean> {
+    if (entity === 'users') return false;
+    if (entity === 'settings') {
+      const write = this.settingsWrite.then(async () => {
+        const client = await this.getClient();
+        if (!client) return false;
+        try {
+          const collection = client.db(this.getPrimaryDbName()).collection('settings');
+          const current = await collection.findOne({ _id: 'app_settings' as any });
+          const merged = mergeSettings(current?.data || {}, data);
+          const result = await collection.updateOne(
+            { _id: 'app_settings' as any },
+            { $set: { data: merged, updatedAt: new Date().toISOString() } }, { upsert: true }
+          );
+          if (!result.acknowledged) return false;
+          const local = this.loadLocalFile();
+          local.settings = merged;
+          this.saveLocalFile(local);
+          return true;
+        } catch (_) { return false; }
+      });
+      this.settingsWrite = write.then(() => undefined, () => undefined);
+      return write;
+    }
     const local = this.loadLocalFile();
-    if (entity === 'settings') data = mergeSettings(local.settings, data);
     local[entity] = data;
     this.saveLocalFile(local);
 
@@ -373,13 +389,7 @@ export class MongoDbService {
       const transColl = this.getTransCollectionName();
       const db = client.db(dbName);
 
-      if (entity === 'settings') {
-        await db.collection('settings').updateOne(
-          { _id: 'app_settings' as any },
-          { $set: { data, updatedAt: new Date().toISOString() } },
-          { upsert: true }
-        );
-      } else if (entity === 'products' && Array.isArray(data)) {
+      if (entity === 'products' && Array.isArray(data)) {
         await db.collection('products').deleteMany({});
         if (data.length > 0) await db.collection('products').insertMany(data);
       } else if (entity === 'orders' && Array.isArray(data)) {
@@ -448,15 +458,48 @@ export class MongoDbService {
     }
   }
 
+  /** Reserve identity before any payment/provider call. No unsafe file-only creation. */
+  async createOrder(order: any): Promise<{ success: boolean; conflict?: boolean; error?: string }> {
+    const filter = { $or: [{ id: order.id }, { invoiceNumber: order.invoiceNumber }] };
+    const local = this.loadLocalFile();
+    const localOrders = Array.isArray(local.orders) ? local.orders : Object.values(local.orders || {});
+    if (localOrders.some((o: any) => o.id === order.id || o.invoiceNumber === order.invoiceNumber)) return { success: false, conflict: true };
+    const client = await this.getClient();
+    if (!client) return { success: false, error: 'Database reservasi pesanan tidak tersedia.' };
+    try {
+      const db = client.db(this.getPrimaryDbName());
+      const names = [...new Set([this.getTransCollectionName() || 'orders', 'orders'])];
+      for (const name of names) {
+        if (await db.collection(name).findOne(filter)) return { success: false, conflict: true };
+      }
+      // Unique indexes are required for cross-process duplicate protection. If legacy
+      // duplicates prevent index creation, fail closed; never repair customer data here.
+      for (const name of names) for (const key of ['id', 'invoiceNumber']) {
+        await db.collection(name).createIndex({ [key]: 1 }, { unique: true, partialFilterExpression: { [key]: { $type: 'string' } } });
+      }
+      for (const name of names) await db.collection(name).insertOne({ ...order });
+      local.orders = [order, ...localOrders];
+      this.saveLocalFile(local);
+      return { success: true };
+    } catch (error: any) {
+      // A failed mirror/payment leaves an identity reservation, not a reusable ID.
+      return { success: false, conflict: error.code === 11000, error: 'Reservasi identitas pesanan gagal.' };
+    }
+  }
+
   /**
-   * Direct Order Persistence (Order Creation / Webhook Update)
+   * Direct Order Persistence (Webhook/Payment Update); ownership is insert-only.
    */
   async saveOrder(order: any): Promise<{ success: boolean; error?: string }> {
     const local = this.loadLocalFile();
     if (!Array.isArray(local.orders)) local.orders = [];
-    const idx = local.orders.findIndex((o: any) => o.id === order.id || o.invoiceNumber === order.invoiceNumber);
-    if (idx >= 0) local.orders[idx] = { ...local.orders[idx], ...order };
-    else local.orders.unshift(order);
+    const { _id, id, invoiceNumber, userId, guestAccessToken, ...mutable } = order;
+    const identity = { id, invoiceNumber, ...(userId ? { userId } : {}), ...(guestAccessToken ? { guestAccessToken } : {}) };
+    const idx = local.orders.findIndex((o: any) => o.id === id || o.invoiceNumber === invoiceNumber);
+    if (idx >= 0) {
+      if (local.orders[idx].id !== id || local.orders[idx].invoiceNumber !== invoiceNumber) return { success: false, error: 'Order identity conflict' };
+      local.orders[idx] = { ...local.orders[idx], ...mutable };
+    } else local.orders.unshift({ ...identity, ...mutable });
     this.saveLocalFile(local);
 
     const client = await this.getClient();
@@ -467,11 +510,11 @@ export class MongoDbService {
     try {
       const db = client.db(this.getPrimaryDbName());
       const transColl = this.getTransCollectionName();
-      const filter = { $or: [{ id: order.id || '' }, { invoiceNumber: order.invoiceNumber || '' }] };
-
-      await db.collection(transColl).updateOne(filter, { $set: order }, { upsert: true });
-      if (transColl !== 'orders') {
-        await db.collection('orders').updateOne(filter, { $set: order }, { upsert: true }).catch(() => {});
+      const filter = { id, invoiceNumber };
+      const update = { $set: mutable, $setOnInsert: identity };
+      await db.collection(transColl || 'orders').updateOne(filter, update, { upsert: true });
+      if (transColl && transColl !== 'orders') {
+        await db.collection('orders').updateOne(filter, update, { upsert: true });
       }
       return { success: true };
     } catch (err: any) {

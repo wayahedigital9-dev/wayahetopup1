@@ -193,8 +193,7 @@ export function AdminDashboard({
       },
     };
 
-    storage.saveSettings(updatedSettings);
-    setSettings(updatedSettings);
+    if (!await persistSettings(updatedSettings)) return;
 
     // Sync to Supabase in background
     try {
@@ -1651,8 +1650,7 @@ export function AdminDashboard({
       adminName: adminNameForm.trim() || 'Administrator',
     };
 
-    setSettings(updated);
-    storage.saveSettings(updated);
+    if (!await persistSettings(updated)) return;
     setActiveTab('SETTINGS');
     setSettingsSubTab('ADMIN_AUTH');
     storage.addAuditLog(
@@ -1891,8 +1889,7 @@ export function AdminDashboard({
       ...settings,
       pakasirIsSandbox: isSandbox,
     };
-    setSettings(updatedSettings);
-    storage.saveSettings(updatedSettings);
+    if (!await persistSettings(updatedSettings)) return;
 
     try {
       await apiAdapter.togglePakasirSandbox(isSandbox);
@@ -1910,27 +1907,7 @@ export function AdminDashboard({
   const handleFetchQiospayMutasi = async () => {
     setQiospayMutasiLoading(true);
     try {
-      let merchantCode = (qiospayMerchantCode || settings.qiospayMerchantCode || 'QP048797').trim();
-      let apiKey = (qiospayApiKey || settings.qiospayApiKey || '1f35027cdf888c74c36063efcb93f69fc15f119419adf772e58629336c5228cf').trim();
-
-      // Normalisasi otomatis QP48797 -> QP048797 jika input kurang digit 0
-      if (merchantCode.toUpperCase().startsWith('QP') && merchantCode.length === 7) {
-        merchantCode = 'QP0' + merchantCode.slice(2).toUpperCase();
-      }
-
-      const query = `?merchant_code=${encodeURIComponent(merchantCode)}&api_key=${encodeURIComponent(apiKey)}`;
-
-      let res: Response | null = null;
-      try {
-        res = await fetch(`/api/qiospay/mutasi${query}`);
-      } catch (_) {}
-
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`http://localhost:4000/api/qiospay/mutasi${query}`);
-        } catch (_) {}
-      }
-
+      const res = await fetch('/api/qiospay/mutasi', { credentials: 'include', cache: 'no-store' });
       if (res && res.ok) {
         const json = await res.json();
         let list: any[] = [];
@@ -1972,14 +1949,8 @@ export function AdminDashboard({
   const handleSyncQiospayMutasi = async () => {
     setQiospayMutasiLoading(true);
     try {
-      let merchantCode = (qiospayMerchantCode || settings.qiospayMerchantCode || 'QP048797').trim();
-      let apiKey = (qiospayApiKey || settings.qiospayApiKey || '1f35027cdf888c74c36063efcb93f69fc15f119419adf772e58629336c5228cf').trim();
-
-      if (merchantCode.toUpperCase().startsWith('QP') && merchantCode.length === 7) {
-        merchantCode = 'QP0' + merchantCode.slice(2).toUpperCase();
-      }
-
-      const res = await apiAdapter.syncQiospayMutasi(merchantCode, apiKey);
+      const res = await apiAdapter.syncQiospayMutasi();
+      if (!res.success) throw new Error(res.message || 'Qiospay menolak sinkronisasi.');
       if (res.syncedCount > 0) {
         onShowToast('Sinkronisasi Sukses', `Berhasil melunasi ${res.syncedCount} transaksi otomatis via mutasi!`, 'success');
       } else {
@@ -2135,8 +2106,7 @@ export function AdminDashboard({
       const res = await tunnelClient.startTunnel(settings.ngrokAuthtoken, settings.ngrokDomain);
       setNgrokStatus(res);
       const updatedSettings = { ...settings, ngrokPublicUrl: res.publicUrl || '' };
-      setSettings(updatedSettings);
-      storage.saveSettings(updatedSettings);
+      if (!await persistSettings(updatedSettings)) return;
 
       const timestamp = new Date().toLocaleTimeString('id-ID');
       setTerminalLogs((prev) => [
@@ -2174,8 +2144,7 @@ export function AdminDashboard({
       const res = await tunnelClient.stopTunnel();
       setNgrokStatus(res);
       const updatedSettings = { ...settings, ngrokPublicUrl: '' };
-      setSettings(updatedSettings);
-      storage.saveSettings(updatedSettings);
+      if (!await persistSettings(updatedSettings)) return;
 
       const timestamp = new Date().toLocaleTimeString('id-ID');
       setTerminalLogs((prev) => [
@@ -2625,15 +2594,14 @@ export function AdminDashboard({
     }
 
     const reader = new FileReader();
-    reader.onload = (loadEvt) => {
+    reader.onload = async (loadEvt) => {
       const result = loadEvt.target?.result as string;
       if (result) {
         const updated: AppSettings = {
           ...settings,
           logoUrl: result,
         };
-        setSettings(updated);
-        storage.saveSettings(updated);
+        if (!await persistSettings(updated)) return;
         onShowToast('Logo Diperbarui', 'Foto logo website berhasil diunggah dan disimpan!', 'success');
         onRefreshData();
       }
@@ -2649,8 +2617,7 @@ export function AdminDashboard({
       ...settings,
       logoUrl: (settings.logoUrl || '').trim(),
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
+    if (!await persistSettings(updated)) return;
     onShowToast('Logo Disimpan', 'URL foto logo website berhasil disimpan!', 'success');
     onRefreshData();
   };
@@ -2660,8 +2627,7 @@ export function AdminDashboard({
       ...settings,
       logoUrl: '',
     };
-    setSettings(updated);
-    storage.saveSettings(updated);
+    if (!await persistSettings(updated)) return;
     onShowToast('Logo Direset', 'Logo website dikembalikan ke emblem bawaan.', 'info');
     onRefreshData();
   };
@@ -6314,7 +6280,7 @@ export function AdminDashboard({
                     <div className="space-y-6 animate-fadeInUp">
                       <AdminApiSettingsSection 
                         onShowToast={onShowToast} 
-                        onRefreshData={onRefreshData} 
+                        onRefreshData={() => { setSettings(storage.getSettings()); onRefreshData(); }}
                       />
                     </div>
                   )}

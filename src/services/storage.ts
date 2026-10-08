@@ -22,6 +22,11 @@ import {
   INITIAL_WIFI_VOUCHERS 
 } from '../data/mockData';
 
+let confirmedMember: User | null = null;
+let memberGeneration = 0;
+let confirmedMemberOrders: Order[] = [];
+let confirmedAdminMembers: RegisteredMemberAccount[] = [];
+
 const STORAGE_KEYS = {
   PRODUCTS: 'wd_products_v1',
   ORDERS: 'wd_orders_v1',
@@ -277,6 +282,28 @@ function withAdminHeaders(opts?: RequestInit): RequestInit | undefined {
   if (!Object.keys(h).length) return opts;
   const cur = (opts.headers || {}) as Record<string, string>;
   return { ...opts, headers: { ...cur, ...h } };
+}
+
+let confirmedSettings: AppSettings = structuredClone(DEFAULT_SETTINGS);
+let adminSettingsHydrated = false;
+
+// Send only edited fields; default or public DTO fields must not overwrite other providers.
+function settingsPatch(existing: any, incoming: any): Record<string, any> {
+  const patch: Record<string, any> = {};
+  for (const [key, value] of Object.entries(incoming)) {
+    if (/^has[A-Z]/.test(key) || ['__proto__', 'constructor', 'prototype'].includes(key) || value === undefined) continue;
+    if (/key|secret|token|password|mongodbUri|supabaseDbUrl/i.test(key) &&
+      (value == null || (typeof value === 'string' && (!value.trim() || /\*{3,}|•{3,}|\.{3}|…|^\[?redacted\]?$/i.test(value))))) continue;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const nested = settingsPatch(existing?.[key], value);
+      if (Object.keys(nested).length) patch[key] = nested;
+    } else if (JSON.stringify(existing?.[key]) !== JSON.stringify(value)) patch[key] = value;
+  }
+  return patch;
+}
+function settingsContains(remote: any, patch: any): boolean {
+  return Object.entries(patch).every(([key, value]) => value && typeof value === 'object' && !Array.isArray(value)
+    ? settingsContains(remote?.[key], value) : JSON.stringify(remote?.[key]) === JSON.stringify(value));
 }
 
 async function fetchWithFallback(endpoint: string, options?: RequestInit): Promise<Response> {
@@ -882,14 +909,7 @@ export const storage = {
             hasUpdates = true;
           }
         }
-        if (Array.isArray(cloud.users) && cloud.users.length > 0) {
-          const current = localStorage.getItem(STORAGE_KEYS.REGISTERED_MEMBERS);
-          const next = JSON.stringify(cloud.users);
-          if (current !== next) {
-            localStorage.setItem(STORAGE_KEYS.REGISTERED_MEMBERS, next);
-            hasUpdates = true;
-          }
-        }
+        // Member state is hydrated only from the authenticated /api/auth/me endpoint.
         if (Array.isArray(cloud.wifiBatches) && cloud.wifiBatches.length > 0) {
           const current = localStorage.getItem(STORAGE_KEYS.WIFI_BATCHES);
           const next = JSON.stringify(cloud.wifiBatches);
@@ -922,15 +942,9 @@ export const storage = {
             hasUpdates = true;
           }
         }
-        if (cloud.settings && Object.keys(cloud.settings).length > 0) {
-          const curStr = localStorage.getItem(STORAGE_KEYS.ADMIN_SETTINGS);
-          const current = curStr ? JSON.parse(curStr) : {};
-          const mergedSettings = { ...DEFAULT_SETTINGS, ...current, ...cloud.settings };
-          const nextStr = JSON.stringify(mergedSettings);
-          if (curStr !== nextStr) {
-            localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, nextStr);
-            hasUpdates = true;
-          }
+        if (!adminSettingsHydrated && cloud.settings && Object.keys(cloud.settings).length > 0) {
+          confirmedSettings = { ...DEFAULT_SETTINGS, ...cloud.settings };
+          hasUpdates = true;
         }
 
         if (hasUpdates && typeof window !== 'undefined') {
@@ -1057,6 +1071,7 @@ export const storage = {
   },
 
   getOrders(): Order[] {
+    if (confirmedMember) return confirmedMemberOrders;
     const raw = localStorage.getItem(STORAGE_KEYS.ORDERS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
@@ -1172,100 +1187,105 @@ export const storage = {
   },
 
   getUser(): User | null {
-    const raw = localStorage.getItem(STORAGE_KEYS.USER);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.USER);
+      localStorage.removeItem('wd_user_v1');
+      localStorage.removeItem(STORAGE_KEYS.REGISTERED_MEMBERS);
     }
+    return confirmedMember;
   },
 
-  saveUser(user: User | null): void {
-    if (!user) {
-      localStorage.removeItem(STORAGE_KEYS.USER);
-    } else {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  // Compatibility callers cannot manufacture a login or change a balance.
+  saveUser(_user: User | null): void { },
+
+  async memberRequest(endpoint: string, body?: unknown, method = body ? 'POST' : 'GET'): Promise<any> {
+    const response = await fetch('/api/auth/' + endpoint, {
+      method, credentials: 'include', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Permintaan akun gagal.');
+    return result.data;
+  },
+
+  async hydrateMemberFromBackend(): Promise<User | null> {
+    this.getUser();
+    const generation = memberGeneration;
+    try {
+      const member = await this.memberRequest('me');
+      if (generation !== memberGeneration) return confirmedMember;
+      if (confirmedMember?.id !== member?.id) confirmedMemberOrders = [];
+      confirmedMember = member;
+    } catch {
+      if (generation !== memberGeneration) return confirmedMember;
+      confirmedMember = null; confirmedMemberOrders = [];
     }
     notifyStorageSynced();
+    return confirmedMember;
   },
+
+  async registerMember(input: { username: string; email: string; password: string; name: string; phone: string }): Promise<User> {
+    memberGeneration++;
+    await this.memberRequest('register', input);
+    const user = await this.hydrateMemberFromBackend();
+    if (!user) throw new Error('Akun tersimpan tetapi sesi belum dikonfirmasi. Silakan login.');
+    return user;
+  },
+
+  async loginMember(identifier: string, password: string): Promise<User> {
+    memberGeneration++;
+    await this.memberRequest('login', { identifier, password });
+    const user = await this.hydrateMemberFromBackend();
+    if (!user) throw new Error('Sesi belum dikonfirmasi. Silakan coba lagi.');
+    return user;
+  },
+
+  async logoutMember(): Promise<void> {
+    memberGeneration++;
+    await this.memberRequest('logout', {});
+    confirmedMember = null; confirmedMemberOrders = [];
+    notifyStorageSynced();
+  },
+
+  async updateMemberProfile(name: string): Promise<User> {
+    await this.memberRequest('me', { name }, 'PATCH');
+    const user = await this.hydrateMemberFromBackend();
+    if (!user) throw new Error('Profil belum dikonfirmasi.');
+    return user;
+  },
+
+  async hydrateMemberOrders(): Promise<Order[]> {
+    const generation = memberGeneration, owner = confirmedMember?.id;
+    if (!owner) return [];
+    try {
+      const orders = await this.memberRequest('orders');
+      if (generation !== memberGeneration || owner !== confirmedMember?.id) return confirmedMemberOrders;
+      confirmedMemberOrders = orders.filter((order: Order & { userId?: string }) => order.userId === owner);
+    } catch {
+      if (generation !== memberGeneration || owner !== confirmedMember?.id) return confirmedMemberOrders;
+      confirmedMemberOrders = [];
+    }
+    notifyStorageSynced();
+    return confirmedMemberOrders;
+  },
+  getMemberOrders(): Order[] { return confirmedMemberOrders; },
 
   getRegisteredMembers(): RegisteredMemberAccount[] {
-    const raw = localStorage.getItem(STORAGE_KEYS.REGISTERED_MEMBERS);
-    if (!raw) {
-      const defaultMembers: RegisteredMemberAccount[] = [
-        {
-          id: 'usr-member-1',
-          username: 'member',
-          email: 'member@wayahedigital.id',
-          password: 'member123',
-          phone: '081234567890',
-          name: 'Member Wayahe',
-          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=member',
-          memberTier: 'VIP_GOLD',
-          balance: 25000,
-          rewardPoints: 500,
-          isGmailVerified: true,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'usr-member-2',
-          username: 'wayahe',
-          email: 'wayahe@gmail.com',
-          password: '123456',
-          phone: '085712345678',
-          name: 'Wayahe Digital',
-          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=wayahe',
-          memberTier: 'VIP_GOLD',
-          balance: 50000,
-          rewardPoints: 1000,
-          isGmailVerified: true,
-          createdAt: new Date().toISOString(),
-        }
-      ];
-      localStorage.setItem(STORAGE_KEYS.REGISTERED_MEMBERS, JSON.stringify(defaultMembers));
-      return defaultMembers;
-    }
+    this.getUser();
+    return confirmedAdminMembers;
+  },
+  async hydrateAdminMembers(): Promise<void> {
+    confirmedAdminMembers = [];
     try {
-      return JSON.parse(raw);
-    } catch {
-      return [];
-    }
+      const response = await fetch('/api/admin/members', { credentials: 'include', cache: 'no-store' });
+      const result = await response.json();
+      if (response.ok && result.success) confirmedAdminMembers = result.data;
+    } catch {}
   },
-
-  saveRegisteredMember(member: RegisteredMemberAccount): void {
-    const members = this.getRegisteredMembers();
-    const existingIndex = members.findIndex(
-      m => m.id === member.id || 
-           m.username.toLowerCase() === member.username.toLowerCase() || 
-           m.email.toLowerCase() === member.email.toLowerCase()
-    );
-    if (existingIndex >= 0) {
-      members[existingIndex] = { ...members[existingIndex], ...member };
-    } else {
-      members.push(member);
-    }
-    localStorage.setItem(STORAGE_KEYS.REGISTERED_MEMBERS, JSON.stringify(members));
-    pushEntityToBackend('users', members);
-    notifyStorageSynced();
-  },
-
-  saveRegisteredMembers(members: RegisteredMemberAccount[]): void {
-    localStorage.setItem(STORAGE_KEYS.REGISTERED_MEMBERS, JSON.stringify(members));
-    pushEntityToBackend('users', members);
-    notifyStorageSynced();
-  },
-
-  deleteRegisteredMember(memberId: string): RegisteredMemberAccount[] {
-    const clean = memberId.trim().toLowerCase();
-    const members = this.getRegisteredMembers().filter(m => 
-      m.id !== memberId && 
-      m.username.toLowerCase() !== clean && 
-      m.email.toLowerCase() !== clean
-    );
-    this.saveRegisteredMembers(members);
-    return members;
-  },
+  saveRegisteredMember(_member: RegisteredMemberAccount): void { throw new Error('Gunakan pendaftaran server.'); },
+  saveRegisteredMembers(_members: RegisteredMemberAccount[]): void { throw new Error('Bulk member writes are disabled.'); },
+  deleteRegisteredMember(_memberId: string): RegisteredMemberAccount[] { throw new Error('Penghapusan member browser dinonaktifkan.'); },
 
   findRegisteredMemberByUsername(username: string): RegisteredMemberAccount | undefined {
     const clean = (username || '').trim().toLowerCase();
@@ -1318,73 +1338,50 @@ export const storage = {
     try {
       // sync/state is intentionally a public, sanitized DTO. Admin settings,
       // including apiConfigs, must be restored only from the admin endpoint.
-      const res = await fetchWithFallback('/api/settings/load', {
+      const res = await fetchWithTimeout('/api/settings/load', {
+        credentials: 'same-origin',
         cache: 'no-store',
         headers: getAdminHeaders(),
-      } as any);
+      } as any, 20000);
       if (!res.ok) return null;
       const json = await res.json().catch(() => null);
       if (json?._sanitized === true) return null;
       const remote: AppSettings | undefined = json?.data?.settings ?? json?.data;
       if (!remote || typeof remote !== 'object') return null;
-      const local = this.getSettings();
       const merged: AppSettings = {
         ...DEFAULT_SETTINGS,
-        ...local,
         ...remote,
         discountPopup: {
           ...DEFAULT_DISCOUNT_POPUP,
-          ...(local.discountPopup || {}),
           ...(remote.discountPopup || {}),
         },
       } as AppSettings;
-      // Silently repair localStorage so next reload tidak butuh fetch lagi
-      try { localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(merged)); } catch (_) {}
-      return merged;
+      confirmedSettings = merged;
+      adminSettingsHydrated = true;
+      await this.hydrateAdminMembers();
+      try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
+      notifyStorageSynced();
+      return structuredClone(merged);
     } catch { return null; }
   },
 
   getSettings(): AppSettings {
-    const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_SETTINGS);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-      return DEFAULT_SETTINGS;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      const settings: AppSettings = {
-        ...DEFAULT_SETTINGS,
-        ...parsed,
-        discountPopup: {
-          ...DEFAULT_DISCOUNT_POPUP,
-          ...(parsed.discountPopup || {})
-        }
-      };
-      if (settings.supabaseUrl) {
-        settings.supabaseUrl = cleanSupabaseUrl(settings.supabaseUrl);
-      }
-      return settings;
-    } catch {
-      return DEFAULT_SETTINGS;
-    }
+    try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
+    return structuredClone(confirmedSettings);
   },
 
   async saveSettings(settings: AppSettings): Promise<void> {
-    const sanitizedSettings = {
+    if (!adminSettingsHydrated) throw new Error('Muat konfigurasi admin dari server sebelum menyimpan.');
+    const sanitizedSettings = settingsPatch(confirmedSettings, {
       ...settings,
       supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),
-    };
-    for (const [key, value] of Object.entries(sanitizedSettings)) {
-      if (/^has[A-Z]/.test(key) || (/key|secret|token|password|mongodbUri|supabaseDbUrl/i.test(key) &&
-          (value == null || (typeof value === 'string' && (!value.trim() || /\*{3,}|•{3,}|\.{3}|…|^\[?redacted\]?$/i.test(value)))))) {
-        delete (sanitizedSettings as any)[key];
-      }
-    }
-    const response = await fetchWithFallback('/api/settings/save', {
+    });
+    const response = await fetchWithTimeout('/api/settings/save', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
         body: JSON.stringify(sanitizedSettings),
-    });
+    }, 20000);
     const result = await response.json().catch(() => null);
     if (!response.ok || result?.success !== true) {
       throw new Error('Pengaturan gagal disimpan ke server. Periksa koneksi dan akses admin.');
@@ -1392,7 +1389,7 @@ export const storage = {
     // Verify via admin-only load endpoint; public sync/state is always sanitized by design.
     let remote: any = null;
     try {
-      const rb = await fetchWithFallback('/api/settings/load', { cache: 'no-store', headers: getAdminHeaders() } as any);
+      const rb = await fetchWithTimeout('/api/settings/load', { credentials: 'same-origin', cache: 'no-store', headers: getAdminHeaders() } as any, 20000);
       if (rb.ok) {
         const cj = await rb.json().catch(() => null);
         if (cj?._sanitized === true) throw new Error('Sesi admin tidak valid atau telah berakhir. Silakan login ulang.');
@@ -1401,22 +1398,13 @@ export const storage = {
     } catch (e: any) {
       if (String(e?.message || '').includes('Token admin')) throw e;
     }
-    if (!remote) {
-      const readback = await fetchWithFallback('/api/sync/state', { cache: 'no-store', headers: getAdminHeaders() } as any);
-      const confirmed = await readback.json().catch(() => null);
-      remote = confirmed?.data?.settings;
-      if (!readback.ok || confirmed?.success !== true || !remote) {
-        throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
-      }
-    }
+    if (!remote) throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
     // Bandingkan hanya field yang dikirim (field secret kosong/redacted sudah dihapus sanitasi & dijaga mergeSettings)
-    const mismatched = Object.entries(sanitizedSettings).filter(
-      ([key, value]) => JSON.stringify(remote[key]) !== JSON.stringify(value)
-    );
-    if (mismatched.length > 0) {
+    if (!settingsContains(remote, sanitizedSettings)) {
       throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
     }
-    localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify({ ...DEFAULT_SETTINGS, ...remote }));
+    confirmedSettings = { ...DEFAULT_SETTINGS, ...remote };
+    try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
     notifyStorageSynced();
   },
 
@@ -1582,6 +1570,9 @@ export const storage = {
 
   saveAdminSession(session: AdminAuthSession | null): void {
     if (!session) {
+      confirmedSettings = structuredClone(DEFAULT_SETTINGS);
+      adminSettingsHydrated = false;
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
     } else {
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, JSON.stringify(session));

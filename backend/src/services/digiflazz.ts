@@ -149,7 +149,7 @@ export async function createDigiflazzTransaction(
   const baseUrl = DIGIFLAZZ_CONFIG.BASE_URL;
 
   if (!username || !apiKey) {
-    throw new Error('Digiflazz credentials (USERNAME / API_KEY) belum dikonfigurasi di server backend .env');
+    throw new Error('Kredensial Digiflazz (username / key sesuai mode) belum dikonfigurasi pada pengaturan server.');
   }
 
   if (!params.buyerSkuCode || !params.customerNo || !params.refId) {
@@ -332,7 +332,7 @@ export class DigiflazzService {
    * Mengambil daftar produk resmi secara realtime dari Digiflazz Buyer API
    * POST https://api.digiflazz.com/v1/price-list
    */
-  async fetchPriceList(credentials?: { username?: string; apiKey?: string; cmd?: 'prepaid' | 'pasca' }): Promise<DigiflazzPriceListItem[]> {
+  async fetchPriceList(credentials?: { username?: string; apiKey?: string; cmd?: 'prepaid' | 'pasca'; allowCache?: boolean }): Promise<DigiflazzPriceListItem[]> {
     const username = (credentials?.username || this.config.username || '').trim();
     const apiKey = (credentials?.apiKey || this.config.apiKey || '').trim();
     const cmd = credentials?.cmd || 'prepaid';
@@ -345,6 +345,7 @@ export class DigiflazzService {
     const cacheFile = path.join(process.cwd(), 'data', 'digiflazz-pricelist-cache.json');
 
     const getCachedPricelist = (): DigiflazzPriceListItem[] | null => {
+      if (credentials?.allowCache === false) return null;
       try {
         if (fs.existsSync(cacheFile)) {
           const raw = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
@@ -368,9 +369,11 @@ export class DigiflazzService {
       const data = response.data?.data;
       if (Array.isArray(data) && data.length > 0) {
         // Simpan ke cache disk untuk antisipasi limitasi Digiflazz
-        try {
-          fs.writeFileSync(cacheFile, JSON.stringify(data, null, 2), 'utf8');
-        } catch (_) {}
+        if (credentials?.allowCache !== false) {
+          try {
+            fs.writeFileSync(cacheFile, JSON.stringify(data, null, 2), 'utf8');
+          } catch (_) {}
+        }
         return data as DigiflazzPriceListItem[];
       }
 
