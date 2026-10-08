@@ -106,7 +106,7 @@ export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModa
       } catch (_) {
         // Abaikan kendala jaringan sesaat
       }
-    }, 3500);
+    }, 1500);
 
     return () => {
       clearInterval(intervalId);

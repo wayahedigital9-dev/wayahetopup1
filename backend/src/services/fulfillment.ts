@@ -31,12 +31,18 @@ export class FulfillmentService {
    * Eksekusi pemenuhan pesanan yang telah lunas
    */
   async fulfillOrder(orderId: string, customCallbackUrl?: string): Promise<void> {
-    const order = await this.prisma.order.findUnique({
+    let order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: { product: true } } },
     });
 
     if (!order) {
+      const state = await mongoDbService.getAllState();
+      const mongoOrder = (state.orders || []).find((item: any) => item.id === orderId);
+      if (mongoOrder && String(mongoOrder.category || '').toUpperCase() === 'WIFI') {
+        await this.fulfillManualWifiOrder(mongoOrder, state.products || []);
+        return;
+      }
       throw new Error(`Order ${orderId} tidak ditemukan.`);
     }
 
@@ -328,6 +334,30 @@ export class FulfillmentService {
         await mongoDbService.saveOrder(failedState);
       } catch (_) { }
     }
+  }
+
+  private async fulfillManualWifiOrder(order: any, products: any[]): Promise<void> {
+    if (order.paymentStatus !== 'PAID') throw new Error(`Order ${order.invoiceNumber || order.id} belum lunas.`);
+    if (order.fulfillmentStatus === 'SUCCESS') return;
+    const item = Array.isArray(order.items) ? order.items[0] : null;
+    const productId = order.productId || item?.productId;
+    const variantId = order.variantId || item?.variantId;
+    const product = products.find((entry: any) => entry.id === productId);
+    const voucher = await mongoDbService.reserveManualWifiVoucher({ productId, variantId, orderId: order.id });
+    if (!voucher) {
+      await mongoDbService.saveOrder({ ...order, fulfillmentStatus: 'MANUAL_REVIEW', errorReason: 'Stok voucher WiFi kosong atau produk tidak ditemukan.', updatedAt: new Date().toISOString() });
+      return;
+    }
+    const fulfilledAt = new Date().toISOString();
+    const success = {
+      ...order,
+      paymentStatus: 'PAID', fulfillmentStatus: 'SUCCESS', voucherCode: voucher.code,
+      voucherPassword: voucher.password || '1234', wifiSsid: product?.networkLocation || 'MelatiNet_Warga_Hotspot',
+      wifiLoginUrl: 'http://hotspot.wayahedigital.id', serialNumber: voucher.code, fulfilledAt, updatedAt: fulfilledAt,
+      fulfillmentResult: { ...(order.fulfillmentResult || {}), voucherCode: voucher.code, voucherPassword: voucher.password || '1234', wifiSsid: product?.networkLocation || 'MelatiNet_Warga_Hotspot', wifiLoginUrl: 'http://hotspot.wayahedigital.id' },
+    };
+    await mongoDbService.saveOrder(success);
+    try { await supabaseService.saveOrder(success); } catch (_) {}
   }
 
   private async fulfillWifiVoucher(order: any, product: any): Promise<void> {
