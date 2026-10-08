@@ -2165,6 +2165,44 @@ app.post('/api/sync/state', requireAdmin, async (req: Request, res: Response) =>
   }
 });
 
+// Admin-only inventory hydration includes voucher codes and batch details, which
+// must never be exposed from the public sync-state DTO.
+app.get('/api/admin/inventory/load', requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const state = await mongoDbService.getAllState();
+    return res.json({ success: true, data: { products: state.products || [], wifiBatches: state.wifiBatches || [] } });
+  } catch {
+    return res.status(503).json({ success: false, message: 'Stok database belum dapat dimuat.' });
+  }
+});
+
+// Database-authoritative save for manual product stock and WiFi voucher batches.
+// The browser updates its local mirror only after this endpoint confirms MongoDB.
+app.post('/api/admin/inventory/save', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    let products = Array.isArray(req.body?.products) ? req.body.products : null;
+    const wifiBatches = Array.isArray(req.body?.wifiBatches) ? req.body.wifiBatches : null;
+    if (!products || !wifiBatches) return res.status(400).json({ success: false, message: 'Produk dan batch voucher harus berupa daftar.' });
+
+    // Manual-stock screens must never erase supplier catalog items that were not
+    // loaded into a browser session.
+    const current = await mongoDbService.getAllState();
+    const incomingIds = new Set(products.map((product: any) => product?.id).filter(Boolean));
+    const supplierProducts = (current.products || []).filter((product: any) =>
+      (product.isDigiflazzSynced || product.sellerName) && !incomingIds.has(product.id)
+    );
+    products = [...products, ...supplierProducts];
+
+    const result = await mongoDbService.saveManualInventory(products, wifiBatches);
+    if (!result.success || !result.data) {
+      return res.status(503).json({ success: false, message: 'Stok belum tersimpan di database. Tidak ada perubahan lokal yang dikonfirmasi.' });
+    }
+    return res.json({ success: true, data: result.data });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message || 'Gagal menyimpan stok ke database.' });
+  }
+});
+
 app.post('/api/sync/entity', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { entity, data } = req.body || {};

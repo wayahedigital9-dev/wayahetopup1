@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Box, 
   Layers, 
@@ -76,6 +76,14 @@ export function ManualProductManager({
   // Trigger re-render when local storage updates
   const [reloadKey, setReloadKey] = useState(0);
 
+  useEffect(() => {
+    let active = true;
+    storage.hydrateManualInventory().then(() => {
+      if (active) setReloadKey(prev => prev + 1);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
   // Get products of current category
   const products = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -107,8 +115,14 @@ export function ManualProductManager({
     }, 0);
   }, [products]);
 
+  const persistManualInventory = async (allProducts: Product[], wifiBatches: WifiVoucherBatch[]) => {
+    await storage.saveManualInventory(allProducts, wifiBatches);
+    setReloadKey(prev => prev + 1);
+    onRefreshData?.();
+  };
+
   // 1. Simpan Produk Baru
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProductName.trim()) {
       onShowToast('Gagal', 'Nama produk (display name) wajib diisi', 'error');
@@ -246,7 +260,7 @@ export function ManualProductManager({
   };
 
   // 3. Tambah Stock Individu
-  const handleAddStockSingle = (e: React.FormEvent) => {
+  const handleAddStockSingle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stockProductSingle) {
       onShowToast('Gagal', 'Pilih Produk terlebih dahulu', 'error');
@@ -288,48 +302,37 @@ export function ManualProductManager({
     prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
     allProducts[prodIdx] = prod;
 
-    storage.saveProducts(allProducts);
-
-    // If WiFi, also sync to WifiVoucherBatches
+    const wifiBatches = storage.getVoucherBatches();
     if (category === 'wifi') {
-      try {
-        const curBatches = storage.getVoucherBatches();
-        let targetBatch = curBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
-        if (!targetBatch) {
-          targetBatch = {
-            id: 'batch-' + Date.now().toString(36),
-            name: `${prod.name} - ${variant.name}`,
-            productId: prod.id,
-            variantId: variant.id,
-            speedProfile: 'Up to 10 Mbps',
-            duration: variant.name,
-            quotaLimit: 'Unlimited',
-            location: 'Hotspot Area RT/RW',
-            vouchers: [],
-            createdAt: new Date().toISOString(),
-          };
-          curBatches.unshift(targetBatch);
-        }
-        const [code, pass] = trimmedInfo.includes('|') ? trimmedInfo.split('|') : [trimmedInfo, trimmedInfo];
-        targetBatch.vouchers.push({
-          id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
-          code: code.trim(),
-          password: pass ? pass.trim() : undefined,
-          status: 'AVAILABLE',
-          createdAt: new Date().toISOString(),
-        });
-        storage.saveVoucherBatches(curBatches);
-      } catch (_) {}
+      let targetBatch = wifiBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
+      if (!targetBatch) {
+        targetBatch = {
+          id: 'batch-' + Date.now().toString(36), name: `${prod.name} - ${variant.name}`,
+          productId: prod.id, variantId: variant.id, speedProfile: 'Up to 10 Mbps', duration: variant.name,
+          quotaLimit: 'Unlimited', location: 'Hotspot Area RT/RW', vouchers: [], createdAt: new Date().toISOString(),
+        };
+        wifiBatches.unshift(targetBatch);
+      }
+      const [code, pass] = trimmedInfo.includes('|') ? trimmedInfo.split('|') : [trimmedInfo, trimmedInfo];
+      targetBatch.vouchers.push({
+        id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
+        code: code.trim(), password: pass ? pass.trim() : undefined, status: 'AVAILABLE', createdAt: new Date().toISOString(),
+      });
+    }
+
+    try {
+      await persistManualInventory(allProducts, wifiBatches);
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Stok belum tersimpan di database.', 'error');
+      return;
     }
 
     setStockAccountInfo('');
-    setReloadKey(prev => prev + 1);
-    if (onRefreshData) onRefreshData();
     onShowToast('Berhasil', `1 Stok baru berhasil ditambahkan ke ${prod.name} - ${variant.name}!`, 'success');
   };
 
   // 4. Tambah Stock Massal
-  const handleAddStockBulk = (e: React.FormEvent) => {
+  const handleAddStockBulk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stockProductBulk) {
       onShowToast('Gagal', 'Pilih Produk terlebih dahulu', 'error');
@@ -377,45 +380,34 @@ export function ManualProductManager({
     prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
     allProducts[prodIdx] = prod;
 
-    storage.saveProducts(allProducts);
-
-    // If WiFi, also sync into WifiVoucherBatches
+    const wifiBatches = storage.getVoucherBatches();
     if (category === 'wifi') {
-      try {
-        const curBatches = storage.getVoucherBatches();
-        let targetBatch = curBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
-        if (!targetBatch) {
-          targetBatch = {
-            id: 'batch-' + Date.now().toString(36),
-            name: `${prod.name} - ${variant.name}`,
-            productId: prod.id,
-            variantId: variant.id,
-            speedProfile: 'Up to 10 Mbps',
-            duration: variant.name,
-            quotaLimit: 'Unlimited',
-            location: 'Hotspot Area RT/RW',
-            vouchers: [],
-            createdAt: new Date().toISOString(),
-          };
-          curBatches.unshift(targetBatch);
-        }
-        lines.forEach(line => {
-          const [c, p] = line.includes('|') ? line.split('|') : [line, line];
-          targetBatch?.vouchers.push({
-            id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
-            code: c.trim(),
-            password: p ? p.trim() : undefined,
-            status: 'AVAILABLE',
-            createdAt: new Date().toISOString(),
-          });
+      let targetBatch = wifiBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
+      if (!targetBatch) {
+        targetBatch = {
+          id: 'batch-' + Date.now().toString(36), name: `${prod.name} - ${variant.name}`,
+          productId: prod.id, variantId: variant.id, speedProfile: 'Up to 10 Mbps', duration: variant.name,
+          quotaLimit: 'Unlimited', location: 'Hotspot Area RT/RW', vouchers: [], createdAt: new Date().toISOString(),
+        };
+        wifiBatches.unshift(targetBatch);
+      }
+      lines.forEach(line => {
+        const [code, password] = line.includes('|') ? line.split('|') : [line, line];
+        targetBatch!.vouchers.push({
+          id: 'vch-' + Date.now().toString(36) + '-' + Math.floor(100 + Math.random() * 900),
+          code: code.trim(), password: password ? password.trim() : undefined, status: 'AVAILABLE', createdAt: new Date().toISOString(),
         });
-        storage.saveVoucherBatches(curBatches);
-      } catch (_) {}
+      });
+    }
+
+    try {
+      await persistManualInventory(allProducts, wifiBatches);
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Stok belum tersimpan di database.', 'error');
+      return;
     }
 
     setStockBulkData('');
-    setReloadKey(prev => prev + 1);
-    if (onRefreshData) onRefreshData();
     onShowToast('Berhasil', `${lines.length} Stok berhasil diunggah secara massal ke ${prod.name} - ${variant.name}!`, 'success');
   };
 
@@ -447,7 +439,7 @@ export function ManualProductManager({
   };
 
   // Delete single stock item from inspection modal
-  const handleDeleteStockItem = (itemIndex: number) => {
+  const handleDeleteStockItem = async (itemIndex: number) => {
     if (!inspectingVariant) return;
     const allProducts = storage.getProducts();
     const prodIdx = allProducts.findIndex(p => p.id === inspectingVariant.product.id);
@@ -460,6 +452,7 @@ export function ManualProductManager({
 
     const variant = { ...variants[varIdx] };
     const codes = [...(variant.voucherCodes || [])];
+    const removedCode = codes[itemIndex] || '';
     codes.splice(itemIndex, 1);
     variant.voucherCodes = codes;
     variant.stock = codes.length;
@@ -468,13 +461,22 @@ export function ManualProductManager({
     prod.stock = variants.reduce((acc, v) => acc + (v.stock || 0), 0);
     allProducts[prodIdx] = prod;
 
-    storage.saveProducts(allProducts);
+    const wifiBatches = storage.getVoucherBatches();
+    if (category === 'wifi') {
+      const batch = wifiBatches.find(b => b.productId === prod.id && b.variantId === variant.id);
+      const code = removedCode.split('|')[0].trim();
+      if (batch && code) batch.vouchers = batch.vouchers.filter(voucher => voucher.code !== code);
+    }
+    try {
+      await persistManualInventory(allProducts, wifiBatches);
+    } catch (error: any) {
+      onShowToast('Gagal', error?.message || 'Stok belum tersimpan di database.', 'error');
+      return;
+    }
     setInspectingVariant({
       product: prod,
       variant: variant,
     });
-    setReloadKey(prev => prev + 1);
-    if (onRefreshData) onRefreshData();
     onShowToast('Dihapus', '1 Item stok berhasil dihapus.', 'info');
   };
 

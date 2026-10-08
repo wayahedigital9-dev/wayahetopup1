@@ -1193,6 +1193,42 @@ export const storage = {
     return remaining;
   },
 
+  async hydrateManualInventory(): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[] }> {
+    const response = await fetchWithFallback('/api/admin/inventory/load', {
+      credentials: 'same-origin',
+      headers: getAdminHeaders(),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.success !== true || !Array.isArray(result?.data?.products) || !Array.isArray(result?.data?.wifiBatches)) {
+      throw new Error(result?.message || 'Stok database belum dapat dimuat.');
+    }
+    const products = result.data.products as Product[];
+    const wifiBatches = result.data.wifiBatches as WifiVoucherBatch[];
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    localStorage.setItem(STORAGE_KEYS.WIFI_BATCHES, JSON.stringify(wifiBatches));
+    notifyStorageSynced();
+    return { products, wifiBatches };
+  },
+
+  async saveManualInventory(products: Product[], wifiBatches: WifiVoucherBatch[]): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[] }> {
+    const response = await fetchWithFallback('/api/admin/inventory/save', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
+      body: JSON.stringify({ products, wifiBatches }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.success !== true || !Array.isArray(result?.data?.products) || !Array.isArray(result?.data?.wifiBatches)) {
+      throw new Error(result?.message || 'Stok belum tersimpan di database.');
+    }
+    const confirmedProducts = result.data.products as Product[];
+    const confirmedBatches = result.data.wifiBatches as WifiVoucherBatch[];
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(confirmedProducts));
+    localStorage.setItem(STORAGE_KEYS.WIFI_BATCHES, JSON.stringify(confirmedBatches));
+    notifyStorageSynced();
+    return { products: confirmedProducts, wifiBatches: confirmedBatches };
+  },
+
   saveProducts(products: Product[]): void {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
     pushEntityToBackend('products', products);

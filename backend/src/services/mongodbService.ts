@@ -203,6 +203,7 @@ export class MongoDbService {
       // Fetch from MongoDB collections in the primary database
       const [
         products,
+        manualInventory,
         orders,
         users,
         wifiBatches,
@@ -214,6 +215,7 @@ export class MongoDbService {
         pushSubscriptions,
       ] = await Promise.all([
         db.collection('products').find({}).toArray().catch(() => []),
+        db.collection('manual_inventory').findOne({ _id: 'current' as any }).catch(() => null),
         db.collection(transColl).find({}).sort({ createdAt: -1 }).toArray()
           .catch(async () => db.collection('orders').find({}).sort({ createdAt: -1 }).toArray().catch(() => [])),
         db.collection('users').find({}).toArray().catch(() => []),
@@ -226,7 +228,16 @@ export class MongoDbService {
         db.collection('push_subscriptions').find({}).toArray().catch(() => []),
       ]);
 
-      const hasMongoData = products.length > 0 || orders.length > 0 || users.length > 0 || settingsDoc || pushSubscriptions.length > 0;
+      const hasMongoData = products.length > 0 || Boolean(manualInventory) || orders.length > 0 || users.length > 0 || settingsDoc || pushSubscriptions.length > 0;
+      const savedManualProducts = Array.isArray((manualInventory as any)?.products) ? (manualInventory as any).products : null;
+      const savedManualBatches = Array.isArray((manualInventory as any)?.wifiBatches) ? (manualInventory as any).wifiBatches : null;
+      const supplierProducts = products.filter((product: any) => product.isDigiflazzSynced || product.sellerName);
+      const manualProducts = savedManualProducts
+        ? [
+            ...savedManualProducts.filter((product: any) => !(product.isDigiflazzSynced || product.sellerName)),
+            ...supplierProducts,
+          ]
+        : products;
 
       if (!hasMongoData) {
         // Seed initial local data into MongoDB if MongoDB is empty
@@ -237,10 +248,10 @@ export class MongoDbService {
       }
 
       const combined = {
-        products: (products.length > 0 ? products : local.products || []).filter((p: any) => !isMockDigiflazz(p)),
+        products: (manualProducts.length > 0 ? manualProducts : local.products || []).filter((p: any) => !isMockDigiflazz(p)),
         orders: orders.length > 0 ? orders : local.orders || [],
         users: users.map(({ password, passwordHash, ...user }: any) => user),
-        wifiBatches: wifiBatches.length > 0 ? wifiBatches : local.wifiBatches || [],
+        wifiBatches: savedManualBatches || (wifiBatches.length > 0 ? wifiBatches : local.wifiBatches || []),
         promos: promos.length > 0 ? promos : local.promos || [],
         auditLogs: auditLogs.length > 0 ? auditLogs : local.auditLogs || [],
         // MongoDB is authoritative; disk is only a mirror/fallback for public reads.
@@ -429,6 +440,47 @@ export class MongoDbService {
     } catch (err: any) {
       console.warn(`⚠️ Error syncing ${entity} to MongoDB:`, err.message);
       return false;
+    }
+  }
+
+  /**
+   * Database-first save for manual catalog stock. A standalone MongoDB cannot
+   * transact across collections, so the complete manual snapshot lives in one
+   * document and is published atomically with journaled acknowledgement.
+   */
+  async saveManualInventory(products: any[], wifiBatches: any[]): Promise<{ success: boolean; data?: { products: any[]; wifiBatches: any[] } }> {
+    if (!Array.isArray(products) || !Array.isArray(wifiBatches)) return { success: false };
+    if (products.some((product) => !product || typeof product.id !== 'string' || !product.id.trim())) return { success: false };
+    if (wifiBatches.some((batch) => !batch || typeof batch.id !== 'string' || !batch.id.trim())) return { success: false };
+
+    const client = await this.getClient();
+    if (!client) return { success: false };
+    const clean = (rows: any[]) => rows.map(({ _id, ...row }) => row);
+    const safeProducts = clean(products);
+    const safeBatches = clean(wifiBatches);
+    const db = client.db(this.getPrimaryDbName());
+    try {
+      const updatedAt = new Date().toISOString();
+      const result = await db.collection('manual_inventory').findOneAndUpdate(
+        { _id: 'current' as any },
+        { $set: { products: safeProducts, wifiBatches: safeBatches, updatedAt }, $inc: { revision: 1 } },
+        { upsert: true, returnDocument: 'after', writeConcern: { w: 'majority', j: true } }
+      );
+      const confirmed = result?.value || await db.collection('manual_inventory').findOne({ _id: 'current' as any });
+      if (!confirmed || !Array.isArray((confirmed as any).products) || !Array.isArray((confirmed as any).wifiBatches)) return { success: false };
+
+      // Disk is only a recovery mirror. A mirror failure must not negate an
+      // already confirmed database commit.
+      try {
+        const local = this.loadLocalFile();
+        local.products = (confirmed as any).products;
+        local.wifiBatches = (confirmed as any).wifiBatches;
+        this.saveLocalFile(local);
+      } catch (_) {}
+      return { success: true, data: { products: (confirmed as any).products, wifiBatches: (confirmed as any).wifiBatches } };
+    } catch (error: any) {
+      console.warn('⚠️ Manual inventory database commit rejected:', error.message);
+      return { success: false };
     }
   }
 
