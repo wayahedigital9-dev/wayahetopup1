@@ -1,21 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
-import path from 'node:path';
+const source = fs.readFileSync('src/components/InvoiceModal.tsx', 'utf8');
 
-const invoicePath = path.resolve('src/components/InvoiceModal.tsx');
-const source = fs.readFileSync(invoicePath, 'utf8');
-
-test('WiFi voucher is shown only after server fulfillment succeeds with a real voucher code', () => {
-  assert.match(
-    source,
-    /isWifi\s*&&\s*currentOrder\.fulfillmentStatus\s*===\s*'SUCCESS'\s*&&\s*Boolean\(wifiVoucherCode\)/,
-  );
+test('WiFi voucher is shown only after server payment and fulfillment succeed with a real code', () => {
+  assert.match(source, /const isPaid = currentOrder\?\.paymentStatus === 'PAID'/);
+  assert.match(source, /const isFulfillmentSuccess = currentOrder\?\.fulfillmentStatus === 'SUCCESS'/);
+  assert.match(source, /const mayReveal = Boolean\(isPaid && isFulfillmentSuccess\)/);
+  assert.match(source, /mayReveal && isWifi && Boolean\(wifiVoucherCode\)/);
 });
-
-
-test('receipt polling treats the server order as authoritative and does not save order state locally', () => {
-  const pollingBlock = source.split('// Auto-polling status transaksi dari backend/database setiap 3-4 detik')[1].split('// Voucher is allocated only by the backend')[0];
-  assert.doesNotMatch(pollingBlock, /storage\.saveOrders\(/);
-  assert.match(pollingBlock, /const serverOrder: Order/);
+test('receipt polling reads canonical server snapshots and never saves fabricated local state', () => {
+  assert.match(source, /const serverOrder: Order/);
+  assert.match(source, /setSnapshot\(\{ key: snapshotKey, order: serverOrder \}\)/);
+  assert.doesNotMatch(source, /storage\.saveOrders|processPaymentWebhook|reserveManual/);
+  assert.match(source, /credentials: 'same-origin'/);
+});
+test('WiFi receipt displays only real admin voucher credentials with secure copy controls', () => {
+  assert.doesNotMatch(source, /from 'qrcode'|wifiDefaultPassword|MelatiNet_Warga_Hotspot|hotspot\.wayahedigital\.id/);
+  assert.match(source, /Voucher WiFi Resmi/);
+  assert.match(source, /secret\('Kode Voucher WiFi', wifiVoucherCode/);
+  assert.match(source, /onCopyText\(value, label\)/);
 });

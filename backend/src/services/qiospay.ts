@@ -53,13 +53,30 @@ export function parseNominalRupiah(val: any): number {
   return parseInt(digits, 10) || 0;
 }
 
+const QIOSPAY_PAYMENT_WINDOW_MS = 20 * 60 * 1000;
+const QIOSPAY_EVENT_CLOCK_TOLERANCE_MS = 30 * 1000;
+const QIOSPAY_EXPIRY_GRACE_MS = 5 * 60 * 1000;
+
+export function isQiospayEventEligibleForOrder(order: any, eventReceivedAt: Date | string): boolean {
+  const createdAtMs = new Date(order?.createdAt || '').getTime();
+  const eventAtMs = new Date(eventReceivedAt || '').getTime();
+  if (!Number.isFinite(createdAtMs) || !Number.isFinite(eventAtMs)) return false;
+  if (eventAtMs < createdAtMs - QIOSPAY_EVENT_CLOCK_TOLERANCE_MS) return false;
+
+  const expiredAtMs = new Date(order?.expiredAt || '').getTime();
+  const deadlineMs = Number.isFinite(expiredAtMs)
+    ? expiredAtMs + QIOSPAY_EXPIRY_GRACE_MS
+    : createdAtMs + QIOSPAY_PAYMENT_WINDOW_MS;
+  return eventAtMs <= deadlineMs;
+}
+
 interface MutasiCacheEntry {
   timestamp: number;
   statusCode: number;
   data: any;
 }
 const mutasiCache = new Map<string, MutasiCacheEntry>();
-const MUTASI_CACHE_TTL_MS = 6000; // 6 seconds debounce / cache
+const MUTASI_CACHE_TTL_MS = 1500; // short debounce so new QRIS payments appear promptly
 
 function mutationRows(value: any, depth = 0): any[] | null {
   if (depth > 5) return null;
@@ -354,6 +371,7 @@ export class QiospayPaymentService {
           orderBy: { createdAt: 'desc' },
           take: 5,
         });
+        matchedOrders = matchedOrders.filter((order: any) => isQiospayEventEligibleForOrder(order, event.receivedAt));
       } catch (_) {}
 
       // Fallback pencarian di MongoDB jika Prisma kosong
@@ -366,7 +384,8 @@ export class QiospayPaymentService {
           matchedOrders = ordersList.filter(
             (o: any) =>
               ['PENDING', 'UNPAID', 'EXPIRED'].includes(o.paymentStatus) &&
-              o.totalAmount === event.amount
+              o.totalAmount === event.amount &&
+              isQiospayEventEligibleForOrder(o, event.receivedAt)
           );
         } catch (_) {}
       }
@@ -480,13 +499,10 @@ export class QiospayPaymentService {
             await fulfillmentService.fulfillOrder(updatedOrder.id);
             // Ambil data order terbaru setelah fulfillment selesai untuk disinkronkan ke Supabase
             try {
-              const freshAfterFulfill = await prisma.order.findUnique({
-                where: { id: updatedOrder.id },
-                include: { items: true },
-              });
+              const freshState = await mongoDbService.getAllState();
+              const freshAfterFulfill = (freshState.orders || []).find((o: any) => o.id === updatedOrder.id);
               if (freshAfterFulfill) {
                 await supabaseService.saveOrder(freshAfterFulfill);
-                await mongoDbService.saveOrder(freshAfterFulfill);
                 updatedOrder = freshAfterFulfill;
               }
             } catch (_) {}
@@ -553,29 +569,15 @@ export class QiospayPaymentService {
       };
     }
 
-    let order: any = null;
-    try {
-      order = await prisma.order.findFirst({
-        where: {
-          OR: [
-            { id: cleanId },
-            { invoiceNumber: cleanId },
-          ],
-        },
-        include: { items: true },
-      });
-    } catch (_) {}
-
-    // Fallback cari di MongoDB / Local File jika Prisma tidak menemukan
+    const state = await mongoDbService.getAllState();
+    const ordersList = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+    let order: any = ordersList.find((o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase());
     if (!order) {
       try {
-        const state = await mongoDbService.getAllState();
-        const ordersList = Array.isArray(state?.orders)
-          ? state.orders
-          : (state?.orders ? Object.values(state.orders) : []);
-        order = ordersList.find(
-          (o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase()
-        );
+        order = await prisma.order.findFirst({
+          where: { OR: [{ id: cleanId }, { invoiceNumber: cleanId }] },
+          include: { items: true },
+        });
       } catch (_) {}
     }
 
@@ -615,6 +617,7 @@ export class QiospayPaymentService {
 
     if (matchingEvents.length > 0) {
       for (const ev of matchingEvents) {
+        if (!isQiospayEventEligibleForOrder(order, ev.receivedAt)) continue;
         const reconciled = await this.reconcileOrderForEvent(prisma, ev, fulfillmentService);
         if (reconciled && reconciled.id === order.id) {
           const freshOrder = await prisma.order.findUnique({
@@ -1090,69 +1093,20 @@ export class QiospayPaymentService {
    * - Memeriksa QIOSPAY_LOCAL_DYNAMIC_CONFIRMED
    * - Memvalidasi struktur TLV & CRC16 QR asli sebelum konversi
    */
-  createPaymentQris(params: {
-    amount: number;
-    orderId?: string;
-  }): {
-    status: 'success' | 'unconfirmed_fallback';
-    qrString: string;
-    qrImage: string;
-    amount: number;
-    orderId?: string;
-    method: string;
-    paymentStatus: string;
-    isDynamic: boolean;
-    providerConfirmed: boolean;
-    message?: string;
+  createPaymentQris(params: { amount: number; orderId?: string; staticQrString?: string }): {
+    status: 'success'; qrString: string; qrImage: string; amount: number; orderId?: string;
+    method: string; paymentStatus: string; isDynamic: boolean; providerConfirmed: boolean; message?: string;
   } {
-    const rawStaticString = (QIOSPAY_CONFIG.QRIS_STRING || QIOSPAY_CONFIG.QR_STRING || '').trim();
-    const effectiveStatic = (
-      rawStaticString && rawStaticString.length >= 25
-        ? rawStaticString
-        : '00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF'
-    ).trim();
-
-    const amount = Math.round(params.amount);
-
-    try {
-      const dynamicResult = createQris(effectiveStatic, amount, { providerConfirmed: true });
-      const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dynamicResult.qrString)}`;
-      return {
-        status: 'success',
-        qrString: dynamicResult.qrString,
-        qrImage,
-        amount,
-        orderId: params.orderId,
-        method: dynamicResult.method || 'dynamic-qris-qiospay',
-        paymentStatus: 'pending',
-        isDynamic: true,
-        providerConfirmed: true,
-        message: 'QRIS Dinamis Lokal Aktif (Nominal Otomatis Diterapkan)',
-      };
-    } catch (err: any) {
-      console.warn('[QRIS Service] Konversi gagal, fallback generateDynamicQRIS:', err.message);
-      const generated = generateDynamicQRIS({
-        amount,
-        invoiceNumber: params.orderId,
-        merchantName: QIOSPAY_CONFIG.MERCHANT_NAME || 'WAROENG DIGITAL QP48797',
-        merchantCity: 'SIDOARJO',
-        nmid: QIOSPAY_CONFIG.NMID || 'ID1026524496431',
-        gateway: 'QIOSPAY',
-      });
-      const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(generated)}`;
-      return {
-        status: 'success',
-        qrString: generated,
-        qrImage,
-        amount,
-        orderId: params.orderId,
-        method: 'generated-dynamic',
-        paymentStatus: 'pending',
-        isDynamic: true,
-        providerConfirmed: true,
-        message: 'QRIS Dinamis Otomatis Nominal Aktif (Generated)',
-      };
-    }
+    // Never replace a malformed merchant account with invented routing identifiers.
+    const raw = params.staticQrString !== undefined ? params.staticQrString : (QIOSPAY_CONFIG.QRIS_STRING || QIOSPAY_CONFIG.QR_STRING || '');
+    const result = createQris(String(raw).trim(), params.amount);
+    return {
+      status: 'success', qrString: result.qrString,
+      qrImage: `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=16&data=${encodeURIComponent(result.qrString)}`,
+      amount: params.amount, orderId: params.orderId, method: result.method,
+      paymentStatus: 'pending', isDynamic: true, providerConfirmed: false,
+      message: 'QRIS menggunakan identitas merchant asli yang tersimpan.',
+    };
   }
 }
 

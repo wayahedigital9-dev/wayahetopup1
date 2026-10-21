@@ -100,11 +100,45 @@ export function AkunPage({
   const [topUpAmount, setTopUpAmount] = useState<number>(50000);
 
   const [memberBusy, setMemberBusy] = useState(false);
+  const [userOrders, setUserOrders] = useState<Order[]>(() => {
+    if (!currentUser) return [];
+    const direct = storage.getMemberOrders();
+    if (direct.length > 0) return direct;
+    return orders.filter(o => o.userId === currentUser.id);
+  });
+
   useEffect(() => {
     setProfileName(currentUser?.name || '');
     setProfilePhone(currentUser?.phone || '');
-    if (currentUser) storage.hydrateMemberOrders().catch(() => {});
+    if (currentUser) {
+      storage.hydrateMemberOrders().then((ords) => {
+        if (Array.isArray(ords)) setUserOrders(ords);
+      }).catch(() => {});
+    } else {
+      setUserOrders([]);
+    }
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      if (currentUser) {
+        const fresh = storage.getMemberOrders();
+        setUserOrders(fresh);
+      }
+    };
+    window.addEventListener('wayahe_storage_synced', handleSync);
+    return () => window.removeEventListener('wayahe_storage_synced', handleSync);
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const fromProp = orders.filter(o => o.userId === currentUser.id);
+      if (fromProp.length > 0) {
+        const direct = storage.getMemberOrders();
+        setUserOrders(direct.length > 0 ? direct : fromProp);
+      }
+    }
+  }, [orders, currentUser?.id]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); if (memberBusy) return; setMemberBusy(true);
@@ -140,13 +174,15 @@ export function AkunPage({
     setShowTopUpModal(false);
     onShowToast('Top Up Belum Tersedia', 'Saldo hanya berubah setelah pembayaran yang diverifikasi server. Simulasi saldo dinonaktifkan.', 'warning');
   };
-  const userOrders = currentUser ? storage.getMemberOrders() : [];
 
   // User Vouchers (WiFi Hotspot & Akun Premium)
-  const userVouchers = userOrders.filter(
-    o => o.paymentStatus === 'PAID' && 
-         (o.fulfillmentResult?.voucherCode || o.category === 'wifi' || o.category === 'premium')
+  const filteredOrders = userOrders.filter(
+    (o: Order) => o.paymentStatus === 'PAID' &&
+      o.fulfillmentStatus === 'SUCCESS' &&
+      Boolean(o.fulfillmentResult?.voucherCode) &&
+      (o.category === 'wifi' || o.category === 'premium')
   );
+  const userVouchers = filteredOrders;
 
   const activePromos = [
     {
@@ -785,8 +821,8 @@ export function AkunPage({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {userVouchers.map((ord) => {
-                    const code = ord.fulfillmentResult?.voucherCode || 'MLT24-' + ord.id.slice(-5);
-                    const password = ord.fulfillmentResult?.voucherPassword || '123';
+                    const code = ord.fulfillmentResult?.voucherCode;
+                    if (!code) return null;
                     const isCopied = copiedCode === code;
 
                     return (
@@ -823,11 +859,6 @@ export function AkunPage({
                             <div className="font-mono font-black text-sm sm:text-base text-[#D4A359] tracking-wider">
                               {code}
                             </div>
-                            {password && (
-                              <div className="text-[10px] text-[#A89F91] mt-0.5">
-                                Sandi: <span className="font-mono text-white font-bold">{password}</span>
-                              </div>
-                            )}
                           </div>
 
                           <button

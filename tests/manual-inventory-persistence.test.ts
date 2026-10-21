@@ -40,7 +40,7 @@ async function invokeInventorySave(persisted: boolean) {
     status: (status: number) => { result.status = status; return res; },
     json: (body: any) => { result.body = body; return res; },
   };
-  const req = { body: { products: [{ id: 'wifi-1', stock: 2 }], wifiBatches: [{ id: 'batch-1', vouchers: [] }] } };
+  const req = { body: { revision: 0, products: [{ id: 'wifi-1', stock: 2 }], wifiBatches: [{ id: 'batch-1', vouchers: [] }] } };
   await handlers[0](req, res, () => handlers[1](req, res));
   return { result, received };
 }

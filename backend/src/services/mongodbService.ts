@@ -248,7 +248,8 @@ export class MongoDbService {
       }
 
       const combined = {
-        products: (manualProducts.length > 0 ? manualProducts : local.products || []).filter((p: any) => !isMockDigiflazz(p)),
+        products: (savedManualProducts !== null || products.length > 0 ? manualProducts : local.products || []).filter((p: any) => !isMockDigiflazz(p)),
+        manualInventoryRevision: Number((manualInventory as any)?.revision || 0),
         orders: orders.length > 0 ? orders : local.orders || [],
         users: users.map(({ password, passwordHash, ...user }: any) => user),
         wifiBatches: savedManualBatches || (wifiBatches.length > 0 ? wifiBatches : local.wifiBatches || []),
@@ -448,76 +449,127 @@ export class MongoDbService {
    * transact across collections, so the complete manual snapshot lives in one
    * document and is published atomically with journaled acknowledgement.
    */
-  async saveManualInventory(products: any[], wifiBatches: any[]): Promise<{ success: boolean; data?: { products: any[]; wifiBatches: any[] } }> {
+  async saveManualInventory(products: any[], wifiBatches: any[], expectedRevision?: number): Promise<{ success: boolean; conflict?: boolean; data?: { products: any[]; wifiBatches: any[]; revision: number } }> {
     if (!Array.isArray(products) || !Array.isArray(wifiBatches)) return { success: false };
-    if (products.some((product) => !product || typeof product.id !== 'string' || !product.id.trim())) return { success: false };
-    if (wifiBatches.some((batch) => !batch || typeof batch.id !== 'string' || !batch.id.trim())) return { success: false };
-
+    if (products.some(p => !p || typeof p.id !== 'string' || !p.id.trim()) || wifiBatches.some(b => !b || typeof b.id !== 'string' || !b.id.trim())) return { success: false };
+    if (expectedRevision !== undefined && (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0)) return { success: false, conflict: true };
     const client = await this.getClient();
     if (!client) return { success: false };
-    const clean = (rows: any[]) => rows.map(({ _id, ...row }) => row);
-    const safeProducts = clean(products);
-    const safeBatches = clean(wifiBatches);
-    const db = client.db(this.getPrimaryDbName());
+    const collection = client.db(this.getPrimaryDbName()).collection('manual_inventory');
     try {
-      const updatedAt = new Date().toISOString();
-      const result = await db.collection('manual_inventory').findOneAndUpdate(
-        { _id: 'current' as any },
-        { $set: { products: safeProducts, wifiBatches: safeBatches, updatedAt }, $inc: { revision: 1 } },
-        { upsert: true, returnDocument: 'after', writeConcern: { w: 'majority', j: true } }
+      const snapshot: any = await collection.findOne({ _id: 'current' as any });
+      const revision = Number(snapshot?.revision || 0);
+      if (expectedRevision !== undefined && expectedRevision !== revision) return { success: false, conflict: true };
+      const allocations = Array.isArray(snapshot?.allocations) ? snapshot.allocations : [];
+      const safeProducts = structuredClone(products).map(({ _id, ...product }) => {
+        const category = String(product.categoryId || '').toUpperCase();
+        if (!['WIFI', 'PREMIUM'].includes(category) || product.isDigiflazzSynced || product.sellerName) return product;
+        const normalize = (holder: any) => {
+          const codes: string[] = Array.isArray(holder.voucherCodes) ? holder.voucherCodes.filter((raw: any) => typeof raw === 'string' && raw.trim()).map((raw: string) => raw.trim()) : [];
+          holder.voucherCodes = [...new Set(codes)].filter(raw => !allocations.some((allocation: any) => allocation.category === category && (allocation.raw === raw || (category === 'WIFI' && allocation.result?.code === raw.split('|')[0].trim()))));
+          holder.stock = holder.voucherCodes.length;
+        };
+        normalize(product);
+        if (Array.isArray(product.variants) && product.variants.length) {
+          product.variants.forEach(normalize);
+          product.stock = product.variants.reduce((sum: number, v: any) => sum + v.stock, 0);
+        }
+        return product;
+      });
+      const safeBatches = structuredClone(wifiBatches).map(({ _id, ...batch }) => batch);
+      const predicate = snapshot ? (snapshot.revision === undefined ? { revision: { $exists: false } } : { revision: snapshot.revision }) : { revision: { $exists: false } };
+      const result: any = await collection.findOneAndUpdate(
+        { _id: 'current' as any, ...predicate },
+        { $set: { products: safeProducts, wifiBatches: safeBatches, updatedAt: new Date().toISOString() }, $inc: { revision: 1 } },
+        { upsert: !snapshot, returnDocument: 'after', writeConcern: { w: 'majority', j: true } }
       );
-      const confirmed = result?.value || await db.collection('manual_inventory').findOne({ _id: 'current' as any });
-      if (!confirmed || !Array.isArray((confirmed as any).products) || !Array.isArray((confirmed as any).wifiBatches)) return { success: false };
-
-      // Disk is only a recovery mirror. A mirror failure must not negate an
-      // already confirmed database commit.
-      try {
-        const local = this.loadLocalFile();
-        local.products = (confirmed as any).products;
-        local.wifiBatches = (confirmed as any).wifiBatches;
-        this.saveLocalFile(local);
-      } catch (_) {}
-      return { success: true, data: { products: (confirmed as any).products, wifiBatches: (confirmed as any).wifiBatches } };
+      const confirmed = result?.value || result;
+      if (!confirmed || !Array.isArray(confirmed.products)) return { success: false, conflict: true };
+      try { const local = this.loadLocalFile(); local.products = confirmed.products; local.wifiBatches = confirmed.wifiBatches; local.manualInventoryRevision = confirmed.revision; this.saveLocalFile(local); } catch (_) {}
+      return { success: true, data: { products: confirmed.products, wifiBatches: confirmed.wifiBatches, revision: confirmed.revision } };
     } catch (error: any) {
-      console.warn('⚠️ Manual inventory database commit rejected:', error.message);
+      if (error.code === 11000) return { success: false, conflict: true };
+      console.warn('Manual inventory database commit rejected:', error.message);
       return { success: false };
     }
   }
 
-  async reserveManualWifiVoucher(input: { productId?: string; variantId?: string; orderId: string }): Promise<{ code: string; password?: string } | null> {
+  async reserveManualWifiVoucher(input: { productId?: string; variantId?: string; orderId: string }): Promise<any | null> {
+    return this.reserveManualCredential(input, 'WIFI');
+  }
+
+  async reserveManualPremiumCredential(input: { productId?: string; variantId?: string; orderId: string }): Promise<any | null> {
+    return this.reserveManualCredential(input, 'PREMIUM');
+  }
+
+  /** Single-document allocation journal survives failed order saves safely. */
+  private async reserveManualCredential(input: { productId?: string; variantId?: string; orderId: string }, category: 'WIFI' | 'PREMIUM'): Promise<any | null> {
+    if (!input.orderId || !input.productId) return null;
     const client = await this.getClient();
-    if (!client) return null;
+    if (!client) throw new Error('Database alokasi stok tidak tersedia.');
     const db = client.db(this.getPrimaryDbName());
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const snapshot: any = await db.collection('manual_inventory').findOne({ _id: 'current' as any });
+    const collection = db.collection('manual_inventory');
+    for (let attempt = 0; attempt < 20; attempt++) {
+      // Payment must be durable in the same canonical database, never browser/disk.
+      const order: any = await db.collection(this.getTransCollectionName() || 'orders').findOne({ id: input.orderId });
+      if (!order || order.paymentStatus !== 'PAID') throw new Error('Alokasi membutuhkan pembayaran PAID yang tersimpan di database.');
+      const item = Array.isArray(order.items) ? order.items[0] : null;
+      if ((order.productId || item?.productId) !== input.productId || (order.variantId || item?.variantId || undefined) !== (input.variantId || undefined)) {
+        throw new Error('Identitas produk/varian alokasi tidak sesuai pesanan.');
+      }
+      if ((Array.isArray(order.items) && order.items.length > 1) || Number(order.quantity || item?.quantity || 1) !== 1) return null;
+      const snapshot: any = await collection.findOne({ _id: 'current' as any });
       if (!snapshot || !Array.isArray(snapshot.products)) return null;
+      const allocations: any[] = Array.isArray(snapshot.allocations) ? structuredClone(snapshot.allocations) : [];
+      const existing = allocations.find((entry: any) => entry.orderId === input.orderId);
+      if (existing) {
+        if (existing.category !== category || existing.productId !== input.productId || (existing.variantId || undefined) !== (input.variantId || undefined)) throw new Error('Identitas reservasi stok bertentangan.');
+        return structuredClone(existing.result);
+      }
+      if (['SUCCESS', 'FAILED', 'CANCELED', 'MANUAL_REVIEW', 'NEEDS_REVIEW'].includes(order.fulfillmentStatus)) return null;
       const products = structuredClone(snapshot.products);
       const wifiBatches = Array.isArray(snapshot.wifiBatches) ? structuredClone(snapshot.wifiBatches) : [];
-      const product = products.find((item: any) => item.id === input.productId);
-      if (!product) return null;
-      const variant = input.variantId ? (product.variants || []).find((item: any) => item.id === input.variantId) : null;
+      const product = products.find((entry: any) => entry.id === input.productId);
+      if (!product || String(product.categoryId || '').toUpperCase() !== category) return null;
+      const variant = input.variantId ? (product.variants || []).find((entry: any) => entry.id === input.variantId) : null;
+      if ((input.variantId && !variant) || (!input.variantId && (product.hasVariants || product.variants?.length))) return null;
       const holder = variant || product;
       const codes = Array.isArray(holder.voucherCodes) ? [...holder.voucherCodes] : [];
-      const raw = codes.shift();
+      const raw = typeof codes[0] === 'string' ? codes[0].trim() : '';
       if (!raw) return null;
-      holder.voucherCodes = codes;
-      holder.stock = codes.length;
-      if (variant) product.stock = (product.variants || []).reduce((sum: number, item: any) => sum + Number(item.stock || 0), 0);
-      const [code, password] = String(raw).split('|');
-      const batch = wifiBatches.find((item: any) => item.productId === product.id && (!variant || item.variantId === variant.id));
-      const batchVoucher = batch?.vouchers?.find((item: any) => item.status === 'AVAILABLE' && item.code === String(code).trim());
-      if (batchVoucher) { batchVoucher.status = 'USED'; batchVoucher.usedAt = new Date().toISOString(); batchVoucher.orderId = input.orderId; }
-      const write = await db.collection('manual_inventory').updateOne(
-        { _id: 'current' as any, revision: Number(snapshot.revision || 0) },
-        { $set: { products, wifiBatches, updatedAt: new Date().toISOString() }, $inc: { revision: 1 } },
+      const delimiter = category === 'WIFI' ? raw.search(/[|,:\t]/) : raw.indexOf('|');
+      const code = (delimiter < 0 ? raw : raw.slice(0, delimiter)).trim();
+      const password = delimiter < 0 ? undefined : raw.slice(delimiter + 1).trim();
+      if (!code || (delimiter >= 0 && !password)) return null;
+      if (allocations.some((entry: any) => entry.category === category && (category === 'WIFI' ? entry.result?.code === code : entry.raw === raw))) return null;
+      const now = new Date().toISOString();
+      let result: any;
+      if (category === 'WIFI') {
+        const matching = wifiBatches.filter((batch: any) => batch.productId === product.id && (batch.variantId || undefined) === (input.variantId || undefined));
+        const vouchers = matching.flatMap((batch: any) => batch.vouchers || []).filter((voucher: any) => voucher.code === code);
+        if (vouchers.some((voucher: any) => voucher.status !== 'AVAILABLE' && voucher.orderId !== input.orderId)) return null;
+        for (const voucher of vouchers) { voucher.status = 'USED'; voucher.usedAt = now; voucher.orderId = input.orderId; }
+        result = { code, password: password || vouchers[0]?.password || code, wifiSsid: product.wifiSsid || product.networkLocation || null, wifiLoginUrl: product.wifiLoginUrl || null };
+      } else {
+        const instructions = holder.premiumInstructions || product.premiumInstructions || (delimiter < 0 ? 'Gunakan kode ini pada portal aktivasi resmi produk.' : 'Gunakan kredensial ini untuk login ke aplikasi.');
+        result = delimiter < 0 ? { voucherCode: code, premiumInstructions: instructions } : { credentials: [{ email: code, password }], premiumInstructions: instructions };
+      }
+      holder.voucherCodes = codes.slice(1);
+      holder.stock = holder.voucherCodes.length;
+      if (variant) product.stock = (product.variants || []).reduce((sum: number, entry: any) => sum + Number(entry.stock || 0), 0);
+      allocations.push({ orderId: input.orderId, productId: input.productId, variantId: input.variantId || null, category, raw, result, allocatedAt: now });
+      const revisionPredicate = snapshot.revision === undefined ? { revision: { $exists: false } } : { revision: snapshot.revision };
+      const write = await collection.updateOne(
+        { _id: 'current' as any, ...revisionPredicate },
+        { $set: { products, wifiBatches, allocations, updatedAt: now }, $inc: { revision: 1 } },
         { writeConcern: { w: 'majority', j: true } }
       );
-      if (write.modifiedCount === 1) {
+      if (write.acknowledged && write.modifiedCount === 1) {
         try { const local = this.loadLocalFile(); local.products = products; local.wifiBatches = wifiBatches; this.saveLocalFile(local); } catch (_) {}
-        return { code: String(code).trim(), password: password?.trim() || undefined };
+        return result;
       }
     }
-    throw new Error('Stok voucher berubah bersamaan. Silakan coba ulang.');
+    throw new Error('Stok berubah bersamaan. Silakan coba ulang.');
   }
 
   /**
@@ -582,10 +634,15 @@ export class MongoDbService {
     const local = this.loadLocalFile();
     if (!Array.isArray(local.orders)) local.orders = [];
     const { _id, id, invoiceNumber, userId, guestAccessToken, ...mutable } = order;
-    const identity = { id, invoiceNumber, ...(userId ? { userId } : {}), ...(guestAccessToken ? { guestAccessToken } : {}) };
-    const idx = local.orders.findIndex((o: any) => o.id === id || o.invoiceNumber === invoiceNumber);
+    const identity: any = { id };
+    if (invoiceNumber) identity.invoiceNumber = invoiceNumber;
+    if (userId) identity.userId = userId;
+    if (guestAccessToken) identity.guestAccessToken = guestAccessToken;
+
+    const idx = local.orders.findIndex((o: any) => (id && o.id === id) || (invoiceNumber && o.invoiceNumber === invoiceNumber));
     if (idx >= 0) {
-      if (local.orders[idx].id !== id || local.orders[idx].invoiceNumber !== invoiceNumber) return { success: false, error: 'Order identity conflict' };
+      if (id && local.orders[idx].id && local.orders[idx].id !== id) return { success: false, error: 'Order identity conflict' };
+      if (invoiceNumber && local.orders[idx].invoiceNumber && local.orders[idx].invoiceNumber !== invoiceNumber) return { success: false, error: 'Order identity conflict' };
       local.orders[idx] = { ...local.orders[idx], ...mutable };
     } else local.orders.unshift({ ...identity, ...mutable });
     this.saveLocalFile(local);
@@ -598,7 +655,7 @@ export class MongoDbService {
     try {
       const db = client.db(this.getPrimaryDbName());
       const transColl = this.getTransCollectionName();
-      const filter = { id, invoiceNumber };
+      const filter: any = id ? { id } : { invoiceNumber };
       const update = { $set: mutable, $setOnInsert: identity };
       await db.collection(transColl || 'orders').updateOne(filter, update, { upsert: true });
       if (transColl && transColl !== 'orders') {

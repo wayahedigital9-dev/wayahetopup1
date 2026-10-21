@@ -79,64 +79,13 @@ export function SnapSimulatorModal({
     ''
   ).trim();
 
-  // Dynamic QR String (Dipisahkan Murni Sesuai Payment Gateway Masing-Masing)
-  const targetAmount = Math.max(1, Math.round(Number(order?.totalAmount || 10000)));
-  let activeQRString = '';
-
-  if (isPakasir) {
-    // ══════════════════════════════════════════════════════════════
-    // JALUR PAKASIR API v2 (MURNI TANPA DATA QIOSPAY)
-    // ══════════════════════════════════════════════════════════════
-    if (order?.qrString && order.qrString.startsWith('000201') && !order.qrString.includes('COM.NOBUBANK')) {
-      activeQRString = order.qrString;
-    } else if (settings.pakasirQrString && settings.pakasirQrString.startsWith('000201')) {
-      activeQRString = settings.pakasirQrString;
-    } else {
-      activeQRString = generateDynamicQRIS({
-        amount: targetAmount,
-        invoiceNumber: order?.invoiceNumber || 'INV-WD',
-        merchantName: merchantStoreName,
-        merchantCity: 'SURABAYA',
-        nmid: settings.pakasirNmid || undefined,
-        gateway: 'PAKASIR',
-      });
-    }
-  } else {
-    // ══════════════════════════════════════════════════════════════
-    // JALUR QIOSPAY QRIS (MURNI NOBU BANK / ASPI QIOSPAY)
-    // ══════════════════════════════════════════════════════════════
-    if (order?.qrString && order.qrString.startsWith('000201') && order.qrString.includes('COM.NOBUBANK')) {
-      activeQRString = order.qrString;
-    } else {
-      const qiospayOfficialStatic = (
-        settings.qiospayQrString ||
-        settings.staticQrisString ||
-        '00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF'
-      ).trim();
-      activeQRString = qiospayOfficialStatic;
-    }
-  }
-
-  // JAMINAN MUTLAK: Selalu pastikan activeQRString menyematkan Tag 54 dengan nominal dinamis produk terkini
-  if (activeQRString && activeQRString.startsWith('000201')) {
-    try {
-      activeQRString = convertStaticToDynamicQRIS(
-        activeQRString,
-        targetAmount,
-        order?.invoiceNumber || 'INV-WD',
-        {
-          preserveTag62: true,
-          forceDynamicPOI: true,
-          merchantName: isPakasir ? merchantStoreName : undefined,
-          gateway: isPakasir ? 'PAKASIR' : 'QIOSPAY',
-        }
-      );
-    } catch (_) {}
-  }
+  // Render only the QR payload issued for this canonical server order.
+  const targetAmount = Number(order?.totalPayment ?? order?.totalAmount ?? 0);
+  const activeQRString = typeof order?.qrString === 'string' && order.qrString.startsWith('000201') ? order.qrString : '';
 
   // Generate QR Code secara lokal langsung di browser (0 ms, aman dari blokir adblock/CORS)
   useEffect(() => {
-    if (!activeQRString) return;
+    if (!activeQRString) { setLocalQrDataUrl(''); return; }
     let isMounted = true;
     QRCode.toDataURL(activeQRString, {
       width: 420,
@@ -165,7 +114,7 @@ export function SnapSimulatorModal({
   const primaryQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&margin=10&data=${encodeURIComponent(activeQRString)}`;
   const fallbackQrUrl = `https://quickchart.io/qr?size=350&text=${encodeURIComponent(activeQRString)}`;
   // Prioritaskan Data URL lokal langsung dari memori browser, baru fallback ke online image jika diperlukan
-  const activeQrImage = localQrDataUrl || (!qrImgError ? primaryQrUrl : fallbackQrUrl);
+  const activeQrImage = activeQRString ? localQrDataUrl : '';
 
   const orderId = order?.id;
   const invoiceNumber = order?.invoiceNumber;
@@ -191,39 +140,58 @@ export function SnapSimulatorModal({
       });
     }, 1000);
 
-    // Auto-Polling Status Pembayaran Otomatis Setiap 4 Detik
+    // Cek segera saat modal terbuka, lalu polling setiap 2 detik tanpa request tumpang tindih.
     let consecutiveErrors = 0;
+    let isPollingRequest = false;
+    let stopped = false;
     if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
-    pollingTimerRef.current = setInterval(async () => {
+
+    const pollPaymentStatus = async () => {
+      if (isPollingRequest || stopped) return;
+      isPollingRequest = true;
       try {
         const checkResult = await apiAdapter.checkOrderStatus(invoiceNumber || orderId);
         consecutiveErrors = 0;
-        if (checkResult && checkResult.paymentStatus === 'PAID') {
+        let confirmedOrder = checkResult?.order;
+        if (checkResult?.paymentStatus === 'PAID' && !confirmedOrder) {
+          const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, { credentials: 'same-origin', cache: 'no-store', headers: order.guestAccessToken ? { 'x-guest-token': order.guestAccessToken } : {} });
+          if (response.ok) confirmedOrder = (await response.json()).data;
+        }
+        if (confirmedOrder?.id === orderId && confirmedOrder.paymentStatus === 'PAID') {
+          stopped = true;
           if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
           if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
           setIsPaymentSuccess(true);
 
           if (checkResult.fulfillmentStatus === 'SUCCESS') {
-            setPollStatus('✅ Pembayaran Berhasil! Membuka rincian invoice...');
+            setPollStatus('Pembayaran Berhasil! Membuka rincian invoice...');
           } else if (checkResult.fulfillmentStatus === 'FAILED' || checkResult.fulfillmentStatus === 'MANUAL_REVIEW') {
-            setPollStatus('⚠️ Pembayaran berhasil, pengiriman produk dalam tinjauan admin.');
+            setPollStatus('Pembayaran berhasil, pengiriman produk dalam tinjauan admin.');
           } else {
-            setPollStatus('⏳ Pembayaran terverifikasi! Menyiapkan produk...');
+            setPollStatus('Pembayaran terverifikasi! Menyiapkan produk...');
           }
 
           setTimeout(() => {
             onSimulateResult('PAID', isPakasir ? 'QRIS (Pakasir)' : 'QRIS');
-          }, 1200);
+          }, 400);
         }
       } catch (e) {
         consecutiveErrors++;
         if (consecutiveErrors >= 3) {
-          setPollStatus(`⚠️ Menghubungkan ke server pembayaran ${gatewayTitle}...`);
+          setPollStatus(`Menghubungkan ke server pembayaran ${gatewayTitle}...`);
         }
+      } finally {
+        isPollingRequest = false;
       }
-    }, 4000);
+    };
+
+    void pollPaymentStatus();
+    pollingTimerRef.current = setInterval(() => {
+      void pollPaymentStatus();
+    }, 2000);
 
     return () => {
+      stopped = true;
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
     };

@@ -106,100 +106,17 @@ export function inspect(payload: string): InspectResult {
  * - Mengubah POI (Tag 01) menjadi '12' (Dinamis)
  * - Mempertahankan seluruh identitas terminal, nama toko, dan routing acquirer asli
  */
-export function createQris(
-  original: string,
-  amount: number,
-  _options: CreateQrisOptions = {}
-): CreateQrisResult {
-  const targetAmount = Math.max(1, Math.round(Number(amount || 0)));
-  const amtStr = String(targetAmount);
-
-  if (!original || typeof original !== 'string' || !original.trim().startsWith('000201')) {
-    const fallbackQR = generateDynamicQRIS({ amount: targetAmount });
-    return {
-      qrString: fallbackQR,
-      amount: targetAmount,
-      method: 'generated-dynamic',
-      paymentStatus: 'unverified',
-    };
-  }
-
-  const cleanOriginal = original.trim();
-
-  try {
-    const rows = parse(cleanOriginal);
-    const updated: TLVRow[] = [];
-    let hasTag01 = false;
-    let hasTag53 = false;
-    let hasTag54 = false;
-
-    for (const row of rows) {
-      if (row.tag === '63') continue;
-
-      if (row.tag === '01') {
-        updated.push({ tag: '01', value: '12' });
-        hasTag01 = true;
-      } else if (row.tag === '53') {
-        updated.push(row);
-        hasTag53 = true;
-      } else if (row.tag === '54') {
-        // Ganti nominal yang ada dengan nominal dinamis produk terbaru
-        updated.push({ tag: '54', value: amtStr });
-        hasTag54 = true;
-      } else if (['55', '56', '57'].includes(row.tag)) {
-        // Abaikan tip/fee statis agar nominal produk tetap presisi
-        continue;
-      } else {
-        updated.push(row);
-      }
-    }
-
-    if (!hasTag01) {
-      updated.splice(1, 0, { tag: '01', value: '12' });
-    }
-
-    if (!hasTag53) {
-      const idx52 = updated.findIndex(r => r.tag === '52');
-      if (idx52 !== -1) {
-        updated.splice(idx52 + 1, 0, { tag: '53', value: '360' });
-      } else {
-        updated.splice(2, 0, { tag: '53', value: '360' });
-      }
-    }
-
-    if (!hasTag54) {
-      const idx53 = updated.findIndex(r => r.tag === '53');
-      if (idx53 !== -1) {
-        updated.splice(idx53 + 1, 0, { tag: '54', value: amtStr });
-      } else {
-        const idx58 = updated.findIndex(r => r.tag === '58');
-        if (idx58 !== -1) {
-          updated.splice(idx58, 0, { tag: '54', value: amtStr });
-        } else {
-          updated.push({ tag: '54', value: amtStr });
-        }
-      }
-    }
-
-    const prefix = updated.map(encode).join('') + '6304';
-    const result = prefix + crc16(prefix);
-
-    return {
-      qrString: result,
-      amount: targetAmount,
-      method: 'local-payload-conversion',
-      paymentStatus: 'unverified',
-    };
-  } catch (err: any) {
-    console.warn('[QRIS Converter] Gagal parse TLV, fallback generateDynamicQRIS:', err.message);
-    const generated = generateDynamicQRIS({ amount: targetAmount });
-    return {
-      qrString: generated,
-      amount: targetAmount,
-      method: 'generated-fallback',
-      paymentStatus: 'unverified',
-    };
-  }
+export function createQris(original: string, amount: number, _options: CreateQrisOptions = {}): CreateQrisResult {
+  if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error('Nominal QRIS harus bilangan rupiah positif.');
+  if (typeof original !== 'string' || !original.trim()) throw new Error('QR merchant asli wajib dikonfigurasi.');
+  const { rows } = inspect(original.trim());
+  const updated = rows.filter(row => row.tag !== '63' && row.tag !== '54').map(row => row.tag === '01' ? { tag: '01', value: '12' } : row);
+  const currency = updated.findIndex(row => row.tag === '53');
+  updated.splice(currency + 1, 0, { tag: '54', value: String(amount) });
+  const prefix = updated.map(encode).join('') + '6304';
+  const qrString = prefix + crc16(prefix);
+  inspect(qrString);
+  return { qrString, amount, method: 'local-payload-conversion', paymentStatus: 'unverified' };
 }
 
 // Backward compatibility helper

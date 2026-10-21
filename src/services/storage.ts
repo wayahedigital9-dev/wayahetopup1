@@ -1193,7 +1193,13 @@ export const storage = {
     return remaining;
   },
 
-  async hydrateManualInventory(): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[] }> {
+  manualInventoryRevision: null as number | null,
+
+  getManualInventoryRevision(): number | null {
+    return this.manualInventoryRevision;
+  },
+
+  async hydrateManualInventory(): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[]; revision?: number }> {
     const response = await fetchWithFallback('/api/admin/inventory/load', {
       credentials: 'same-origin',
       headers: getAdminHeaders(),
@@ -1206,18 +1212,34 @@ export const storage = {
     const wifiBatches = result.data.wifiBatches as WifiVoucherBatch[];
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
     localStorage.setItem(STORAGE_KEYS.WIFI_BATCHES, JSON.stringify(wifiBatches));
+    const revision = Number.isSafeInteger(result.data.revision) && result.data.revision >= 0 ? result.data.revision as number : undefined;
+    this.manualInventoryRevision = revision ?? null;
     notifyStorageSynced();
-    return { products, wifiBatches };
+    return { products, wifiBatches, revision };
   },
 
-  async saveManualInventory(products: Product[], wifiBatches: WifiVoucherBatch[]): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[] }> {
+  async saveManualInventory(products: Product[], wifiBatches: WifiVoucherBatch[], expectedRevision?: number): Promise<{ products: Product[]; wifiBatches: WifiVoucherBatch[]; revision?: number }> {
+    if (this.manualInventoryRevision === null) {
+      await this.hydrateManualInventory();
+      // The supplied snapshot predates hydration; require review instead of overwriting server stock.
+      throw new Error('Inventori dimuat ulang. Periksa draf dan revisi stok sebelum menyimpan.');
+    }
+    if (expectedRevision !== undefined && (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0)) {
+      throw new Error('Revisi inventori tidak valid.');
+    }
     const response = await fetchWithFallback('/api/admin/inventory/save', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
-      body: JSON.stringify({ products, wifiBatches }),
+      body: JSON.stringify({ products, wifiBatches, revision: expectedRevision ?? this.manualInventoryRevision }),
     });
     const result = await response.json().catch(() => null);
+    if (response.status === 409) {
+      // Refresh confirmed state only; never resubmit a stale draft automatically.
+      this.manualInventoryRevision = null;
+      await this.hydrateManualInventory().catch(() => {});
+      throw new Error('Konflik stok: inventori berubah. Draf tetap tersedia; muat ulang data sebelum menyimpan kembali.');
+    }
     if (!response.ok || result?.success !== true || !Array.isArray(result?.data?.products) || !Array.isArray(result?.data?.wifiBatches)) {
       throw new Error(result?.message || 'Stok belum tersimpan di database.');
     }
@@ -1225,8 +1247,10 @@ export const storage = {
     const confirmedBatches = result.data.wifiBatches as WifiVoucherBatch[];
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(confirmedProducts));
     localStorage.setItem(STORAGE_KEYS.WIFI_BATCHES, JSON.stringify(confirmedBatches));
+    const revision = Number.isSafeInteger(result.data.revision) && result.data.revision >= 0 ? result.data.revision as number : undefined;
+    this.manualInventoryRevision = revision ?? null;
     notifyStorageSynced();
-    return { products: confirmedProducts, wifiBatches: confirmedBatches };
+    return { products: confirmedProducts, wifiBatches: confirmedBatches, revision };
   },
 
   saveProducts(products: Product[]): void {
@@ -1247,6 +1271,20 @@ export const storage = {
     } catch {
       return INITIAL_ORDERS;
     }
+  },
+
+  // Cache only an order returned by an authenticated server read; never push it back as a mutation.
+  cacheServerOrder(order: Order): void {
+    if (!order?.id || !order.invoiceNumber) throw new Error('Respon pesanan server tidak valid.');
+    const rows = this.getOrders();
+    const index = rows.findIndex(row => row.id === order.id);
+    if (index >= 0) rows[index] = order;
+    else rows.unshift(order);
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(rows));
+    if (confirmedMember?.id && order.userId === confirmedMember.id) {
+      confirmedMemberOrders = [order, ...confirmedMemberOrders.filter(row => row.id !== order.id)];
+    }
+    notifyStorageSynced();
   },
 
   saveOrders(orders: Order[]): void {

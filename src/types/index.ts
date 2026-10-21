@@ -150,6 +150,7 @@ export interface PaymentAttempt {
 
 export interface Order {
   id: string;
+  userId?: string;
   invoiceNumber: string;
   customerName?: string;
   customerEmail?: string;

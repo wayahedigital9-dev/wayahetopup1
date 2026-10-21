@@ -1,28 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Printer, 
-  Copy, 
-  Zap, 
-  ShieldCheck, 
-  ExternalLink,
-  Info,
-  RefreshCw,
-  CheckCircle2,
-  ShieldAlert,
-  MessageCircle,
-  Wifi,
-  Eye,
-  EyeOff,
-  Key,
-  QrCode
-} from 'lucide-react';
-import QRCode from 'qrcode';
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Copy, Eye, EyeOff, KeyRound, LockKeyhole, Printer, RefreshCw, ShieldAlert, ShieldCheck, Wifi, X } from 'lucide-react';
 import { Order } from '../types';
-import { formatRupiah, formatDateWIB } from '../utils/operator';
+import { formatDateWIB, formatRupiah } from '../utils/operator';
 import { PaymentStatusBadge, FulfillmentStatusBadge } from './StatusBadge';
 import { ProductLogo } from './ProductLogo';
-import { storage } from '../services/storage';
 
 interface InvoiceModalProps {
   order: Order | null;
@@ -32,703 +13,129 @@ interface InvoiceModalProps {
 }
 
 export function InvoiceModal({ order, isOpen, onClose, onCopyText }: InvoiceModalProps) {
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(order);
-  const [isPollingFulfillment, setIsPollingFulfillment] = useState<boolean>(false);
-  const [showPasswordMap, setShowPasswordMap] = useState<Record<number, boolean>>({});
-  const [wifiQrDataUrl, setWifiQrDataUrl] = useState<string>('');
-  const [showWifiQr, setShowWifiQr] = useState<boolean>(false);
+  const [snapshot, setSnapshot] = useState<{ key: string; order: Order } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const orderId = order?.id || order?.invoiceNumber;
+  const accessToken = order?.guestAccessToken || '';
+  const snapshotKey = `${orderId || ''}:${accessToken}:${refresh}`;
+  const currentOrder = isOpen && snapshot?.key === snapshotKey ? snapshot.order : null;
 
-  const togglePasswordVisibility = (index: number) => {
-    setShowPasswordMap(prev => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
-  };
-
-  // Sinkronkan prop order ke local state saat berubah
+  // The prop identifies a purchase; it is never proof of payment or delivery.
+  // No browser inventory/order lookup and no merge with stale local credentials.
   useEffect(() => {
-    setCurrentOrder(order);
-  }, [order]);
-
-  // Auto-polling status transaksi dari backend/database setiap 3-4 detik
-  // Berjalan saat order berstatus PENDING atau PROCESSING
-  // Otomatis berhenti setelah status menjadi SUCCESS atau FAILED
-  useEffect(() => {
-    if (!isOpen || !currentOrder) return;
-
-    const fulStatus = String(currentOrder.fulfillmentStatus || '').toUpperCase();
-    const isStillProcessing = 
-      currentOrder.paymentStatus === 'PAID' &&
-      (fulStatus === 'PROCESSING' || fulStatus === 'PENDING' || fulStatus === 'NOT_STARTED' || fulStatus === 'QUEUED');
-
-    if (!isStillProcessing) {
-      setIsPollingFulfillment(false);
-      return;
-    }
-
-    setIsPollingFulfillment(true);
-    const identifier = currentOrder.supplierRefId || currentOrder.invoiceNumber || currentOrder.id;
-
-    const intervalId = setInterval(async () => {
+    setSnapshot(null);
+    setVisibleSecrets({});
+    setError('');
+    if (!isOpen || !orderId) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const controller = new AbortController();
+    const readCanonicalOrder = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`/api/orders/${encodeURIComponent(identifier)}`);
-        if (res.ok) {
-          const json = await res.json();
-          const backendData = json?.data;
-          const newFulfillmentStatus = json?.fulfillmentStatus || backendData?.fulfillmentStatus;
-          const newSN = json?.serialNumber || backendData?.serialNumber || backendData?.fulfillmentResult?.serialNumber;
-          const newSupplierRef = json?.supplierRefId || backendData?.supplierRefId;
-
-          if (backendData || newFulfillmentStatus) {
-            setCurrentOrder(prev => {
-              if (!prev) return null;
-              const serverOrder: Order = {
-                ...prev,
-                ...(backendData || {}),
-                paymentStatus: json?.paymentStatus || backendData?.paymentStatus || prev.paymentStatus,
-                fulfillmentStatus: newFulfillmentStatus || prev.fulfillmentStatus,
-                voucherCode: json?.voucherCode || backendData?.voucherCode || prev.voucherCode,
-                voucherPassword: json?.voucherPassword || backendData?.voucherPassword || prev.voucherPassword,
-                wifiSsid: json?.wifiSsid || backendData?.wifiSsid || prev.wifiSsid,
-                wifiLoginUrl: json?.wifiLoginUrl || backendData?.wifiLoginUrl || prev.wifiLoginUrl,
-                serialNumber: newSN || prev.serialNumber,
-                supplierRefId: newSupplierRef || prev.supplierRefId,
-              };
-              return serverOrder;
-            });
-
-            if (['SUCCESS', 'FAILED', 'MANUAL_REVIEW'].includes(String(newFulfillmentStatus || '').toUpperCase())) {
-              setIsPollingFulfillment(false);
-              clearInterval(intervalId);
-            }
-          }
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+          credentials: 'same-origin',
+          headers: accessToken ? { 'x-guest-token': accessToken } : {},
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('Status invoice belum dapat diverifikasi. Periksa koneksi atau akses pembelian Anda.');
+        const json = await res.json();
+        const serverOrder: Order = json?.data || json?.order || json;
+        if (!serverOrder || (serverOrder.id !== orderId && serverOrder.invoiceNumber !== orderId) || !Array.isArray(serverOrder.items) || !serverOrder.paymentStatus || !serverOrder.fulfillmentStatus) {
+          throw new Error('Data invoice belum lengkap. Silakan periksa kembali.');
         }
-      } catch (_) {
-        // Abaikan kendala jaringan sesaat
+        if (stopped) return;
+        setSnapshot({ key: snapshotKey, order: serverOrder });
+        setError('');
+        const finished = (serverOrder.paymentStatus === 'PAID' && serverOrder.fulfillmentStatus === 'SUCCESS') || ['FAILED', 'EXPIRED', 'REFUNDED'].includes(serverOrder.paymentStatus) || ['FAILED', 'CANCELED'].includes(serverOrder.fulfillmentStatus);
+        if (!finished) timer = setTimeout(() => { void readCanonicalOrder(); }, 3000);
+      } catch (err) {
+        if (stopped) return;
+        setSnapshot(null); // Fail closed: no retained credential on an unverifiable receipt.
+        setError(err instanceof Error ? err.message : 'Gagal membaca status invoice.');
+        timer = setTimeout(() => { void readCanonicalOrder(); }, 5000);
+      } finally {
+        if (!stopped) setLoading(false);
       }
-    }, 1500);
-
-    return () => {
-      clearInterval(intervalId);
     };
-  }, [isOpen, currentOrder?.id, currentOrder?.fulfillmentStatus, currentOrder?.paymentStatus]);
-
-  // Voucher is allocated only by the backend after a confirmed fulfillment.
-  // The receipt never creates, changes, or syncs voucher inventory in the browser.
-
-  if (!isOpen || !currentOrder) return null;
-
-  const item = currentOrder.items?.[0];
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const isWifi = currentOrder.category === 'wifi' || 
-    (currentOrder.items && currentOrder.items[0]?.category === 'wifi') ||
-    String(currentOrder.productName || '').toLowerCase().includes('wifi') ||
-    String(item?.productName || '').toLowerCase().includes('wifi');
-
-  const wifiVoucherCode = 
-    currentOrder.voucherCode || 
-    currentOrder.fulfillmentResult?.voucherCode || 
-    (isWifi && currentOrder.serialNumber && !currentOrder.serialNumber.startsWith('SN') ? currentOrder.serialNumber : '') ||
-    '';
-
-  const settings = storage.getSettings();
-  const wifiPassword = currentOrder.voucherPassword || currentOrder.fulfillmentResult?.voucherPassword || settings.wifiDefaultPassword || '1234';
-  const wifiSsid = currentOrder.wifiSsid || currentOrder.fulfillmentResult?.wifiSsid || settings.wifiHotspotSsid || 'MelatiNet_Warga_Hotspot';
-  const wifiLoginUrl = currentOrder.wifiLoginUrl || currentOrder.fulfillmentResult?.wifiLoginUrl || settings.wifiLoginUrl || 'http://hotspot.wayahedigital.id';
-
-  const activeSerialNumber = currentOrder.fulfillmentResult?.serialNumber || currentOrder.serialNumber;
-  const activeSupplierRef = currentOrder.fulfillmentResult?.supplierRefId || currentOrder.supplierRefId;
-
-  const fulStatus = String(currentOrder.fulfillmentStatus || '').toUpperCase();
-  const isPaid = currentOrder.paymentStatus === 'PAID';
-  const isFailedOrRefunded = currentOrder.fulfillmentStatus === 'FAILED' || currentOrder.paymentStatus === 'REFUNDED';
-  const isFulfillmentSuccess = currentOrder.fulfillmentStatus === 'SUCCESS' || Boolean(activeSerialNumber) || Boolean(wifiVoucherCode);
-  const isProcessingFulfillment = isPaid && !isFulfillmentSuccess && !isFailedOrRefunded;
-
-  const rawSupportWa = settings.supportWhatsApp || settings.wifiContactSupport || '0812-3456-7890';
-  const cleanAdminWa = rawSupportWa.replace(/[^0-9]/g, '').replace(/^0/, '62') || '6281234567890';
+    void readCanonicalOrder();
+    return () => { stopped = true; controller.abort(); if (timer) clearTimeout(timer); };
+  }, [isOpen, orderId, accessToken, snapshotKey]);
 
   useEffect(() => {
-    if (isWifi && isPaid && wifiVoucherCode) {
-      const qrTarget = wifiLoginUrl
-        ? `${wifiLoginUrl}${wifiLoginUrl.includes('?') ? '&' : '?'}username=${encodeURIComponent(wifiVoucherCode)}&password=${encodeURIComponent(wifiPassword)}`
-        : `WIFI:S:${wifiSsid};T:WPA;P:${wifiPassword};;`;
-      QRCode.toDataURL(qrTarget, { margin: 1, width: 220 })
-        .then(url => setWifiQrDataUrl(url))
-        .catch(() => {});
-    }
-  }, [isWifi, isPaid, wifiVoucherCode, wifiLoginUrl, wifiPassword, wifiSsid]);
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    return () => { document.body.style.overflow = bodyOverflow; previous?.focus(); };
+  }, [isOpen]);
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
-      <div 
-        id={`invoice-modal-${currentOrder.id}`}
-        className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 my-auto"
-        role="dialog"
-        aria-labelledby="invoice-modal-title"
-      >
-        {/* Modal Top Bar */}
-        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Bukti Transaksi Resmi
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors"
-              title="Cetak Invoice"
-            >
-              <Printer size={14} />
-              <span className="hidden sm:inline">Cetak</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
-              aria-label="Tutup invoice"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
+  if (!isOpen || !order) return null;
+  const isPaid = currentOrder?.paymentStatus === 'PAID';
+  const isFulfillmentSuccess = currentOrder?.fulfillmentStatus === 'SUCCESS';
+  const mayReveal = Boolean(isPaid && isFulfillmentSuccess);
+  const isWifi = currentOrder?.category === 'wifi';
+  const isPremium = currentOrder?.category === 'premium';
+  const result = currentOrder?.fulfillmentResult;
+  const wifiVoucherCode = result?.voucherCode || currentOrder?.voucherCode || '';
+  // Receipt is voucher-code only: kata sandi WiFi tidak ditampilkan.
 
-        {/* Printable Area */}
-        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 overflow-y-auto print:p-0 print:overflow-visible">
-          {/* Header Brand & Invoice ID */}
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                  <Zap size={15} className="text-teal-300 fill-teal-300" />
-                </div>
-                <span className="font-extrabold text-base tracking-tight text-slate-900">
-                  Wayahe<span className="text-indigo-600">Digital</span>
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Kebutuhan digitalmu, dalam satu tempat.
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="font-mono text-xs md:text-sm font-bold text-slate-900 block">
-                {currentOrder.invoiceNumber}
-              </span>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                {formatDateWIB(currentOrder.createdAt)}
-              </span>
-            </div>
-          </div>
+  const credentials = result?.credentials?.length ? result.credentials : currentOrder?.credentials || [];
+  const serialNumber = result?.serialNumber || currentOrder?.serialNumber;
+  const failed = currentOrder && (['FAILED', 'CANCELED', 'MANUAL_REVIEW', 'NEEDS_REVIEW', 'PARTIAL'].includes(currentOrder.fulfillmentStatus) || ['FAILED', 'EXPIRED', 'REFUND_PENDING', 'REFUNDED'].includes(currentOrder.paymentStatus));
+  const fulfilledDataMissing = mayReveal && ((isWifi && !wifiVoucherCode) || (isPremium && !credentials.length && !wifiVoucherCode && !serialNumber && !result?.premiumInstructions));
+  const total = currentOrder?.totalPayment ?? currentOrder?.totalAmount ?? 0;
 
-          {/* Dual Status Bar */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Status Pembayaran:</span>
-              <PaymentStatusBadge status={currentOrder.paymentStatus} size="sm" />
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Status Pengiriman:</span>
-              <FulfillmentStatusBadge status={currentOrder.fulfillmentStatus} size="sm" />
-            </div>
-          </div>
-
-          {/* 1. KARTU STATUS: SEDANG DIPROSES OPERATOR (PULSA, KUOTA, GAME, DLL) */}
-          {isProcessingFulfillment && (
-            <div className="bg-gradient-to-br from-indigo-50/90 via-sky-50/80 to-blue-50/90 border-2 border-indigo-300/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3 animate-fadeIn">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                  <RefreshCw size={20} className="animate-spin text-teal-300" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white uppercase tracking-wider">
-                      <span className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-ping"></span>
-                      Sedang Diproses
-                    </span>
-                    <span className="text-[11px] text-indigo-700 font-semibold">Injeksi Operator</span>
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 mt-1">
-                    Pesanan Sedang Diproses Masuk ke Nomor/Akun Anda
-                  </h3>
-                </div>
-              </div>
-
-              <div className="bg-white/90 backdrop-blur-xs p-3 rounded-xl border border-indigo-100 space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Nomor / Akun Tujuan:</span>
-                  <span className="font-mono font-bold text-slate-900 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
-                    {currentOrder.targetDestination}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed pt-1">
-                  Pembayaran Anda telah <strong className="text-emerald-600">LUNAS & AMAN</strong>. Sistem sedang memproses pengisian {item?.productName || 'produk'} langsung ke nomor tujuan. Status akan otomatis diperbarui begitu Serial Number (SN) sukses terbit.
-                </p>
-              </div>
-
-              <div className="w-full bg-indigo-100 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-indigo-600 h-full rounded-full animate-pulse w-full"></div>
-              </div>
-            </div>
-          )}
-
-
-
-          {/* Indikator Auto-Polling Sederhana saat belum final */}
-          {isPollingFulfillment && !isProcessingFulfillment && !isFailedOrRefunded && (
-            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl animate-pulse">
-              <RefreshCw size={15} className="animate-spin text-amber-600 shrink-0" />
-              <div>
-                <p className="font-bold">Menunggu Konfirmasi Operator / Supplier...</p>
-                <p className="text-[11px] text-amber-700">Status pesanan diperbarui otomatis setiap beberapa detik tanpa perlu refresh halaman.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Voucher WiFi only appears after backend fulfillment has succeeded. */}
-          {isWifi && currentOrder.fulfillmentStatus === 'SUCCESS' && Boolean(wifiVoucherCode) && (
-            <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-amber-500/10 border-2 border-emerald-500/30 rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/30">
-                    <Wifi size={22} className="animate-pulse" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5">
-                      Kode Voucher WiFi Anda
-                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <CheckCircle2 size={11} /> Aktif Siap Pakai
-                      </span>
-                    </h3>
-                    <p className="text-[11px] text-slate-500">Gunakan kode voucher di bawah untuk login ke jaringan Hotspot.</p>
-                  </div>
-                </div>
-
-                {wifiQrDataUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setShowWifiQr(!showWifiQr)}
-                    className="px-2.5 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Tampilkan / Sembunyikan QR Code Login"
-                  >
-                    <QrCode size={14} />
-                    <span>{showWifiQr ? 'Tutup QR' : 'Scan QR'}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* QR Code Container Toggle */}
-              {showWifiQr && wifiQrDataUrl && (
-                <div className="p-4 bg-white rounded-xl border border-emerald-200 text-center space-y-2 shadow-xs animate-fadeIn">
-                  <div className="text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5">
-                    <QrCode size={16} className="text-emerald-600" />
-                    <span>Scan untuk Langsung Konek / Login Hotspot</span>
-                  </div>
-                  <img
-                    src={wifiQrDataUrl}
-                    alt="QR Login Hotspot WiFi"
-                    className="w-44 h-44 mx-auto rounded-lg border border-slate-100 p-1 bg-white shadow-2xs"
-                  />
-                  <p className="text-[10px] text-slate-500">
-                    Scan via kamera HP yang telah terhubung ke WiFi <b>{wifiSsid}</b>
-                  </p>
-                </div>
-              )}
-
-              {/* Box Kode Voucher Monospace Besar */}
-              <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
-                    KODE VOUCHER HOTSPOT:
-                  </span>
-                  <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-700 tracking-widest select-all">
-                    {wifiVoucherCode}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onCopyText(wifiVoucherCode, 'Kode Voucher WiFi')}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
-                >
-                  <Copy size={15} />
-                  <span>Salin Kode</span>
-                </button>
-              </div>
-
-              {/* Rincian Login & SSID */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-100 shadow-2xs">
-                  <span className="text-[10px] text-slate-400 block">Nama WiFi (SSID):</span>
-                  <span className="font-bold text-slate-800">{wifiSsid}</span>
-                </div>
-                <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-100 shadow-2xs flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Password / Sandi:</span>
-                    <span className="font-mono font-bold text-slate-800">{wifiPassword}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onCopyText(wifiPassword, 'Password')}
-                    className="text-slate-400 hover:text-slate-700 p-1 rounded"
-                    title="Salin Password"
-                  >
-                    <Copy size={13} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Portal Login + Direct Button */}
-              {wifiLoginUrl && (
-                <div className="text-xs text-slate-600 bg-white/90 p-3 rounded-xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Portal Login Hotspot:</span>
-                    <a
-                      href={wifiLoginUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-emerald-700 font-bold hover:underline inline-flex items-center gap-1 text-xs"
-                    >
-                      {wifiLoginUrl}
-                      <ExternalLink size={12} />
-                    </a>
-                  </div>
-                  <a
-                    href={wifiLoginUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs inline-flex items-center justify-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                  >
-                    <ExternalLink size={13} />
-                    <span>Buka Portal Login</span>
-                  </a>
-                </div>
-              )}
-
-              {/* Petunjuk Pemakaian */}
-              <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 text-[11px] text-slate-600 space-y-1.5">
-                <p className="font-bold text-slate-800 text-xs">Cara Menggunakan Voucher:</p>
-                {settings.wifiLoginInstructions ? (
-                  <div className="whitespace-pre-line text-slate-600 leading-relaxed font-sans text-xs">
-                    {settings.wifiLoginInstructions}
-                  </div>
-                ) : (
-                  <ol className="list-decimal list-inside space-y-0.5 text-slate-600">
-                    <li>Sambungkan HP / Laptop Anda ke WiFi <b>{wifiSsid}</b></li>
-                    <li>Buka browser atau klik notifikasi <b>Masuk ke Jaringan Hotspot</b></li>
-                    <li>Masukkan <b>Kode Voucher</b> di atas dan klik <b>Login</b></li>
-                  </ol>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Detail Hasil Pemenuhan Akun Premium (Credentials: Email & Password) */}
-          {currentOrder.paymentStatus === 'PAID' && (Boolean(currentOrder.credentials?.length) || Boolean(currentOrder.fulfillmentResult?.credentials?.length)) && (
-            <div className="bg-gradient-to-br from-indigo-50 via-purple-50/50 to-pink-50/30 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5 shadow-md space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-                    <Key size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-extrabold text-indigo-950 flex items-center gap-1.5">
-                      Data Akun Premium (Akses Resmi)
-                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <CheckCircle2 size={11} /> Siap Pakai
-                      </span>
-                    </h3>
-                    <p className="text-[11px] text-slate-500">Gunakan akun login berikut pada aplikasi/situs terkait.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Daftar Akun */}
-              <div className="space-y-2.5">
-                {(currentOrder.credentials || currentOrder.fulfillmentResult?.credentials || []).map((cred, idx) => {
-                  const isVisible = Boolean(showPasswordMap[idx]);
-                  return (
-                    <div key={idx} className="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                          Akun #{idx + 1}
-                        </span>
-                        {currentOrder.providerOrderId && (
-                          <span className="text-[9px] font-mono text-slate-400">
-                            Ref: {currentOrder.providerOrderId}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Email Row */}
-                      <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
-                        <div className="min-w-0 flex-1 pr-2">
-                          <span className="text-[10px] text-slate-500 block">Email / Username:</span>
-                          <span className="font-mono text-xs sm:text-sm font-bold text-slate-900 truncate block select-all">
-                            {cred.email}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => onCopyText(cred.email, 'Email Akun')}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer"
-                        >
-                          <Copy size={12} /> Salin
-                        </button>
-                      </div>
-
-                      {/* Password Row */}
-                      {cred.password && (
-                        <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
-                          <div className="min-w-0 flex-1 pr-2">
-                            <span className="text-[10px] text-slate-500 block">Kata Sandi / Password:</span>
-                            <span className="font-mono text-xs sm:text-sm font-bold text-slate-900 truncate block select-all">
-                              {isVisible ? cred.password : '••••••••••••'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility(idx)}
-                              className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-md shadow-2xs"
-                              title={isVisible ? 'Sembunyikan' : 'Lihat Password'}
-                            >
-                              {isVisible ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onCopyText(cred.password || '', 'Password Akun')}
-                              className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1 cursor-pointer"
-                            >
-                              <Copy size={12} /> Salin
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="bg-indigo-50/80 rounded-xl p-2.5 border border-indigo-100 text-[11px] text-indigo-900">
-                <p>🔒 <strong>Keamanan:</strong> Jangan membagikan data login ini kepada orang lain. Masa aktif akun berjalan sesuai durasi paket yang Anda pilih.</p>
-              </div>
-            </div>
-          )}
-
-          {/* SMM Order Tracking Card */}
-          {currentOrder.category === 'smm' && (
-            <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center">
-                    <RefreshCw size={16} className={currentOrder.fulfillmentStatus === 'WAITING' || currentOrder.fulfillmentStatus === 'PROCESSING' ? 'animate-spin' : ''} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-extrabold text-sky-950">
-                      Layanan SMM (Social Media)
-                    </h3>
-                    <p className="text-[11px] text-slate-500">Status pengerjaan pesanan ke sistem penyedia.</p>
-                  </div>
-                </div>
-                <FulfillmentStatusBadge status={currentOrder.fulfillmentStatus} />
-              </div>
-
-              <div className="bg-white p-3 rounded-xl border border-sky-100 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Akun / Link Target:</span>
-                  <span className="font-mono font-bold text-slate-900 truncate max-w-[220px]">
-                    {currentOrder.smmTarget || currentOrder.targetDestination}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Jumlah Pesanan:</span>
-                  <span className="font-bold text-slate-900">
-                    {(currentOrder.smmQty || 1).toLocaleString('id-ID')} unit
-                  </span>
-                </div>
-                {currentOrder.providerOrderId && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">ID Gateway:</span>
-                    <span className="font-mono text-slate-600">
-                      {currentOrder.providerOrderId}
-                    </span>
-                  </div>
-                )}
-                {currentOrder.providerRawStatus && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Status Provider:</span>
-                    <span className="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                      {currentOrder.providerRawStatus}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {currentOrder.fulfillmentResult?.notes && (
-                <p className="text-xs text-slate-600 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-sky-100">
-                  {currentOrder.fulfillmentResult.notes}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Detail Hasil Pemenuhan Non-WiFi (SN Digiflazz / Akses Premium Standar) */}
-          {currentOrder.paymentStatus === 'PAID' && !isWifi && (activeSerialNumber || (currentOrder.fulfillmentResult?.voucherCode && !currentOrder.credentials?.length)) && (
-            <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-teal-600 shrink-0" />
-                <h3 className="text-xs md:text-sm font-bold text-indigo-950 flex items-center gap-1.5">
-                  Hasil Pemenuhan Produk
-                  {currentOrder.fulfillmentStatus === 'SUCCESS' && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
-                      <CheckCircle2 size={11} /> Sukses
-                    </span>
-                  )}
-                </h3>
-              </div>
-
-              {/* Digiflazz Serial Number (SN) */}
-              {activeSerialNumber && (
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-slate-500 block">Serial Number (SN):</span>
-                    <span className="font-mono text-xs md:text-sm font-bold text-slate-800">
-                      {activeSerialNumber}
-                    </span>
-                    {activeSupplierRef && (
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        Ref: {activeSupplierRef}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => onCopyText(activeSerialNumber, 'Serial Number')}
-                    className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="Salin SN"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* Premium Voucher Code / License */}
-              {currentOrder.fulfillmentResult?.voucherCode && currentOrder.category === 'premium' && (
-                <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-slate-500 block">Kode Lisensi Resmi:</span>
-                    <span className="font-mono text-sm font-bold text-indigo-700">
-                      {currentOrder.fulfillmentResult.voucherCode}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => onCopyText(currentOrder.fulfillmentResult?.voucherCode || '', 'Kode Lisensi')}
-                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                    title="Salin Lisensi"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* Notes / Manual Review instructions */}
-              {currentOrder.fulfillmentResult?.notes && (
-                <p className="text-xs text-slate-600 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-indigo-100/60">
-                  {currentOrder.fulfillmentResult.notes}
-                </p>
-              )}
-            </div>
-          )}
-
-
-          {/* Rincian Produk & Tujuan */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Rincian Pembelian
-            </h4>
-            <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
-              <div className="p-3.5 bg-slate-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <ProductLogo
-                    provider={item?.provider}
-                    name={item?.productName}
-                    category={currentOrder.category}
-                    iconUrl={item?.iconUrl}
-                    size="md"
-                  />
-                  <div>
-                    <p className="text-xs md:text-sm font-bold text-slate-900">{item?.productName}</p>
-                    <p className="text-xs text-slate-500">Provider / Mitra: {item?.provider}</p>
-                  </div>
-                </div>
-                <span className="text-xs md:text-sm font-bold text-slate-800 shrink-0">
-                  {formatRupiah(item?.sellingPrice || 0)}
-                </span>
-              </div>
-
-              <div className="p-3.5 space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Nomor / Akun Tujuan:</span>
-                  <span className="font-semibold text-slate-900">{currentOrder.targetDestination}</span>
-                </div>
-                {item?.networkLocation && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Lokasi WiFi:</span>
-                    <span className="font-medium text-slate-800">{item.networkLocation}</span>
-                  </div>
-                )}
-                {currentOrder.customerPhone && currentOrder.customerPhone !== currentOrder.targetDestination && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">No. WhatsApp Pembeli:</span>
-                    <span className="text-slate-700">{currentOrder.customerPhone}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Metode Pembayaran:</span>
-                  <span className="font-medium text-slate-800">{currentOrder.paymentMethod || 'QRIS'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Ringkasan Total */}
-          <div className="space-y-2 border-t border-slate-200 pt-4 text-xs">
-            <div className="flex justify-between text-slate-600">
-              <span>Subtotal Produk</span>
-              <span>{formatRupiah(currentOrder.subtotal)}</span>
-            </div>
-            {currentOrder.discount > 0 && (
-              <div className="flex justify-between text-teal-600 font-semibold">
-                <span>Diskon ({currentOrder.promoCode || 'Promo'})</span>
-                <span>-{formatRupiah(currentOrder.discount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-slate-600">
-              <span>Biaya Layanan</span>
-              <span>{currentOrder.adminFee === 0 ? 'Gratis' : formatRupiah(currentOrder.adminFee)}</span>
-            </div>
-            <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
-              <span>Total Pembayaran</span>
-              <span className="text-indigo-600">{formatRupiah(currentOrder.totalAmount)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-[11px] text-slate-400">
-            Token Akses: {currentOrder.guestAccessToken ? `${currentOrder.guestAccessToken.substring(0, 10)}***` : 'GUEST'}
-          </span>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-xl text-xs transition-colors"
-          >
-            Tutup
-          </button>
-        </div>
+  function secret(label: string, value: string, key: string, conceal = true) {
+    const revealed = !conceal || Boolean(visibleSecrets[key]);
+    return <div key={key} className="rounded-xl bg-slate-900 border border-slate-700/80 p-3 sm:p-4 space-y-2 text-white shadow-inner">
+      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">{label}</p>
+      <div className="flex items-center gap-2"><span className="font-mono text-base sm:text-lg font-extrabold tracking-wider break-all min-w-0 flex-1 select-all text-white">{revealed ? value : '••••••••••••'}</span>
+        {conceal && <button type="button" aria-label={`${revealed ? 'Sembunyikan' : 'Tampilkan'} ${label}`} aria-pressed={revealed} onClick={() => setVisibleSecrets(prev => ({ ...prev, [key]: !prev[key] }))} className="p-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white focus-visible:outline-emerald-500">{revealed ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
+        <button type="button" aria-label={`Salin ${label}`} onClick={() => onCopyText(value, label)} className="p-2.5 rounded-lg border border-emerald-500/50 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 hover:text-white focus-visible:outline-emerald-500"><Copy size={16} /></button>
       </div>
+    </div>;
+  }
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape') { onClose(); return; }
+    if (event.key !== 'Tab') return;
+    const controls = dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), [tabindex="0"]');
+    if (!controls?.length) return;
+    const first = controls[0]; const last = controls[controls.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  return <div className="fixed inset-0 z-50 p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md flex items-center justify-center">
+    <div ref={dialogRef} tabIndex={-1} onKeyDown={handleKeyDown} role="dialog" aria-modal="true" aria-labelledby="invoice-modal-title" id={`invoice-modal-${orderId}`} className="w-full max-w-2xl max-h-[92dvh] flex flex-col overflow-hidden rounded-3xl bg-white shadow-2xl outline-none">
+      <header className="px-5 sm:px-7 py-5 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white flex items-center justify-between gap-3">
+        <div><p className="text-[10px] sm:text-xs font-medium tracking-[0.3em] uppercase text-emerald-300/90">Wayahe Digital</p><h2 id="invoice-modal-title" className="text-lg sm:text-xl font-semibold tracking-tight mt-1 text-white">Invoice Pembelian Premium</h2></div>
+        <div className="flex gap-2"><button type="button" aria-label="Cetak invoice" disabled={!currentOrder || loading || Boolean(error)} onClick={() => window.print()} className="p-2.5 border border-white/20 rounded-xl text-white/80 hover:bg-white/10 disabled:opacity-40"><Printer size={18} /></button><button type="button" aria-label="Tutup invoice" onClick={onClose} className="p-2.5 border border-white/20 rounded-xl text-white/80 hover:bg-white/10"><X size={18} /></button></div>
+      </header>
+      <div className="p-5 sm:p-7 overflow-y-auto space-y-6">
+        {!currentOrder && <div role="status" aria-live="polite" className="rounded-2xl bg-slate-50 border border-slate-200 p-6 flex items-start gap-3">{error ? <ShieldAlert className="text-amber-600 shrink-0" size={22} /> : <RefreshCw className="animate-spin text-indigo-600 shrink-0" size={22} />}<div><h3 className="font-semibold text-sm">{error ? 'Invoice belum terverifikasi' : 'Memverifikasi invoice'}</h3><p className="text-xs text-slate-500 leading-relaxed mt-1">{error || 'Mengambil status pembayaran dan hasil pengiriman langsung dari server.'}</p>{error && <button type="button" onClick={() => setRefresh(v => v + 1)} className="mt-3 text-sm text-indigo-600 font-semibold">Coba lagi</button>}</div></div>}
+        {currentOrder && <>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3"><div><p className="text-xs text-slate-500">Nomor invoice</p><p className="font-mono font-semibold break-all mt-1">{currentOrder.invoiceNumber}</p><p className="text-xs text-slate-400 mt-1">{formatDateWIB(currentOrder.createdAt)}</p></div><button type="button" onClick={() => onCopyText(currentOrder.invoiceNumber, 'Nomor Invoice')} className="flex items-center justify-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-600"><Copy size={14} />Salin invoice</button></div>
+          <section className="relative overflow-hidden rounded-2xl p-5 sm:p-6 text-white bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-900/20"><div aria-hidden="true" className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" /><p className="text-xs uppercase tracking-[0.25em] text-emerald-300/80">Total Pembayaran</p><p className="text-3xl sm:text-5xl tracking-tight font-semibold tabular-nums mt-2 bg-gradient-to-r from-white via-emerald-100 to-emerald-200 bg-clip-text text-transparent">{formatRupiah(total)}</p><div className="mt-5 space-y-3 text-xs"><div className="flex flex-wrap gap-2 justify-between items-center"><span className="text-slate-300">Pembayaran</span><PaymentStatusBadge status={currentOrder.paymentStatus} size="sm" /></div><div className="flex flex-wrap gap-2 justify-between items-center"><span className="text-slate-300">Pengiriman produk</span><FulfillmentStatusBadge status={currentOrder.fulfillmentStatus} size="sm" /></div></div>{currentOrder.expiredAt && !isPaid && <p className="mt-4 text-xs text-slate-400">Batas pembayaran: {formatDateWIB(currentOrder.expiredAt)}</p>}</section>
+          <div role="status" aria-live="polite" className={`flex items-start gap-3 rounded-xl p-4 border ${failed || fulfilledDataMissing ? 'bg-amber-50 border-amber-200 text-amber-900' : mayReveal ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-indigo-50 border-indigo-100 text-indigo-900'}`}>
+            {failed || fulfilledDataMissing ? <ShieldAlert size={20} className="shrink-0" /> : mayReveal ? <CheckCircle2 size={20} className="shrink-0" /> : <RefreshCw size={20} className="shrink-0" />}
+            <div><p className="font-semibold text-sm">{fulfilledDataMissing ? 'Hasil pengiriman belum lengkap' : failed ? 'Pesanan memerlukan perhatian' : mayReveal ? 'Pembayaran dan pengiriman selesai' : isPaid ? 'Pembayaran terverifikasi, produk sedang disiapkan' : 'Menunggu pembayaran terverifikasi'}</p><p className="text-xs leading-relaxed mt-1 opacity-80">{failed ? currentOrder.errorReason || result?.errorReason || 'Periksa status di atas. Hubungi dukungan toko dengan nomor invoice; jangan membayar ulang tanpa arahan.' : fulfilledDataMissing ? 'Server belum mengembalikan data akses. Hubungi dukungan toko dengan nomor invoice.' : mayReveal ? 'Data pembelian di bawah berasal dari hasil pengiriman server.' : 'Status diperbarui otomatis. Kode dan data akses hanya tersedia setelah pembayaran PAID dan pengiriman SUCCESS.'}</p></div>
+          </div>
+          {mayReveal && isWifi && Boolean(wifiVoucherCode) && <section className="rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-5 sm:p-6 space-y-4 shadow-xl ring-1 ring-emerald-500/30 text-white"><h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-emerald-300"><Wifi size={18} className="text-emerald-400" />Voucher WiFi Resmi (Stok Admin)</h3>{secret('Kode Voucher WiFi', wifiVoucherCode, 'wifi-code', false)}{(result?.wifiSsid || currentOrder.wifiSsid) && <p className="text-xs text-emerald-200/80">Jaringan: <span className="font-semibold text-white">{result?.wifiSsid || currentOrder.wifiSsid}</span></p>}</section>}
+          {mayReveal && isPremium && credentials.length > 0 && <section className="rounded-2xl border border-indigo-300/50 bg-gradient-to-br from-indigo-50 via-white to-indigo-50 p-5 sm:p-6 space-y-4 ring-1 ring-indigo-500/20 shadow-inner"><h3 className="flex items-center gap-2 text-sm font-semibold"><KeyRound size={18} className="text-indigo-600" />Data akun premium</h3>{credentials.map((credential, index) => <div key={index} className="space-y-2"><p className="text-xs text-slate-500">Akun {index + 1}</p>{secret(`Email / username akun ${index + 1}`, credential.email, `email-${index}`, false)}{credential.password && secret(`Kata sandi akun ${index + 1}`, credential.password, `password-${index}`)}</div>)}<p className="text-xs text-slate-500 flex items-start gap-2"><LockKeyhole size={14} className="shrink-0" />Jangan membagikan data akses ini kepada orang lain.</p></section>}
+          {mayReveal && !isWifi && (serialNumber || (isPremium && wifiVoucherCode)) && <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3"><h3 className="font-semibold text-sm flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600" />Hasil pemenuhan produk</h3>{serialNumber && secret('Serial Number', serialNumber, 'serial', false)}{isPremium && wifiVoucherCode && secret('Kode lisensi', wifiVoucherCode, 'license', false)}</section>}
+          {mayReveal && (result?.premiumInstructions || result?.notes) && <div className="rounded-xl border border-slate-200 p-4 text-xs whitespace-pre-line text-slate-600 leading-relaxed">{result.premiumInstructions || result.notes}</div>}
+          <section><h3 className="font-semibold text-sm mb-3 tracking-tight">Rincian Pembelian</h3><div className="divide-y divide-slate-100 border border-slate-200 rounded-xl">{currentOrder.items.map((item, index) => <div key={`${item.productId}-${index}`} className="p-4 flex items-start gap-3"><ProductLogo provider={item.provider} name={item.productName} category={item.category} iconUrl={item.iconUrl} size="md" /><div className="min-w-0 flex-1"><h4 className="text-sm font-semibold break-words">{item.productName}</h4>{item.variantName && <p className="text-xs text-slate-500 mt-1">{item.variantName}</p>}<p className="text-xs text-slate-500 mt-1 break-all">{item.targetNumberOrAccount || currentOrder.targetDestination}</p>{item.networkLocation && <p className="text-xs text-slate-500 mt-1">{item.networkLocation}</p>}</div><p className="text-sm font-semibold tabular-nums">{formatRupiah(item.sellingPrice)}</p></div>)}</div></section>
+          <dl className="space-y-2 text-xs text-slate-500"><div className="flex justify-between gap-3"><dt>Metode pembayaran</dt><dd>{currentOrder.paymentMethod || 'Belum ditetapkan'}</dd></div><div className="flex justify-between gap-3"><dt>Subtotal</dt><dd>{formatRupiah(currentOrder.subtotal)}</dd></div><div className="flex justify-between gap-3"><dt>Biaya layanan</dt><dd>{formatRupiah(currentOrder.adminFee)}</dd></div>{currentOrder.discount > 0 && <div className="flex justify-between text-emerald-700"><dt>Diskon</dt><dd>-{formatRupiah(currentOrder.discount)}</dd></div>}{currentOrder.paidAt && <div className="flex justify-between gap-3"><dt>Dibayar pada</dt><dd className="text-right">{formatDateWIB(currentOrder.paidAt)}</dd></div>}{currentOrder.fulfilledAt && <div className="flex justify-between gap-3"><dt>Dikirim pada</dt><dd className="text-right">{formatDateWIB(currentOrder.fulfilledAt)}</dd></div>}</dl>
+        </>}
+      </div>
+      <footer className="border-t border-emerald-100/70 px-5 sm:px-7 py-4 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-emerald-50/60 to-slate-50"><p className="text-[11px] text-slate-500 flex items-center gap-1.5"><ShieldCheck size={14} className="text-emerald-600" />Status terverifikasi server</p><button type="button" disabled={loading} onClick={() => setRefresh(v => v + 1)} className="text-xs font-semibold text-indigo-600 flex items-center gap-2 px-3 py-2 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Perbarui status</button></footer>
     </div>
-  );
+  </div>;
 }

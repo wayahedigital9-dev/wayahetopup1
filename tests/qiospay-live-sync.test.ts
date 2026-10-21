@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 const sandbox = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'qiospay-live-'));
 process.chdir(sandbox);
-const { qiospayService } = await import('../backend/src/services/qiospay.ts');
+const { qiospayService, isQiospayEventEligibleForOrder } = await import('../backend/src/services/qiospay.ts');
 // Config modules resolve their own .env: isolate every persistence/notification seam.
 const { mongoDbService } = await import('../backend/src/services/mongodbService.ts');
 const { supabaseService } = await import('../backend/src/services/supabaseService.ts');
@@ -44,6 +44,19 @@ test('nested provider result is normalized once for UI and reconciliation', asyn
 test('unexpected provider payload does not masquerade as an empty feed', async () => {
   const result = await qiospayService.getMutasi('fixture-code', 'fixture-key', (async () => new Response(JSON.stringify({ unexpected: 'payload' }))) as any, true);
   assert.equal(result.statusCode, 502);
+});
+
+test('stale same-amount orders and events are excluded from Qiospay reconciliation', () => {
+  const eventAt = new Date('2026-10-09T10:15:00.000Z');
+  assert.equal(isQiospayEventEligibleForOrder({ createdAt: '2026-10-09T10:05:00.000Z', expiredAt: '2026-10-09T10:20:00.000Z' }, eventAt), true);
+  assert.equal(isQiospayEventEligibleForOrder({ createdAt: '2026-10-08T10:05:00.000Z' }, eventAt), false);
+  assert.equal(isQiospayEventEligibleForOrder({ createdAt: '2026-10-09T10:30:00.000Z' }, eventAt), false);
+});
+
+test('Qiospay status checks filter saved events to the order payment window before reconciliation', () => {
+  const source = fs.readFileSync(new URL('../backend/src/services/qiospay.ts', import.meta.url), 'utf8');
+  const block = source.split('// 1. Cek dari event lokal yang sudah tersimpan di tabel qiospayEvent')[1].split('// 2. Cek langsung ke Mutasi API Qiospay')[0];
+  assert.match(block, /isQiospayEventEligibleForOrder\(order, ev\.receivedAt\)/);
 });
 
 test('a verified provider reference cannot credit or fulfill another pending order', async () => {

@@ -130,7 +130,27 @@ export function createMemberAuth(getDb: () => Promise<Db>, secure = true, orderC
     } catch { return unavailable(res); }
   });
   router.get('/orders', async (req, res) => {
-    try { const u = await getMember(req); if (!u) return res.status(401).json({ success: false }); const db = await database(); const orders = await db.collection(orderCollection).find({ userId: u.id }).sort({ createdAt: -1 }).limit(100).toArray(); return res.json({ success: true, data: orders.map(({ _id, guestAccessToken, ...o }) => o) }); } catch { return unavailable(res); }
+    try {
+      const u = await getMember(req);
+      if (!u) return res.status(401).json({ success: false });
+      const db = await database();
+      const colls = [...new Set([orderCollection, 'orders'])];
+      // Contact details and top-up destinations do not prove order ownership.
+      const ownerFilter = { userId: u.id };
+      let foundOrders: any[] = [];
+      for (const c of colls) {
+        try {
+          const list = await db.collection(c).find(ownerFilter).sort({ createdAt: -1 }).limit(100).toArray();
+          if (list && list.length > 0) {
+            foundOrders = list;
+            break;
+          }
+        } catch (_) {}
+      }
+      return res.json({ success: true, data: foundOrders.map(({ _id, guestAccessToken, ...o }) => o) });
+    } catch {
+      return unavailable(res);
+    }
   });
   router.post('/logout', async (req, res) => {
     try { const db = await database(); if (token(req)) await db.collection('member_sessions').deleteOne({ _id: digest(token(req)) as any }); res.clearCookie(COOKIE, { ...cookieOptions, maxAge: undefined }); return res.json({ success: true }); } catch { return unavailable(res); }

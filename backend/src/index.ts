@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { toPublicState } from './security/stateDto.js';
 import { createMemberAuth, memberDto } from './security/memberAuth.js';
+import { resolveManualCheckout } from './services/manualCheckout.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -28,6 +29,7 @@ import { createPaymentSession, detectActiveGateway, logGatewayStatus } from './s
 import { pushNotificationService } from './services/pushNotificationService.js';
 import { pakasirService } from './services/pakasir.js';
 import { outboundIpService } from './services/outboundIpService.js';
+import { loadXavieraConfig, xavieraProducts, xavieraSmmServices, xavieraGames } from './services/xavieraClient.js';
 
 // ── Config terpisah: Console (terminal) vs API Keys ──────────
 import { CONSOLE_CONFIG } from './config/console.js';
@@ -163,6 +165,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       invoiceNumber: customInvoice,
       guestAccessToken,
       productId,
+      variantId,
       targetDestination,
       customerName,
       customerPhone,
@@ -178,22 +181,28 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     }
 
     const member = await memberAuth.getMember(req);
+    if (!member) {
+      return res.status(401).json({ success: false, message: 'Silakan login sebagai member sebelum membuat pesanan.' });
+    }
     const state = await mongoDbService.getAllState();
 
-    // 1. Dapatkan metadata produk (dari MongoDB/Local State jika Prisma tidak aktif)
-    let product: any = null;
-    try {
-      product = await prisma.product.findUnique({ where: { id: productId } });
-    } catch (_) {}
-
-    if (!product) {
-      const productList = Array.isArray(state?.products) 
-        ? state.products 
-        : (state?.products ? Object.values(state.products) : []);
-      product = productList.find((p: any) => p.id === productId);
-    }
+    // Catalog and manual stock come from the canonical admin inventory first.
+    const canonicalProducts = Array.isArray(state?.products) ? state.products : Object.values(state?.products || {});
+    let product: any = canonicalProducts.find((p: any) => p.id === productId);
+    if (!product) { try { product = await prisma.product.findUnique({ where: { id: productId } }); } catch (_) {} }
 
     const dynamicPriceFromReq = Number(req.body.sellingPrice || req.body.totalAmount || req.body.amount || 0);
+
+    if ((!product || product.isActive === false) && ['wifi', 'premium'].includes(String(req.body.category || product?.categoryId || '').toLowerCase())) {
+      return res.status(404).json({ success: false, message: 'Produk manual tidak tersedia di katalog admin.' });
+    }
+    let selectedVariantId: string | undefined;
+    let selectedVariantName: string | undefined;
+    const manualCategory = product && ['wifi', 'premium'].includes(String(product.categoryId).toLowerCase()) && !product.isDigiflazzSynced && !product.sellerName && !product.providerProductId;
+    if (manualCategory) {
+      try { const selected = resolveManualCheckout(product, variantId); product = selected.product; selectedVariantId = selected.variantId; selectedVariantName = selected.variantName; }
+      catch (error: any) { return res.status(error.status || 400).json({ success: false, message: error.message }); }
+    }
 
     if (!product || product.isActive === false) {
       // Gunakan data produk dinamis dari frontend (misal WiFi voucher, Digiflazz, atau akun premium)
@@ -205,7 +214,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
         provider: req.body.provider || 'General',
         deliveryMethod: req.body.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
       };
-    } else if (dynamicPriceFromReq > 0 && (!product.sellingPrice || product.sellingPrice === 10000)) {
+    } else if (!manualCategory && dynamicPriceFromReq > 0 && (!product.sellingPrice || product.sellingPrice === 10000)) {
       product.sellingPrice = dynamicPriceFromReq;
     }
 
@@ -256,7 +265,8 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 
     const accessToken = typeof guestAccessToken === 'string' && guestAccessToken.length >= 20 ? guestAccessToken : `gst_${crypto.randomBytes(24).toString('hex')}`;
     const reservation = {
-      id: orderId, invoiceNumber, ...(member ? { userId: member.id } : {}), guestAccessToken: accessToken,
+      id: orderId, invoiceNumber, userId: member.id, guestAccessToken: accessToken,
+      productId: product.id, variantId: selectedVariantId, variantName: selectedVariantName,
       targetDestination: targetDestination.trim(), customerName: customerName || 'Pelanggan Wayahe', customerPhone: customerPhone || targetDestination,
       customerEmail: customerEmail || '', category: product.categoryId || 'PULSA', subtotal, adminFee, discount, totalAmount,
       promoCode: promoCode || '', deliveryMethod: product.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
@@ -266,7 +276,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     const reserved = await mongoDbService.createOrder(reservation);
     if (!reserved.success) return res.status(reserved.conflict ? 409 : 503).json({ success: false, message: reserved.conflict ? 'ID atau nomor invoice pesanan sudah digunakan.' : 'Database reservasi pesanan tidak tersedia.' });
     await supabaseService.saveOrder(reservation, true);
-    const { userId: _owner, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
+    const { userId: _owner, productId: _product, variantId: _variant, variantName: _variantName, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
     await prisma.order.create({ data: { ...prismaReservation, idempotencyKey: idempotencyKey || invoiceNumber } });
 
     // Generate Payment Session (QRIS)
@@ -289,7 +299,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 
     const formattedOrder = {
       id: orderId,
-      ...(member ? { userId: member.id } : {}),
+      userId: member.id,
       invoiceNumber,
       guestAccessToken: accessToken,
       targetDestination: targetDestination.trim(),
@@ -297,6 +307,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       customerPhone: customerPhone || targetDestination,
       customerEmail: customerEmail || '',
       productId: product.id,
+      variantId: selectedVariantId, variantName: selectedVariantName,
       productName: product.name,
       buyerSkuCode: (product as any).supplierSku || (product as any).sku || req.body.supplierSku || req.body.sku || req.body.buyerSkuCode || '',
       supplierSku: (product as any).supplierSku || (product as any).sku || '',
@@ -305,9 +316,14 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       items: [
         {
           productId: product.id,
+          variantId: selectedVariantId, variantName: selectedVariantName,
           productName: product.name,
           category: product.categoryId || 'PULSA',
           price: product.sellingPrice,
+          sellingPrice: product.sellingPrice,
+          provider: product.provider,
+          deliveryMethod: product.deliveryMethod,
+          iconUrl: product.iconUrl,
           supplierSku: (product as any).supplierSku || (product as any).sku || '',
           sku: (product as any).sku || (product as any).supplierSku || '',
           targetNumberOrAccount: targetDestination.trim(),
@@ -439,64 +455,31 @@ app.get('/api/orders/track', async (req: Request, res: Response) => {
 // 4. CHECK & AUTO RECONCILE ORDER STATUS (GET /api/orders/:identifier/payment-status)
 const handleOrderStatusCheck = async (req: Request, res: Response) => {
   try {
-    const { identifier } = req.params;
-    const token = (req.query.token as string) || (req.headers['x-guest-token'] as string);
-    const phone = req.query.phone as string;
-    const merchantCode = (req.query.merchant_code as string) || (req.body?.merchant_code as string) || '';
-    const apiKey = (req.query.api_key as string) || (req.body?.api_key as string) || '';
-
-    // Cari order dari Prisma, MongoDB, atau Supabase
-    const cleanId = String(identifier || '').trim();
-    let order: any = null;
-    try {
-      order = await prisma.order.findFirst({
-        where: {
-          OR: [
-            { id: cleanId },
-            { invoiceNumber: cleanId },
-          ],
-        },
-        include: { items: true },
-      });
-    } catch (_) {}
-
-    if (!order) {
-      try {
-        const state = await mongoDbService.getAllState();
-        const ordersList = Array.isArray(state?.orders)
-          ? state.orders
-          : (state?.orders ? Object.values(state.orders) : []);
-        order = ordersList.find(
-          (o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase()
-        );
-      } catch (_) {}
-    }
-
-    if (!order) {
-      return res.status(404).json({ success: false, paymentStatus: 'NOT_FOUND', fulfillmentStatus: 'NOT_STARTED', message: 'Pesanan tidak ditemukan.' });
-    }
-
+    const cleanId = String(req.params.identifier || '').trim();
+    const state = await mongoDbService.getAllState();
+    const orders = Array.isArray(state.orders) ? state.orders : Object.values(state.orders || {});
+    const order: any = orders.find((o: any) => o.id === cleanId || o.invoiceNumber === cleanId);
+    if (!order) return res.status(404).json({ success: false, message: 'Pesanan tidak ditemukan.' });
     if (!await canReadOrder(req, order)) return res.status(403).json({ success: false, message: 'Akses pesanan ditolak.' });
-    // Validasi kepemilikan jika token atau phone disertakan
-    if (token || phone) {
-      const isTokenMatch = token && order.guestAccessToken === String(token).trim();
-      const isPhoneMatch = phone && (order.targetDestination.includes(String(phone).trim()) || order.customerPhone?.includes(String(phone).trim()));
-      if (!isTokenMatch && !isPhoneMatch) {
-        return res.status(403).json({ success: false, message: 'Akses ditolak. Token atau identitas pesanan tidak cocok.' });
-      }
+    if (order.paymentStatus === 'PAID') {
+      return res.json({ success: true, paymentStatus: 'PAID', fulfillmentStatus: order.fulfillmentStatus, order, diagnosticCode: 'VERIFIED' });
     }
-
-    const result = await qiospayService.checkAndReconcileOrderStatus(
-      order.id, 
-      prisma, 
-      fulfillmentService,
-      merchantCode,
-      apiKey
-    );
-    res.json(result);
+    const settings = await mongoDbService.getSettingsFromDatabase();
+    const gateway = String(order.paymentGatewayProvider || settings.paymentGatewayProvider || 'QIOSPAY').toUpperCase();
+    if (gateway === 'PAKASIR') {
+      const result = await pakasirService.getOrderStatus(order.invoiceNumber || order.id, prisma, fulfillmentService);
+      if (!result.success) return res.status(502).json({ success: false, message: result.message || 'Gateway belum dapat dihubungi.' });
+      const freshState = await mongoDbService.getAllState();
+      const fresh = (freshState.orders || []).find((o: any) => o.id === order.id) || order;
+      return res.json({ success: true, paymentStatus: fresh.paymentStatus, fulfillmentStatus: fresh.fulfillmentStatus, order: fresh });
+    }
+    if (!settings.qiospayMerchantCode || !settings.qiospayApiKey) {
+      return res.status(503).json({ success: false, message: 'Konfigurasi gateway di dashboard admin belum lengkap.' });
+    }
+    const result = await qiospayService.checkAndReconcileOrderStatus(order.id, prisma, fulfillmentService, settings.qiospayMerchantCode, settings.qiospayApiKey);
+    return res.json(result);
   } catch (error: any) {
-    console.error('[Check Status Error]:', error.message);
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(503).json({ success: false, message: 'Status pembayaran belum dapat diverifikasi. Silakan coba lagi.' });
   }
 };
 
@@ -510,34 +493,21 @@ app.get('/api/orders/:ref_id', async (req: Request, res: Response) => {
     const { ref_id } = req.params;
     const cleanRef = String(ref_id || '').trim();
 
-    let order: any = null;
-    try {
-      order = await prisma.order.findFirst({
-        where: {
-          OR: [
-            { id: cleanRef },
-            { invoiceNumber: cleanRef },
-            { supplierRefId: cleanRef },
-            { invoiceNumber: cleanRef.replace(/^WD-/, '') },
-          ],
-        },
-        include: { items: true },
-      });
-    } catch (_) {}
-
+    // Read canonical Mongo/local state first so a stale mirror cannot hide SKU or supplier results.
+    const state = await mongoDbService.getAllState();
+    const ordersList = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+    let order: any = ordersList.find((o: any) =>
+      o.id === cleanRef || o.invoiceNumber === cleanRef || o.supplierRefId === cleanRef
+      || o.invoiceNumber?.toLowerCase() === cleanRef.toLowerCase());
     if (!order) {
       try {
-        const state = await mongoDbService.getAllState();
-        const ordersList = Array.isArray(state?.orders)
-          ? state.orders
-          : (state?.orders ? Object.values(state.orders) : []);
-        order = ordersList.find(
-          (o: any) =>
-            o.id === cleanRef ||
-            o.invoiceNumber === cleanRef ||
-            o.supplierRefId === cleanRef ||
-            o.invoiceNumber?.toLowerCase() === cleanRef.toLowerCase()
-        );
+        order = await prisma.order.findFirst({
+          where: { OR: [
+            { id: cleanRef }, { invoiceNumber: cleanRef }, { supplierRefId: cleanRef },
+            { invoiceNumber: cleanRef.replace(/^WD-/, '') },
+          ] },
+          include: { items: true },
+        });
       } catch (_) {}
     }
 
@@ -2101,7 +2071,36 @@ function requireAdmin(req: Request, res: Response, next: any) {
   return res.status(401).json({ success: false, message: 'Unauthorized' });
 }
 
-app.post('/api/admin/login', async (req: Request, res: Response) => {
+app.get('/api/provider/catalog', requireAdmin, async (req: Request, res: Response) => {
+  const category = String(req.query.category || '').trim().toLowerCase();
+  if (!['premium', 'smm', 'games'].includes(category)) {
+    return res.status(400).json({ success: false, message: 'Kategori Xaviera tidak valid.' });
+  }
+  try {
+    const config = loadXavieraConfig();
+    const result = category === 'premium'
+      ? { products: await xavieraProducts(config) }
+      : category === 'smm'
+        ? { services: await xavieraSmmServices(config) }
+        : { games: await xavieraGames(config) };
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({ success: true, category, ...result });
+  } catch (error: any) {
+    const status = error?.status === 401 ? 503 : 502;
+    console.warn(`[Xaviera catalog] ${category} request failed with status ${Number(error?.status) || 0}`);
+    return res.status(status).json({ success: false, code: 'XAVIERA_CATALOG_UNAVAILABLE', message: 'Katalog Xaviera belum dapat dimuat.' });
+  }
+});
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' },
+});
+
+app.post('/api/admin/login', adminLoginLimiter, async (req: Request, res: Response) => {
   const username = String(req.body?.username || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   if (!username || !password) return res.status(400).json({ success: false, message: 'Username dan password wajib diisi.' });
@@ -2184,7 +2183,7 @@ app.post('/api/sync/state', requireAdmin, async (req: Request, res: Response) =>
 app.get('/api/admin/inventory/load', requireAdmin, async (_req: Request, res: Response) => {
   try {
     const state = await mongoDbService.getAllState();
-    return res.json({ success: true, data: { products: state.products || [], wifiBatches: state.wifiBatches || [] } });
+    return res.json({ success: true, data: { products: state.products || [], wifiBatches: state.wifiBatches || [], revision: state.manualInventoryRevision || 0 } });
   } catch {
     return res.status(503).json({ success: false, message: 'Stok database belum dapat dimuat.' });
   }
@@ -2207,7 +2206,10 @@ app.post('/api/admin/inventory/save', requireAdmin, async (req: Request, res: Re
     );
     products = [...products, ...supplierProducts];
 
-    const result = await mongoDbService.saveManualInventory(products, wifiBatches);
+    const revision = req.body?.revision;
+    if (!Number.isSafeInteger(revision) || revision < 0) return res.status(400).json({ success: false, message: 'Muat ulang inventori sebelum menyimpan (revisi wajib diisi).' });
+    const result = await mongoDbService.saveManualInventory(products, wifiBatches, revision);
+    if (result.conflict) return res.status(409).json({ success: false, message: 'Inventori berubah. Muat ulang stok sebelum menyimpan draf.' });
     if (!result.success || !result.data) {
       return res.status(503).json({ success: false, message: 'Stok belum tersimpan di database. Tidak ada perubahan lokal yang dikonfirmasi.' });
     }

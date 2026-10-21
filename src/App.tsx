@@ -166,24 +166,19 @@ export default function App() {
     window.addEventListener('wayahe_storage_synced', loadData);
     window.addEventListener('storage', loadData);
 
-    // Background worker simulation for fulfillment and reconciliation
-    const workerInterval = setInterval(() => {
-      const currentOrders = storage.getOrders();
-      const needsFulfillment = currentOrders.filter(
-        o => o.paymentStatus === 'PAID' && (o.fulfillmentStatus === 'NOT_STARTED' || o.fulfillmentStatus === 'QUEUED')
-      );
-
-      if (needsFulfillment.length > 0) {
-        needsFulfillment.forEach(async (order) => {
-          try {
-            await apiAdapter.retryFulfillment(order.id);
-            setOrders(storage.getOrders());
-          } catch (e) {
-            // Ignore background worker transient error
-          }
-        });
-      }
-    }, 12000);
+    // Customers refresh confirmed catalog/history; only the backend fulfills orders.
+    let refreshing = false;
+    const refreshConfirmedData = async () => {
+      if (refreshing || document.visibilityState === 'hidden') return;
+      refreshing = true;
+      try {
+        await storage.hydrateManualInventory();
+        if (storage.getUser()) await storage.hydrateMemberOrders();
+        loadData();
+      } catch (_) {} finally { refreshing = false; }
+    };
+    const workerInterval = setInterval(() => { void refreshConfirmedData(); }, 15000);
+    window.addEventListener('focus', refreshConfirmedData);
 
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
@@ -191,6 +186,7 @@ export default function App() {
       window.removeEventListener('wayahe_storage_synced', loadData);
       window.removeEventListener('storage', loadData);
       clearInterval(workerInterval);
+      window.removeEventListener('focus', refreshConfirmedData);
     };
   }, []);
 

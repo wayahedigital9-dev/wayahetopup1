@@ -170,7 +170,7 @@ test('creation dispatch fails closed before payments when reservation database i
   const h = routes({ mongoDbService: { getAllState: async () => ({ orders: [] }), createOrder: async () => ({ success: false }) },
     prisma: { product: { findUnique: async () => null }, order: { findFirst: async () => null } }, supabaseService: { getOrder: async () => null },
     createPaymentSession: async () => { payments++; } });
-  assert.equal((await h.dispatch('post', '/api/orders', { body: { productId: 'fixture-product', targetDestination: '0800000000' }, headers: {}, query: {} })).status, 503);
+  assert.equal((await h.dispatch('post', '/api/orders', { body: { productId: 'fixture-product', targetDestination: '0800000000' }, headers: { cookie }, query: {} })).status, 503);
   assert.equal(payments, 0);
 });
 

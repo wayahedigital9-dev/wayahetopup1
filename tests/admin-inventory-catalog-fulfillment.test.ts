@@ -21,3 +21,13 @@ test('WiFi category always uses local voucher fulfillment even when the order ca
   assert.match(fulfillment, /const isDigiflazz\s*=\s*rawCat\s*!==\s*['"]WIFI['"]\s*&&/);
   assert.match(fulfillment, /else if \(rawCat === ['"]WIFI['"]\)\s*\{\s*await this\.fulfillWifiVoucher/);
 });
+
+test('WiFi fulfillment never generates a voucher and fails closed when admin stock is empty', () => {
+  const start = fulfillment.indexOf('private async fulfillWifiVoucher');
+  const end = fulfillment.indexOf('private async fulfillPremium', start);
+  assert.ok(start >= 0 && end > start);
+  const handler = fulfillment.slice(start, end);
+  assert.match(handler, /reserveManualWifiVoucher/);
+  assert.match(handler, /fulfillmentStatus:\s*'MANUAL_REVIEW'/);
+  assert.doesNotMatch(handler, /Math\.random|wifiVoucherItem\.(findFirst|create)|WF-/);
+});

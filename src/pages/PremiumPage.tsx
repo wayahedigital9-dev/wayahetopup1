@@ -10,6 +10,7 @@ import {
   Lock
 } from 'lucide-react';
 import { Product, PromoBanner } from '../types';
+import { premiumAvailableStock, isManualPremium } from '../components/PremiumManualStockPanel';
 import { formatRupiah } from '../utils/operator';
 import { HeroAdBanner } from '../components/HeroAdBanner';
 import { ProductLogo } from '../components/ProductLogo';
@@ -69,6 +70,7 @@ export function PremiumPage({
   const banners = propBanners && propBanners.length > 0 ? propBanners : storage.getBanners();
 
   const handleCheckout = (product: Product) => {
+    if (isManualPremium(product) && premiumAvailableStock(product) <= 0) { alert('Stok premium kosong. Silakan pilih produk lain.'); return; }
     if (!targetAccount || targetAccount.trim().length < 5) {
       alert('Masukkan email akun atau nomor WhatsApp tujuan aktivasi.');
       return;
@@ -236,13 +238,13 @@ export function PremiumPage({
                     <div className="flex justify-between">
                       <span className="text-[#A89F91]">Status Stok:</span>
                       <span className={`font-bold ${
-                        (p.stock ?? 10) > 5
+                        premiumAvailableStock(p) > 5
                           ? 'text-[#84A951]'
-                          : (p.stock ?? 10) > 0
+                          : premiumAvailableStock(p) > 0
                           ? 'text-[#D4A359]'
                           : 'text-rose-400'
                       }`}>
-                        {(p.stock ?? 10) > 0 ? `Tersedia (${p.stock ?? 10} slot akun)` : 'Stok Habis'}
+                        {premiumAvailableStock(p) > 0 ? `Tersedia (${premiumAvailableStock(p)} slot akun)` : 'Stok Habis'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -274,15 +276,15 @@ export function PremiumPage({
 
                   <button
                     onClick={() => handleCheckout(p)}
-                    disabled={(p.stock ?? 10) <= 0}
+                    disabled={premiumAvailableStock(p) <= 0}
                     id={`buy-premium-${p.id}`}
                     className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                      (p.stock ?? 10) <= 0
+                      premiumAvailableStock(p) <= 0
                         ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
                         : 'bg-[#D4A359] hover:bg-[#E2B774] text-[#1D1814]'
                     }`}
                   >
-                    <span>{(p.stock ?? 10) <= 0 ? 'Habis' : 'Pilih Produk'}</span>
+                    <span>{premiumAvailableStock(p) <= 0 ? 'Habis' : 'Pilih Produk'}</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>

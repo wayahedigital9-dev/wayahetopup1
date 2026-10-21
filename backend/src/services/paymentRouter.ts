@@ -1,5 +1,6 @@
 import { QIOSPAY_CONFIG, PAKASIR_CONFIG } from '../config/apikeys.js';
 import { qiospayService } from './qiospay.js';
+import { mongoDbService } from './mongodbService.js';
 import { pakasirService } from './pakasir.js';
 
 /**
@@ -143,9 +144,11 @@ export async function createPaymentSession(params: {
 
   // 2. Jalur Qiospay QRIS Dinamis
   const depositId = `QP-${params.orderId.replace(/[^a-zA-Z0-9]/g, '')}`;
+  const savedSettings = await mongoDbService.getSettingsFromDatabase();
+  const staticQrString = String(savedSettings.qiospayQrString || savedSettings.staticQrisString || '').trim();
+  if (!staticQrString) throw new Error('QRIS Qiospay asli belum tersimpan di dashboard admin.');
   const qrisRes = qiospayService.createPaymentQris({
-    amount: dynamicAmount,
-    orderId: params.orderId,
+    amount: dynamicAmount, orderId: params.orderId, staticQrString,
   });
 
   return {
