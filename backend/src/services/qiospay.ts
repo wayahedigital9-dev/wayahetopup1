@@ -1087,6 +1087,260 @@ export class QiospayPaymentService {
     }
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  VIRTUAL ACCOUNT (VA H2H) — POST https://qiospay.id/api/create/va
+  //  Autentikasi memakai username (User ID mitra) + pin (us_apikey),
+  //  CASE-SENSITIVE. Fee admin TIDAK PERNAH di-hardcode: selalu dibaca dari
+  //  `additionalfee` pada respons sukses, sesuai catatan dokumentasi resmi.
+  // ══════════════════════════════════════════════════════════════════════
+
+  /** VA hanya boleh dipakai bila fitur diaktifkan DAN kredensial H2H terisi. */
+  isVaConfigured(): boolean {
+    return Boolean(QIOSPAY_CONFIG.VA_ENABLED && QIOSPAY_CONFIG.H2H_USERNAME && QIOSPAY_CONFIG.H2H_PIN);
+  }
+
+  /** Daftar bank VA yang ditampilkan ke pembeli (BRI, BNI, Mandiri, BSI). */
+  listVaBanks(): Array<{ name: string; code: string }> {
+    return QIOSPAY_CONFIG.VA_BANKS;
+  }
+
+  /** Partner reference VA harus unik per transaksi dan stabil saat diulang. */
+  buildVaPartnerReff(orderId: string): string {
+    return `WD-VA-${String(orderId || '').replace(/[^a-zA-Z0-9]/g, '')}`;
+  }
+
+  private resolveVaCallbackUrl(explicit?: string): string {
+    if (explicit && /^https:\/\//i.test(explicit)) return explicit;
+    if (QIOSPAY_CONFIG.VA_CALLBACK_URL) return QIOSPAY_CONFIG.VA_CALLBACK_URL;
+    const base = String(process.env.PUBLIC_BASE_URL || process.env.FRONTEND_URL || 'https://wayahetopup.my.id').replace(/\/+$/, '');
+    return `${base}/api/webhook/qiospay-va`;
+  }
+
+  async createVirtualAccount(params: {
+    orderId: string;
+    amount: number;
+    bankCode: string;
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    callbackUrl?: string;
+  }): Promise<{
+    status: 'success' | 'error';
+    virtualAccount?: string;
+    bankCode: string;
+    bankName?: string;
+    amount: number;
+    additionalfee?: number;
+    customerName?: string;
+    partnerReff: string;
+    message?: string;
+  }> {
+    const partnerReff = this.buildVaPartnerReff(params.orderId);
+    const bankCode = String(params.bankCode || '').trim();
+    const bank = this.listVaBanks().find((b) => b.code === bankCode);
+    const amount = Math.max(0, Math.round(Number(params.amount || 0)));
+
+    if (!this.isVaConfigured()) {
+      return {
+        status: 'error', bankCode, bankName: bank?.name, amount, partnerReff,
+        message: 'Fitur Virtual Account Qiospay belum aktif. Isi QIOSPAY_H2H_USERNAME & QIOSPAY_H2H_PIN setelah VA H2H disetujui di dashboard Qiospay.',
+      };
+    }
+    if (!amount || !bankCode) {
+      return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: 'Nominal dan kode bank wajib diisi.' };
+    }
+
+    try {
+      const response = await fetch('https://qiospay.id/api/create/va', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: QIOSPAY_CONFIG.H2H_USERNAME,
+          pin: QIOSPAY_CONFIG.H2H_PIN,
+          amount,
+          bank_code: bankCode,
+          partner_reff: partnerReff,
+          customer_id: String(params.customerId || params.orderId || '').slice(0, 64),
+          customer_name: String(params.customerName || 'Pelanggan').slice(0, 64),
+          customer_phone: String(params.customerPhone || '').slice(0, 32),
+          customer_email: String(params.customerEmail || '').slice(0, 96),
+          url_callback: this.resolveVaCallbackUrl(params.callbackUrl),
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      const text = await response.text();
+      let json: any = null;
+      try { json = JSON.parse(text); } catch (_) {}
+
+      if (!json || String(json.status || '').toLowerCase() !== 'success' || !json.virtual_account) {
+        const reason = json?.response || json?.message || `HTTP ${response.status}`;
+        console.warn(`⚠️ [Qiospay VA] Gagal membuat VA untuk ${partnerReff}: ${reason}`);
+        return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: String(reason) };
+      }
+
+      // additionalfee = fee admin dari Qiospay (dipotong dari amount). Jangan di-hardcode.
+      const additionalfee = parseNominalRupiah(json.additionalfee);
+      console.log(`✅ [Qiospay VA] VA ${json.bank_name || bankCode} dibuat untuk ${partnerReff} (fee Rp ${additionalfee})`);
+      return {
+        status: 'success',
+        virtualAccount: String(json.virtual_account),
+        bankCode: String(json.bank_code || bankCode),
+        bankName: String(json.bank_name || bank?.name || ''),
+        amount: parseNominalRupiah(json.amount) || amount,
+        additionalfee,
+        customerName: json.customer_name,
+        partnerReff,
+      };
+    } catch (err: any) {
+      console.warn(`⚠️ [Qiospay VA] Kesalahan koneksi: ${err?.message}`);
+      return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: `Koneksi ke Qiospay gagal: ${err?.message}` };
+    }
+  }
+
+  /**
+   * Callback VA (POST ke url_callback mitra). WAJIB membalas HTTP 200.
+   * Pencocokan memakai partner_reff (identitas eksplisit dari provider) — bukan
+   * nominal — lalu order di-update PAID dan diteruskan ke fulfillment.
+   */
+  async processVaCallback(
+    payload: any,
+    prisma: PrismaClient,
+    fulfillmentService?: any
+  ): Promise<{ statusCode: number; response: any }> {
+    const partnerReff = String(payload?.partner_reff || '').trim();
+    const statusRaw = String(payload?.status || '').trim().toUpperCase();
+    const amount = parseNominalRupiah(payload?.amount);
+    const vaNumber = String(payload?.va_number || '').trim();
+    const vaCode = String(payload?.va_code || '').trim();
+    const serial = String(payload?.serialnumber || '').trim();
+
+    if (!partnerReff) {
+      console.warn('⚠️ [Qiospay VA Callback] partner_reff tidak ada; ditolak.');
+      return { statusCode: 400, response: { status: 'reject', message: 'partner_reff wajib ada' } };
+    }
+    if (statusRaw !== 'SUCCESS') {
+      return { statusCode: 200, response: { status: 'accept', message: `Status "${statusRaw || 'kosong'}" diabaikan` } };
+    }
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
+      console.warn(`⚠️ [Qiospay VA Callback] amount tidak valid untuk ${partnerReff}:`, payload?.amount);
+      return { statusCode: 400, response: { status: 'reject', message: 'amount tidak valid' } };
+    }
+
+    try {
+      const state = await mongoDbService.getAllState();
+      const orders: any[] = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+      const sameReff = orders.filter((o: any) => String(o.vaPartnerReff || '') === partnerReff);
+
+      // Idempotensi: VA yang sudah pernah dicairkan tidak boleh mengkredit dua kali.
+      if (sameReff.some((o: any) => o.paymentStatus === 'PAID')) {
+        console.log(`🔁 [Qiospay VA] ${partnerReff} sudah PAID; callback duplikat diabaikan.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Duplicate VA callback ignored' } };
+      }
+
+      const targetOrder = sameReff[0];
+      if (!targetOrder) {
+        // Tanpa order yang cocok, jangan pernah menebak: simpan untuk review manual.
+        try {
+          await prisma.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_UNMATCHED',
+              performedBy: 'Qiospay VA Callback',
+              details: `Callback VA ${vaNumber || '(tanpa nomor)'} Rp ${amount.toLocaleString('id-ID')} dengan partner_reff ${partnerReff} tidak cocok dengan pesanan mana pun. Butuh peninjauan manual.`,
+            },
+          });
+        } catch (_) {}
+        console.warn(`⚠️ [Qiospay VA] Callback ${partnerReff} tidak menemukan pesanan; masuk antrean manual review.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Diterima untuk peninjauan manual' } };
+      }
+
+      // Nominal harus sama dengan tagihan pesanan; selisih = tidak boleh dikreditkan otomatis.
+      const expected = Number(targetOrder.totalAmount || targetOrder.amount || 0);
+      if (expected > 0 && amount !== expected) {
+        try {
+          await prisma.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_AMOUNT_MISMATCH',
+              performedBy: 'Qiospay VA Callback',
+              details: `Invoice ${targetOrder.invoiceNumber}: callback VA Rp ${amount.toLocaleString('id-ID')} tidak sama dengan tagihan Rp ${expected.toLocaleString('id-ID')} (ref ${partnerReff}). Menunggu review manual.`,
+            },
+          });
+        } catch (_) {}
+        console.warn(`⚠️ [Qiospay VA] Nominal tidak cocok untuk ${targetOrder.invoiceNumber}; manual review.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Nominal tidak cocok; peninjauan manual' } };
+      }
+
+      if (targetOrder.paymentStatus === 'PAID') {
+        return { statusCode: 200, response: { status: 'accept', message: 'Sudah lunas' } };
+      }
+
+      const now = new Date();
+      let updatedOrder: any = {
+        ...targetOrder,
+        paymentStatus: 'PAID',
+        paidAt: now.toISOString(),
+        paymentMethod: targetOrder.paymentMethod || `VA ${targetOrder.vaBankName || vaCode || ''}`.trim(),
+        vaNumber: targetOrder.vaNumber || vaNumber,
+        vaBankCode: targetOrder.vaBankCode || vaCode,
+        vaSerialNumber: serial || undefined,
+        qiospayRefid: partnerReff,
+        updatedAt: now.toISOString(),
+      };
+
+      try {
+        const txResult = await prisma.$transaction(async (tx) => {
+          const fresh = await tx.order.findUnique({ where: { id: targetOrder.id } });
+          if (!fresh || fresh.paymentStatus === 'PAID') return fresh;
+          const updated = await tx.order.update({
+            where: { id: fresh.id },
+            data: { paymentStatus: 'PAID', paidAt: now, paymentMethod: updatedOrder.paymentMethod, updatedAt: now },
+          });
+          await tx.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_RECONCILED',
+              performedBy: 'Qiospay VA Callback',
+              details: `Invoice ${fresh.invoiceNumber} lunas via VA ${updatedOrder.vaBankName || vaCode} (Rp ${amount.toLocaleString('id-ID')}, ref ${partnerReff})`,
+            },
+          });
+          return updated;
+        });
+        if (txResult) updatedOrder = { ...updatedOrder, ...txResult };
+      } catch (txErr: any) {
+        console.warn('[Qiospay VA] Prisma transaction notice:', txErr.message);
+      }
+
+      try {
+        await supabaseService.saveOrder(updatedOrder);
+        await mongoDbService.saveOrder(updatedOrder);
+        console.log(`✅ [QIOSPAY_VA_PAID] Order ${updatedOrder.invoiceNumber} PAID via VA ${updatedOrder.vaBankName || vaCode}`);
+      } catch (syncErr: any) {
+        console.warn('⚠️ [Qiospay VA] Cloud sync notice:', syncErr.message);
+      }
+
+      try {
+        pushNotificationService.sendPaymentSuccessNotification({
+          id: updatedOrder.id,
+          invoiceNumber: updatedOrder.invoiceNumber,
+          productName: updatedOrder.productName || targetOrder.productName || 'Produk Digital',
+          totalAmount: amount,
+          paidAt: updatedOrder.paidAt,
+        }).catch(() => {});
+      } catch (_) {}
+
+      if (fulfillmentService && typeof fulfillmentService.fulfillOrder === 'function') {
+        try { await fulfillmentService.fulfillOrder(updatedOrder.id); } catch (fErr: any) {
+          console.error(`[Fulfillment] Gagal memproses order ${updatedOrder.invoiceNumber}:`, fErr.message);
+        }
+      }
+
+      return { statusCode: 200, response: { status: 'accept', message: 'VA payment recorded' } };
+    } catch (dbError: any) {
+      console.error('[Qiospay VA Callback] Exception:', dbError.message);
+      return { statusCode: 500, response: { status: 'reject', message: 'Gagal memproses callback VA' } };
+    }
+  }
+
   /**
    * 4. Pembuatan Payload QRIS Menggunakan Modul qris.mjs
    * - Membaca QIOSPAY_QRIS_STRING dari environment

@@ -25,7 +25,7 @@ import { ngrokService } from './services/ngrok.js';
 import { mongoDbService } from './services/mongodbService.js';
 import { supabaseService, sanitizeSupabaseUrl } from './services/supabaseService.js';
 import { mergeSettings } from './services/settingsMerge.js';
-import { createPaymentSession, detectActiveGateway, logGatewayStatus } from './services/paymentRouter.js';
+import { createPaymentSession, detectActiveGateway, logGatewayStatus, listPaymentChannels } from './services/paymentRouter.js';
 import { pushNotificationService } from './services/pushNotificationService.js';
 import { pakasirService } from './services/pakasir.js';
 import { outboundIpService } from './services/outboundIpService.js';
@@ -279,7 +279,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     const { userId: _owner, productId: _product, variantId: _variant, variantName: _variantName, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
     await prisma.order.create({ data: { ...prismaReservation, idempotencyKey: idempotencyKey || invoiceNumber } });
 
-    // Generate Payment Session (QRIS)
+    // Generate Payment Session (QRIS atau Virtual Account sesuai pilihan pembeli)
     const paymentResult = await createPaymentSession({
       orderId: invoiceNumber,
       grossAmount: totalAmount,
@@ -287,6 +287,8 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       customerEmail,
       customerPhone: customerPhone || targetDestination,
       preferredGateway: activeGateway,
+      // 'qris' (default) atau 'va:<kode bank>' / '<bank>_va' bila pembeli memilih VA.
+      paymentMethod: req.body.paymentMethod || req.body.paymentChannel,
       items: [
         {
           id: product.id,
@@ -337,10 +339,16 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       paymentStatus: 'PENDING',
       fulfillmentStatus: 'NOT_STARTED',
       deliveryMethod: product.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
-      paymentMethod: paymentResult.gateway === 'PAKASIR' ? 'QRIS (Pakasir)' : 'QRIS',
-      snapToken: paymentResult.token,
+      paymentMethod: paymentResult.vaNumber
+        ? `VA ${paymentResult.vaBankName || paymentResult.vaBankCode || ''}`.trim()
+        : (paymentResult.gateway === 'PAKASIR' ? 'QRIS (Pakasir)' : 'QRIS'),
+      gatewayRefId: paymentResult.token,
       qrString: paymentResult.qrString,
       paymentLink: paymentResult.redirectUrl,
+      vaNumber: paymentResult.vaNumber,
+      vaBankCode: paymentResult.vaBankCode,
+      vaBankName: paymentResult.vaBankName,
+      vaPartnerReff: paymentResult.partnerReff,
       pakasirTxnId: paymentResult.gateway === 'PAKASIR' ? paymentResult.token : undefined,
       fee: paymentResult.fee || 0,
       totalPayment: paymentResult.totalPayment || totalAmount,
@@ -364,8 +372,10 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       data: {
         paymentStatus: 'PENDING', fulfillmentStatus: 'NOT_STARTED',
         paymentMethod: formattedOrder.paymentMethod,
-        midtransSnapToken: paymentResult.token,
+        gatewayRefId: paymentResult.token,
         qrString: paymentResult.qrString, paymentLink: paymentResult.redirectUrl,
+        vaNumber: paymentResult.vaNumber, vaBankCode: paymentResult.vaBankCode,
+        vaBankName: paymentResult.vaBankName, vaPartnerReff: paymentResult.partnerReff,
         fee: paymentResult.fee || 0, totalPayment: paymentResult.totalPayment || totalAmount,
       },
     });
@@ -386,11 +396,15 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       data: formattedOrder,
-      snapToken: paymentResult.token,
+      gatewayRefId: paymentResult.token,
       paymentGateway: paymentResult.gateway,
       paymentLink: paymentResult.redirectUrl,
       qrString: paymentResult.qrString,
       qrImage: paymentResult.qrImage,
+      vaNumber: paymentResult.vaNumber,
+      vaBankCode: paymentResult.vaBankCode,
+      vaBankName: paymentResult.vaBankName,
+      vaPartnerReff: paymentResult.partnerReff,
       fee: paymentResult.fee || 0,
       totalPayment: paymentResult.totalPayment || totalAmount,
       expiredAt: paymentResult.expiredAt,
@@ -1192,8 +1206,62 @@ app.get('/api/payment/qiospay/health', (req: Request, res: Response) => {
     qris_string: isQrisString,
     callback_secret: isCallbackSecret,
     database: (process.env.SUPABASE_URL || process.env.DATABASE_URL) ? 'connected' : 'standby',
+    virtual_account: {
+      enabled: qiospayService.isVaConfigured(),
+      banks: qiospayService.listVaBanks(),
+      note: qiospayService.isVaConfigured()
+        ? 'VA H2H aktif'
+        : 'VA H2H belum aktif: isi QIOSPAY_H2H_USERNAME & QIOSPAY_H2H_PIN setelah disetujui di dashboard Qiospay.',
+    },
   });
 });
+
+// GET /api/payment/methods — daftar channel pembayaran dari SERVER.
+// UI tidak boleh menebak daftar channel: channel VA Qiospay hanya muncul tersedia
+// setelah kredensial H2H ada, supaya pembeli tidak pernah diarahkan ke VA yang gagal.
+app.get('/api/payment/methods', (req: Request, res: Response) => {
+  try {
+    const channels = listPaymentChannels();
+    res.json({
+      success: true,
+      activeGateway: detectActiveGateway(),
+      channels,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message, channels: [] });
+  }
+});
+
+// ── Callback Virtual Account Qiospay ────────────────────────────────────────
+// Qiospay mengirim POST ke url_callback yang dilampirkan saat Create VA dan
+// WAJIB dibalas HTTP 200. Pencocokan memakai partner_reff (identitas eksplisit).
+const handleQiospayVaCallback = async (req: Request, res: Response) => {
+  try {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (_) {
+        try { const qs = await import('node:querystring'); body = qs.parse(body); } catch (__) {}
+      }
+    }
+    const { statusCode, response } = await qiospayService.processVaCallback(body, prisma, fulfillmentService);
+    res.writeHead(statusCode, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return res.end(JSON.stringify(response));
+  } catch (error: any) {
+    console.error('[Qiospay VA Callback Error]:', error.message);
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ status: 'reject', message: 'Terjadi kesalahan backend' }));
+    }
+  }
+};
+app.get('/api/webhook/qiospay-va', (req, res) => res.json({ status: 'ready', message: 'Qiospay VA webhook endpoint active' }));
+app.post('/api/webhook/qiospay-va', handleQiospayVaCallback);
+app.post('/api/webhook/callback_secret/qiospay-va', handleQiospayVaCallback);
+app.post('/api/webhook/callback_scret/qiospay-va', handleQiospayVaCallback);
 
 // 2. Callback / Webhook Receiver Endpoint
 // POST /webhook/:secret/qiospay, /webhook/callback_scret/qiospay, /api/callback/accept/:key

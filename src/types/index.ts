@@ -139,9 +139,9 @@ export interface OrderItem {
 export interface PaymentAttempt {
   id: string;
   orderId: string;
-  paymentMethod: string; // QRIS, BCA_VA, MANDIRI_VA, BRI_VA, ALFAMART
+  paymentMethod: string; // QRIS, VA:002 (BRI), VA:009 (BNI), VA:008 (Mandiri), VA:451 (BSI)
   transactionId?: string;
-  snapToken?: string;
+  gatewayRef?: string;
   amount: number;
   status: PaymentStatus;
   createdAt: string;
@@ -172,7 +172,8 @@ export interface Order {
   updatedAt: string;
   paidAt?: string;
   fulfilledAt?: string;
-  snapToken?: string;
+  // Referensi transaksi dari gateway (QRIS/VA), dipakai untuk pencocokan callback.
+  gatewayRefId?: string;
   qrString?: string;
   isDynamic?: boolean;
 
@@ -183,7 +184,13 @@ export interface Order {
   fee?: number;
   totalPayment?: number;
   expiredAt?: string;
-  paymentGatewayProvider?: 'MIDTRANS' | 'PAKASIR' | 'QIOSPAY' | string;
+
+  // Virtual Account (hanya terisi bila pembeli memilih channel VA)
+  vaNumber?: string;
+  vaBankCode?: string;
+  vaBankName?: string;
+  vaPartnerReff?: string;
+  paymentGatewayProvider?: 'PAKASIR' | 'QIOSPAY' | string;
   isSandbox?: boolean;
   
   // Hasil pemenuhan (Top-level & nested)

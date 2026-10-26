@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   ShieldCheck, 
@@ -25,7 +25,7 @@ interface CheckoutPageProps {
   product: Product;
   targetDestination: string;
   onBack: () => void;
-  onOrderCreated: (order: Order, snapToken: string) => void;
+  onOrderCreated: (order: Order, gatewayRefId: string) => void;
   onShowToast: (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
@@ -72,6 +72,21 @@ export function CheckoutPage({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isAgreed, setIsAgreed] = useState(true);
+
+  // Channel pembayaran diambil dari SERVER, bukan ditebak di UI.
+  // Channel VA hanya muncul tersedia setelah kredensial Qiospay H2H siap.
+  type PayChannel = { id: string; gateway: string; kind: 'QRIS' | 'VA'; label: string; bankName?: string; bankCode?: string; unavailable?: boolean; unavailableReason?: string };
+  const [paymentChannel, setPaymentChannel] = useState<string>('qris');
+  const [channels, setChannels] = useState<PayChannel[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/payment/methods', { credentials: 'same-origin', cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (alive && j?.success && Array.isArray(j.channels) && j.channels.length) setChannels(j.channels); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const settings = storage.getSettings();
   const isPakasir = settings.paymentGatewayProvider === 'PAKASIR';
@@ -220,7 +235,8 @@ export function CheckoutPage({
 
     try {
       // Backend creates order with server-calculated price
-      const { order, snapToken } = await apiAdapter.createOrder({
+      const selectedChannel = paymentChannel || 'qris';
+      const { order, gatewayRefId } = await apiAdapter.createOrder({
         productId: product.id,
         variantId: product.selectedVariantId,
         variantName: product.selectedVariantName,
@@ -232,11 +248,12 @@ export function CheckoutPage({
         customerNote: customerNote || undefined,
         smmQty: product.categoryId === 'smm' ? smmQty : undefined,
         smmComments: product.categoryId === 'smm' ? smmComments : undefined,
+        paymentMethod: selectedChannel,
       });
 
       setIsLoading(false);
       onShowToast('Sesi Pembayaran Dibuat', `Invoice ${order.invoiceNumber} siap dibayar`, 'info');
-      onOrderCreated(order, snapToken);
+      onOrderCreated(order, gatewayRefId);
     } catch (err: any) {
       setIsLoading(false);
       onShowToast('Gagal Membuat Pesanan', err.message || 'Terjadi kesalahan sistem', 'error');
@@ -664,7 +681,7 @@ export function CheckoutPage({
           </div>
         </div>
 
-        {/* 5. Pilihan Metode Pembayaran Otomatis */}
+        {/* 5. Pilihan Metode Pembayaran (QRIS / Virtual Account) */}
         <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-sm space-y-3">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -675,23 +692,60 @@ export function CheckoutPage({
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Metode Pembayaran
                 </h3>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-sm font-bold text-white">
-                    {isPakasir ? 'QRIS Dinamis (Pakasir API v2)' : 'QRIS Dinamis (Qiospay)'}
-                  </span>
-                  <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                    Otomatis Muncul
-                  </span>
-                </div>
+                <span className="text-sm font-bold text-white">
+                  {paymentChannel === 'qris'
+                    ? (isPakasir ? 'QRIS Dinamis (Pakasir API v2)' : 'QRIS Dinamis (Qiospay)')
+                    : `Virtual Account ${channels.find((c) => c.id === paymentChannel)?.bankName || ''}`.trim()}
+                </span>
               </div>
             </div>
-            <span className="text-[11px] font-bold text-teal-300 bg-teal-950/80 border border-teal-800 px-2.5 py-1 rounded-lg">
-              Bebas Biaya Admin
-            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2">
+            {/* QRIS selalu tersedia */}
+            <button
+              type="button"
+              onClick={() => setPaymentChannel('qris')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${paymentChannel === 'qris' ? 'bg-teal-500/15 border-teal-500/50' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`}
+            >
+              <QrCode size={18} className={paymentChannel === 'qris' ? 'text-teal-400' : 'text-slate-500'} />
+              <span className="flex-1">
+                <span className="block text-sm font-bold text-white">QRIS Dinamis</span>
+                <span className="block text-[11px] text-slate-400">Scan lewat m-Banking / e-wallet apa pun</span>
+              </span>
+              {paymentChannel === 'qris' && <Check size={16} className="text-teal-400" />}
+            </button>
+
+            {/* Channel VA dari server (tersembunyi bila belum ada) */}
+            {channels.filter((c) => c.kind === 'VA').map((c) => {
+              const disabled = Boolean(c.unavailable);
+              const active = paymentChannel === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => !disabled && setPaymentChannel(c.id)}
+                  title={disabled ? (c.unavailableReason || 'Belum tersedia') : ''}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl border flex items-center gap-3 transition-all ${disabled ? 'opacity-45 cursor-not-allowed bg-slate-950/40 border-slate-800' : active ? 'bg-indigo-500/15 border-indigo-500/50 cursor-pointer' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 cursor-pointer'}`}
+                >
+                  <CreditCard size={18} className={active ? 'text-indigo-400' : 'text-slate-500'} />
+                  <span className="flex-1">
+                    <span className="block text-sm font-bold text-white">{c.label}</span>
+                    <span className="block text-[11px] text-slate-400">
+                      {disabled ? (c.unavailableReason || 'Belum tersedia') : 'Nomor VA unik untuk pesanan ini'}
+                    </span>
+                  </span>
+                  {active && !disabled && <Check size={16} className="text-indigo-400" />}
+                </button>
+              );
+            })}
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed">
-            Barcode QRIS nominal dinamis akan muncul otomatis seketika setelah klik tombol bayar. Kompatibel dengan semua aplikasi mobile banking (BCA, Mandiri, BRI, BNI) & e-wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).
+            {paymentChannel === 'qris'
+              ? 'Barcode QRIS nominal dinamis muncul otomatis setelah klik tombol bayar. Kompatibel dengan semua aplikasi mobile banking (BCA, Mandiri, BRI, BNI) & e-wallet (GoPay, OVO, Dana, ShopeePay).'
+              : 'Nomor Virtual Account dibuat khusus untuk pesanan ini. Biaya admin mengikuti ketentuan bank penerbit sesuai respons gateway.'}
           </p>
         </div>
 

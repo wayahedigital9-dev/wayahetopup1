@@ -9,7 +9,7 @@ import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
-import { SnapSimulatorModal } from './components/SnapSimulatorModal';
+import { PaymentDialog } from './components/PaymentDialog';
 import { InvoiceModal } from './components/InvoiceModal';
 import { QuickBuyModal } from './components/QuickBuyModal';
 import { FloatingCsBot } from './components/FloatingCsBot';
@@ -86,8 +86,8 @@ export default function App() {
   const [checkoutTarget, setCheckoutTarget] = useState<string>('');
 
   // Modals
-  const [activeSnapOrder, setActiveSnapOrder] = useState<Order | null>(null);
-  const [activeSnapToken, setActiveSnapToken] = useState<string | null>(null);
+  const [activePaymentOrder, setActivePaymentOrder] = useState<Order | null>(null);
+  const [activeGatewayRef, setActiveGatewayRef] = useState<string | null>(null);
   const [activeInvoiceOrder, setActiveInvoiceOrder] = useState<Order | null>(null);
 
   // Toast notifications
@@ -233,30 +233,30 @@ export default function App() {
   };
 
   // Handling Order Created & opening QRIS Payment Modal
-  const handleOrderCreated = (order: Order, snapToken: string) => {
+  const handleOrderCreated = (order: Order, gatewayRefId: string) => {
     setOrders(storage.getOrders());
-    setActiveSnapOrder(order);
-    setActiveSnapToken(snapToken);
+    setActivePaymentOrder(order);
+    setActiveGatewayRef(gatewayRefId);
   };
 
-  // Simulating payment result from Snap Simulator Modal
+  // Menutup dialog pembayaran setelah status terverifikasi (QRIS/VA)
   const handleSimulatePaymentResult = async (
     status: 'PAID' | 'FAILED' | 'EXPIRED',
     method: string,
     withFulfillmentError: boolean = false
   ) => {
-    if (!activeSnapOrder) return;
+    if (!activePaymentOrder) return;
     try {
       const updated = await apiAdapter.processPaymentWebhook(
-        activeSnapOrder.id,
+        activePaymentOrder.id,
         status,
         method,
         withFulfillmentError
       );
 
       setOrders(storage.getOrders());
-      setActiveSnapOrder(null);
-      setActiveSnapToken(null);
+      setActivePaymentOrder(null);
+      setActiveGatewayRef(null);
 
       if (status === 'PAID') {
         setActiveInvoiceOrder(updated);
@@ -469,8 +469,8 @@ export default function App() {
               orders={orders}
               onOpenInvoice={(order) => setActiveInvoiceOrder(order)}
               onOpenPaymentSession={(order) => {
-                setActiveSnapOrder(order);
-                setActiveSnapToken('SNAP-' + order.id.replace('ord-', '').toUpperCase());
+                setActivePaymentOrder(order);
+                setActiveGatewayRef(order.gatewayRefId || ('REF-' + order.id.replace('ord-', '').toUpperCase()));
               }}
               onCopyText={handleCopyText}
             />
@@ -544,14 +544,14 @@ export default function App() {
         />
       )}
 
-      {activeSnapOrder && activeSnapToken && (
-        <SnapSimulatorModal
-          order={activeSnapOrder}
-          snapToken={activeSnapToken}
-          isOpen={Boolean(activeSnapOrder && activeSnapToken)}
+      {activePaymentOrder && activeGatewayRef && (
+        <PaymentDialog
+          order={activePaymentOrder}
+          gatewayRefId={activeGatewayRef}
+          isOpen={Boolean(activePaymentOrder && activeGatewayRef)}
           onClose={() => {
-            setActiveSnapOrder(null);
-            setActiveSnapToken(null);
+            setActivePaymentOrder(null);
+            setActiveGatewayRef(null);
             setOrders(storage.getOrders());
           }}
           onSimulateResult={handleSimulatePaymentResult}

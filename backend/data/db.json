@@ -33,8 +33,7 @@
       ],
       "basePrice": 0,
       "supplierPrice": 0,
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648ec"
+      "voucherCodes": []
     },
     {
       "id": "dkobers",
@@ -63,8 +62,7 @@
       ],
       "basePrice": 0,
       "supplierPrice": 0,
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648ed"
+      "voucherCodes": []
     },
     {
       "id": "wifi ulum",
@@ -93,8 +91,7 @@
       ],
       "basePrice": 0,
       "supplierPrice": 0,
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648ee"
+      "voucherCodes": []
     },
     {
       "id": "prod-man-1791337237197",
@@ -114,8 +111,7 @@
       "iconUrl": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80",
       "basePrice": 0,
       "supplierPrice": 0,
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648ef"
+      "voucherCodes": []
     },
     {
       "id": "prm-netflix-4k",
@@ -134,8 +130,7 @@
       "stock": 0,
       "badge": "4K UHD",
       "iconUrl": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f0"
+      "voucherCodes": []
     },
     {
       "id": "prm-disney-hotstar",
@@ -154,8 +149,7 @@
       "stock": 0,
       "badge": "4K DOLBY",
       "iconUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f1"
+      "voucherCodes": []
     },
     {
       "id": "prm-viu-vip",
@@ -174,8 +168,7 @@
       "stock": 0,
       "badge": "FAMILY SAFE",
       "iconUrl": "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f2"
+      "voucherCodes": []
     },
     {
       "id": "prm-vidio-plat",
@@ -194,8 +187,7 @@
       "stock": 0,
       "badge": "LIGA 1 INDO",
       "iconUrl": "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f3"
+      "voucherCodes": []
     },
     {
       "id": "prm-youtube-prem",
@@ -214,8 +206,7 @@
       "stock": 0,
       "badge": "BEBAS IKLAN",
       "iconUrl": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f4"
+      "voucherCodes": []
     },
     {
       "id": "prm-spotify-ind",
@@ -234,8 +225,7 @@
       "stock": 0,
       "badge": "RESMI",
       "iconUrl": "https://images.unsplash.com/photo-1614680376593-902f749f7ffc?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f5"
+      "voucherCodes": []
     },
     {
       "id": "prm-apple-music",
@@ -254,8 +244,7 @@
       "stock": 0,
       "badge": "LOSSLESS",
       "iconUrl": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f6"
+      "voucherCodes": []
     },
     {
       "id": "prm-canva-pro",
@@ -274,8 +263,7 @@
       "stock": 0,
       "badge": "PRO DESIGN",
       "iconUrl": "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f7"
+      "voucherCodes": []
     },
     {
       "id": "prm-capcut-pro",
@@ -294,8 +282,7 @@
       "stock": 0,
       "badge": "TRENDING",
       "iconUrl": "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f8"
+      "voucherCodes": []
     },
     {
       "id": "prm-lightroom-prem",
@@ -314,8 +301,7 @@
       "stock": 0,
       "badge": "FOTOGRAFI",
       "iconUrl": "https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648f9"
+      "voucherCodes": []
     },
     {
       "id": "prm-nord-vpn",
@@ -334,8 +320,7 @@
       "stock": 0,
       "badge": "PRIVATE IP",
       "iconUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648fa"
+      "voucherCodes": []
     },
     {
       "id": "prm-express-vpn",
@@ -354,8 +339,7 @@
       "stock": 0,
       "badge": "SPEED TEST 1",
       "iconUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648fb"
+      "voucherCodes": []
     },
     {
       "id": "prm-chatgpt-plus",
@@ -374,8 +358,7 @@
       "stock": 0,
       "badge": "AI PRO",
       "iconUrl": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648fc"
+      "voucherCodes": []
     },
     {
       "id": "prm-claude-pro",
@@ -394,8 +377,7 @@
       "stock": 0,
       "badge": "SMART AI",
       "iconUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648fd"
+      "voucherCodes": []
     },
     {
       "id": "prm-office-365",
@@ -414,8 +396,7 @@
       "stock": 0,
       "badge": "OFFICE ORIGINAL",
       "iconUrl": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648fe"
+      "voucherCodes": []
     },
     {
       "id": "prm-google-one-2tb",
@@ -434,8 +415,7 @@
       "stock": 0,
       "badge": "CLOUD 2TB",
       "iconUrl": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc5009648ff"
+      "voucherCodes": []
     },
     {
       "id": "prm-duolingo-super",
@@ -454,8 +434,7 @@
       "stock": 0,
       "badge": "EDUKASI",
       "iconUrl": "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964900"
+      "voucherCodes": []
     },
     {
       "id": "prm-grammarly-prem",
@@ -474,8 +453,7 @@
       "stock": 0,
       "badge": "PRO WRITER",
       "iconUrl": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964901"
+      "voucherCodes": []
     },
     {
       "id": "ai-openai-5usd",
@@ -493,8 +471,7 @@
       "stock": 0,
       "badge": "GPT-4o",
       "iconUrl": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964902"
+      "voucherCodes": []
     },
     {
       "id": "ai-openai-20usd",
@@ -512,8 +489,7 @@
       "stock": 0,
       "badge": "BEST SELLER",
       "iconUrl": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964903"
+      "voucherCodes": []
     },
     {
       "id": "ai-claude-10usd",
@@ -531,8 +507,7 @@
       "stock": 0,
       "badge": "CLAUDE 3.5",
       "iconUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964904"
+      "voucherCodes": []
     },
     {
       "id": "ai-deepseek-20m",
@@ -550,8 +525,7 @@
       "stock": 0,
       "badge": "SUPER HEMAT",
       "iconUrl": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964905"
+      "voucherCodes": []
     },
     {
       "id": "ai-gemini-pro",
@@ -569,8 +543,7 @@
       "stock": 0,
       "badge": "2M CONTEXT",
       "iconUrl": "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964906"
+      "voucherCodes": []
     },
     {
       "id": "ai-midjourney-fast",
@@ -588,8 +561,7 @@
       "stock": 0,
       "badge": "IMAGE AI",
       "iconUrl": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=200&q=80",
-      "voucherCodes": [],
-      "_id": "6ad845170bf6afc500964907"
+      "voucherCodes": []
     },
     {
       "_id": "6ac89bb0856f04f0dc181628",
@@ -799,7 +771,7 @@
       "lastSyncAt": "2026-10-09T07:47:06.740Z"
     },
     {
-      "_id": "6ad845170bf6afc500964908",
+      "_id": "6adf0fb006642629e51863c6",
       "id": "df-100b",
       "name": "Axis Data BRONET 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -818,10 +790,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964909",
+      "_id": "6adf0fb006642629e51863c7",
       "id": "df-100g",
       "name": "Telkomsel Data Non Puma 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -840,10 +812,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490a",
+      "_id": "6adf0fb006642629e51863c8",
       "id": "df-100gb",
       "name": "Indosat Freedom Internet Sensasi 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -853,8 +825,8 @@
       "sellerName": "BAHTERA GROUP",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 106875,
-      "basePrice": 106875,
+      "supplierPrice": 113600,
+      "basePrice": 113600,
       "sellingPrice": 115700,
       "description": "Freedom Internet 100GB/28 Hari",
       "quotaDetails": "Freedom Internet 100GB/28 Hari",
@@ -862,10 +834,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490b",
+      "_id": "6adf0fb006642629e51863c9",
       "id": "df-100gbb",
       "name": "Indosat Freedom Internet 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -884,10 +856,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490c",
+      "_id": "6adf0fb006642629e51863ca",
       "id": "df-10gb",
       "name": "Indosat Freedom Internet 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -897,8 +869,8 @@
       "sellerName": "KHAZANAH",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 36400,
-      "basePrice": 36400,
+      "supplierPrice": 36325,
+      "basePrice": 36325,
       "sellingPrice": 38800,
       "description": "Freedom Internet 10GB/28 Hari",
       "quotaDetails": "Freedom Internet 10GB/28 Hari",
@@ -906,10 +878,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490d",
+      "_id": "6adf0fb006642629e51863cb",
       "id": "df-10gbhappy",
       "name": "Tri Data Happy 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -928,10 +900,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490e",
+      "_id": "6adf0fb006642629e51863cc",
       "id": "df-11gb",
       "name": "Indosat Freedom Internet 11 GB 28 Hari",
       "categoryId": "kuota",
@@ -950,10 +922,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096490f",
+      "_id": "6adf0fb006642629e51863cd",
       "id": "df-11gbhppy",
       "name": "Tri Data Happy 11 GB 28 Hari",
       "categoryId": "kuota",
@@ -972,10 +944,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964910",
+      "_id": "6adf0fb006642629e51863ce",
       "id": "df-125g",
       "name": "Telkomsel Data Combo Sakti 125 GB 30 Hari",
       "categoryId": "kuota",
@@ -994,10 +966,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964911",
+      "_id": "6adf0fb006642629e51863cf",
       "id": "df-125gb",
       "name": "Indosat Freedom Internet 125 GB 28 Hari",
       "categoryId": "kuota",
@@ -1016,10 +988,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964912",
+      "_id": "6adf0fb006642629e51863d0",
       "id": "df-130gb",
       "name": "Tri Data Happy 130 GB 28 Hari",
       "categoryId": "kuota",
@@ -1038,10 +1010,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964913",
+      "_id": "6adf0fb006642629e51863d1",
       "id": "df-150gb",
       "name": "Axis Data BRONET 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -1060,10 +1032,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964914",
+      "_id": "6adf0fb006642629e51863d2",
       "id": "df-16gb",
       "name": "Axis Data BRONET 16 GB 30 hari",
       "categoryId": "kuota",
@@ -1082,10 +1054,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964915",
+      "_id": "6adf0fb006642629e51863d3",
       "id": "df-175gb",
       "name": "Tri Data Happy 175 GB 180 Hari",
       "categoryId": "kuota",
@@ -1104,10 +1076,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964916",
+      "_id": "6adf0fb006642629e51863d4",
       "id": "df-18gb",
       "name": "Tri Data Happy 18 GB 28 Hari",
       "categoryId": "kuota",
@@ -1126,10 +1098,10 @@
       "isActive": false,
       "stock": 0,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964917",
+      "_id": "6adf0fb006642629e51863d5",
       "id": "df-20gb",
       "name": "Axis Data BRONET 20 GB 30 Hari",
       "categoryId": "kuota",
@@ -1148,10 +1120,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964918",
+      "_id": "6adf0fb006642629e51863d6",
       "id": "df-22gb",
       "name": "Axis Data BRONET 22 GB 28 hari",
       "categoryId": "kuota",
@@ -1161,8 +1133,8 @@
       "sellerName": "TETRALINK",
       "digiflazzCategory": "Data",
       "digiflazzType": "Bronet",
-      "supplierPrice": 49575,
-      "basePrice": 49575,
+      "supplierPrice": 49200,
+      "basePrice": 49200,
       "sellingPrice": 54000,
       "description": "AIGO Bronet 22GB + Kuota di Kota-mu 28hr",
       "quotaDetails": "AIGO Bronet 22GB + Kuota di Kota-mu 28hr",
@@ -1170,10 +1142,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc500964919",
+      "_id": "6adf0fb006642629e51863d7",
       "id": "df-24g",
       "name": "Axis Data BRONET 24 GB 5 Hari",
       "categoryId": "kuota",
@@ -1192,10 +1164,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491a",
+      "_id": "6adf0fb006642629e51863d8",
       "id": "df-24gb",
       "name": "Indosat Freedom Internet 24 GB 28 Hari",
       "categoryId": "kuota",
@@ -1214,10 +1186,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491b",
+      "_id": "6adf0fb006642629e51863d9",
       "id": "df-250gb",
       "name": "Tri Data Happy 250 GB 365 Hari",
       "categoryId": "kuota",
@@ -1236,10 +1208,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491c",
+      "_id": "6adf0fb006642629e51863da",
       "id": "df-25gb",
       "name": "Tri Data Happy 25 GB 28 Hari",
       "categoryId": "kuota",
@@ -1258,10 +1230,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491d",
+      "_id": "6adf0fb006642629e51863db",
       "id": "df-28gb",
       "name": "Indosat Freedom Internet 28 GB 28 Hari",
       "categoryId": "kuota",
@@ -1280,10 +1252,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491e",
+      "_id": "6adf0fb006642629e51863dc",
       "id": "df-2k",
       "name": "Telkomsel 2.000",
       "categoryId": "pulsa",
@@ -1302,10 +1274,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.241Z"
     },
     {
-      "_id": "6ad845170bf6afc50096491f",
+      "_id": "6adf0fb006642629e51863dd",
       "id": "df-3",
       "name": "Tri Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -1324,10 +1296,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964920",
+      "_id": "6adf0fb006642629e51863de",
       "id": "df-300g",
       "name": "Tri Data Happy Spesial 300 GB 30 Hari",
       "categoryId": "kuota",
@@ -1346,10 +1318,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964921",
+      "_id": "6adf0fb006642629e51863df",
       "id": "df-30b",
       "name": "Axis Data BRONET 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -1359,8 +1331,8 @@
       "sellerName": "Rapid Reloads",
       "digiflazzCategory": "Data",
       "digiflazzType": "Bronet",
-      "supplierPrice": 71675,
-      "basePrice": 71675,
+      "supplierPrice": 65000,
+      "basePrice": 65000,
       "sellingPrice": 73200,
       "description": "AIGO Bronet 24Jam 30GB + Kuota di Kota-mu 30hr",
       "quotaDetails": "AIGO Bronet 24Jam 30GB + Kuota di Kota-mu 30hr",
@@ -1368,10 +1340,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964922",
+      "_id": "6adf0fb006642629e51863e0",
       "id": "df-30gb",
       "name": "Indosat Freedom Internet 30 GB 28 Hari",
       "categoryId": "kuota",
@@ -1390,10 +1362,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964923",
+      "_id": "6adf0fb006642629e51863e1",
       "id": "df-35gb",
       "name": "Indosat Freedom Internet 35 GB 28 Hari",
       "categoryId": "kuota",
@@ -1412,10 +1384,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964924",
+      "_id": "6adf0fb006642629e51863e2",
       "id": "df-36gb",
       "name": "Indosat Freedom Internet 36 GB 28 Hari",
       "categoryId": "kuota",
@@ -1434,10 +1406,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964925",
+      "_id": "6adf0fb006642629e51863e3",
       "id": "df-3k",
       "name": "Telkomsel 3.000",
       "categoryId": "pulsa",
@@ -1456,10 +1428,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964926",
+      "_id": "6adf0fb006642629e51863e4",
       "id": "df-43gb",
       "name": "Indosat Freedom Internet 43 GB 30 Hari",
       "categoryId": "kuota",
@@ -1478,10 +1450,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964927",
+      "_id": "6adf0fb006642629e51863e5",
       "id": "df-44gb",
       "name": "Indosat Freedom Internet 44 GB 28 Hari",
       "categoryId": "kuota",
@@ -1500,10 +1472,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964928",
+      "_id": "6adf0fb006642629e51863e6",
       "id": "df-45gb",
       "name": "Telkomsel Data Flash 45 GB 30 Hari",
       "categoryId": "kuota",
@@ -1522,10 +1494,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964929",
+      "_id": "6adf0fb006642629e51863e7",
       "id": "df-45gbb",
       "name": "Tri Data Happy 45 GB 28 Hari",
       "categoryId": "kuota",
@@ -1544,10 +1516,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492a",
+      "_id": "6adf0fb006642629e51863e8",
       "id": "df-49gb",
       "name": "Telkomsel Data Flash 49 GB 30 Hari",
       "categoryId": "kuota",
@@ -1566,10 +1538,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492b",
+      "_id": "6adf0fb006642629e51863e9",
       "id": "df-5",
       "name": "Mobile Legends Cek Username",
       "categoryId": "game",
@@ -1588,10 +1560,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492c",
+      "_id": "6adf0fb006642629e51863ea",
       "id": "df-50g",
       "name": "Telkomsel Data Flash 50 GB 30 Hari",
       "categoryId": "kuota",
@@ -1610,10 +1582,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492d",
+      "_id": "6adf0fb006642629e51863eb",
       "id": "df-50gb",
       "name": "Indosat Freedom Internet Sensasi 50 GB 28 Hari",
       "categoryId": "kuota",
@@ -1623,19 +1595,19 @@
       "sellerName": "SAKA NUSANTARA",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 85500,
-      "basePrice": 85500,
-      "sellingPrice": 92300,
+      "supplierPrice": 97275,
+      "basePrice": 97275,
+      "sellingPrice": 98800,
       "description": "Freedom Internet 50GB/28 Hari",
       "quotaDetails": "Freedom Internet 50GB/28 Hari",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492e",
+      "_id": "6adf0fb006642629e51863ec",
       "id": "df-52gb",
       "name": "Tri Data Happy 52 GB 28 Hari",
       "categoryId": "kuota",
@@ -1654,10 +1626,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096492f",
+      "_id": "6adf0fb006642629e51863ed",
       "id": "df-55gb",
       "name": "Tri Data Happy 55 GB 60 Hari",
       "categoryId": "kuota",
@@ -1676,10 +1648,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964930",
+      "_id": "6adf0fb006642629e51863ee",
       "id": "df-55gbb",
       "name": "Tri Data Happy 55 GB 28 Hari",
       "categoryId": "kuota",
@@ -1698,10 +1670,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964931",
+      "_id": "6adf0fb006642629e51863ef",
       "id": "df-568dm",
       "name": "MOBILE LEGENDS 568 Diamond",
       "categoryId": "game",
@@ -1720,10 +1692,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964932",
+      "_id": "6adf0fb006642629e51863f0",
       "id": "df-60gb",
       "name": "Indosat Freedom Internet 60 GB 28 Hari",
       "categoryId": "kuota",
@@ -1742,10 +1714,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964933",
+      "_id": "6adf0fb006642629e51863f1",
       "id": "df-60gbb",
       "name": "Tri Data Happy Spesial 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -1764,10 +1736,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964934",
+      "_id": "6adf0fb006642629e51863f2",
       "id": "df-65gb",
       "name": "Indosat Freedom Internet 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -1783,13 +1755,13 @@
       "description": "Freedom Internet 65GB/28hr",
       "quotaDetails": "Freedom Internet 65GB/28hr",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964935",
+      "_id": "6adf0fb006642629e51863f3",
       "id": "df-7gb",
       "name": "Axis Data BRONET 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -1808,10 +1780,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964936",
+      "_id": "6adf0fb006642629e51863f4",
       "id": "df-8",
       "name": "XL Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -1830,10 +1802,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964937",
+      "_id": "6adf0fb006642629e51863f5",
       "id": "df-9b",
       "name": "Axis Data BRONET 9 GB 28 Hari",
       "categoryId": "kuota",
@@ -1852,10 +1824,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964938",
+      "_id": "6adf0fb006642629e51863f6",
       "id": "df-akrab10gb",
       "name": "XL Data Akrab Kuota Bersama 10 GB / 30 Hari",
       "categoryId": "kuota",
@@ -1874,10 +1846,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964939",
+      "_id": "6adf0fb006642629e51863f7",
       "id": "df-akrab160",
       "name": "XL Data Akrab Kuota Bersama 160 GB / 30 Hari",
       "categoryId": "kuota",
@@ -1896,10 +1868,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493a",
+      "_id": "6adf0fb006642629e51863f8",
       "id": "df-akrabl",
       "name": "XL Data Akrab L",
       "categoryId": "kuota",
@@ -1918,10 +1890,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493b",
+      "_id": "6adf0fb006642629e51863f9",
       "id": "df-akrabm",
       "name": "XL Data Akrab M",
       "categoryId": "kuota",
@@ -1940,10 +1912,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493c",
+      "_id": "6adf0fb006642629e51863fa",
       "id": "df-akrabs",
       "name": "XL Data Akrab S",
       "categoryId": "kuota",
@@ -1962,10 +1934,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493d",
+      "_id": "6adf0fb006642629e51863fb",
       "id": "df-akrabsm",
       "name": "XL Data Akrab SM",
       "categoryId": "kuota",
@@ -1984,10 +1956,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493e",
+      "_id": "6adf0fb006642629e51863fc",
       "id": "df-akrabxl",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -2006,10 +1978,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096493f",
+      "_id": "6adf0fb006642629e51863fd",
       "id": "df-akrabxl4",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -2028,10 +2000,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964940",
+      "_id": "6adf0fb006642629e51863fe",
       "id": "df-akrabxxl",
       "name": "XL Data Akrab XXL",
       "categoryId": "kuota",
@@ -2050,10 +2022,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964941",
+      "_id": "6adf0fb006642629e51863ff",
       "id": "df-alw12gb",
       "name": "Tri Data AlwaysOn 12 GB",
       "categoryId": "kuota",
@@ -2072,10 +2044,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964942",
+      "_id": "6adf0fb006642629e5186400",
       "id": "df-apls30",
       "name": "Axis 30.000",
       "categoryId": "pulsa",
@@ -2085,8 +2057,8 @@
       "sellerName": "BCA PULSA  CV BALI CAKRA AMERTA",
       "digiflazzCategory": "Pulsa",
       "digiflazzType": "Umum",
-      "supplierPrice": 29990,
-      "basePrice": 29990,
+      "supplierPrice": 30014,
+      "basePrice": 30014,
       "sellingPrice": 31100,
       "description": "Reguler",
       "quotaDetails": "Reguler",
@@ -2094,10 +2066,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964943",
+      "_id": "6adf0fb006642629e5186401",
       "id": "df-apls40",
       "name": "Axis 40.000",
       "categoryId": "pulsa",
@@ -2116,10 +2088,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964944",
+      "_id": "6adf0fb006642629e5186402",
       "id": "df-ax10",
       "name": "Axis 10.000",
       "categoryId": "pulsa",
@@ -2138,10 +2110,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964945",
+      "_id": "6adf0fb006642629e5186403",
       "id": "df-ax5",
       "name": "Axis 5.000",
       "categoryId": "pulsa",
@@ -2160,10 +2132,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964946",
+      "_id": "6adf0fb006642629e5186404",
       "id": "df-axdj1",
       "name": "Axis Data Jawa 2.5 GB 5 Hari",
       "categoryId": "kuota",
@@ -2182,10 +2154,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964947",
+      "_id": "6adf0fb006642629e5186405",
       "id": "df-axdss2",
       "name": "Axis Data SS 2 GB 3 Hari",
       "categoryId": "kuota",
@@ -2204,32 +2176,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964948",
-      "id": "df-axp3g60d",
-      "name": "Aktivasi Perdana Axis 3 GB 60 Hari (SP5K SP7K)",
-      "categoryId": "aktivasi perdana",
-      "provider": "AXIS",
-      "sku": "axp3g60d",
-      "supplierSku": "axp3g60d",
-      "sellerName": "masterload8",
-      "digiflazzCategory": "Aktivasi Perdana",
-      "digiflazzType": "SP5K SP7K",
-      "supplierPrice": 13905,
-      "basePrice": 13905,
-      "sellingPrice": 15000,
-      "description": "Perdana Bronet 3GB + Kuota di Kota-mu 60hr",
-      "quotaDetails": "Perdana Bronet 3GB + Kuota di Kota-mu 60hr",
-      "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
-      "stock": 9999,
-      "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
-    },
-    {
-      "_id": "6ad845170bf6afc500964949",
+      "_id": "6adf0fb006642629e5186406",
       "id": "df-b35",
       "name": "Axis Data BRONET 35 GB 28 hari",
       "categoryId": "kuota",
@@ -2248,10 +2198,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494a",
+      "_id": "6adf0fb006642629e5186407",
       "id": "df-byu10",
       "name": "by.U 10.000",
       "categoryId": "pulsa",
@@ -2270,10 +2220,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494b",
+      "_id": "6adf0fb006642629e5186408",
       "id": "df-byu125",
       "name": "by.U Data 125 GB 30 Hari",
       "categoryId": "kuota",
@@ -2292,10 +2242,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494c",
+      "_id": "6adf0fb006642629e5186409",
       "id": "df-byu50gb",
       "name": "by.U Data 50 GB 30 Hari",
       "categoryId": "kuota",
@@ -2314,10 +2264,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494d",
+      "_id": "6adf0fb006642629e518640a",
       "id": "df-byu57gb",
       "name": "by.U Data 57 GB 30 Hari",
       "categoryId": "kuota",
@@ -2327,8 +2277,8 @@
       "sellerName": "TETRALINK",
       "digiflazzCategory": "Data",
       "digiflazzType": "Umum",
-      "supplierPrice": 94885,
-      "basePrice": 94885,
+      "supplierPrice": 95025,
+      "basePrice": 95025,
       "sellingPrice": 97200,
       "description": "Kuota Utama 57 GB 24 jam",
       "quotaDetails": "Kuota Utama 57 GB 24 jam",
@@ -2336,10 +2286,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494e",
+      "_id": "6adf0fb006642629e518640b",
       "id": "df-byu75",
       "name": "by.U Data 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -2358,10 +2308,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096494f",
+      "_id": "6adf0fb006642629e518640c",
       "id": "df-byukaget75",
       "name": "by.U Data Kaget 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -2380,10 +2330,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964950",
+      "_id": "6adf0fb006642629e518640d",
       "id": "df-combo100gbb",
       "name": "Telkomsel Data Combo Sakti 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -2402,10 +2352,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964951",
+      "_id": "6adf0fb006642629e518640e",
       "id": "df-combo18",
       "name": "Telkomsel Data Combo Sakti 18 GB 30 Hari",
       "categoryId": "kuota",
@@ -2424,10 +2374,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964952",
+      "_id": "6adf0fb006642629e518640f",
       "id": "df-combo19",
       "name": "Telkomsel Data Combo Sakti 19 GB 30 Hari",
       "categoryId": "kuota",
@@ -2446,10 +2396,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964953",
+      "_id": "6adf0fb006642629e5186410",
       "id": "df-combo70",
       "name": "Telkomsel Data Combo Sakti 70 GB 30 Hari",
       "categoryId": "kuota",
@@ -2468,10 +2418,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964954",
+      "_id": "6adf0fb006642629e5186411",
       "id": "df-combo80",
       "name": "Telkomsel Data Combo Sakti 80 GB 30 Hari",
       "categoryId": "kuota",
@@ -2490,10 +2440,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964955",
+      "_id": "6adf0fb006642629e5186412",
       "id": "df-data",
       "name": "Telkomsel Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -2512,10 +2462,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964956",
+      "_id": "6adf0fb006642629e5186413",
       "id": "df-datal",
       "name": "XL Data Akrab L",
       "categoryId": "kuota",
@@ -2534,10 +2484,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964957",
+      "_id": "6adf0fb006642629e5186414",
       "id": "df-datam",
       "name": "XL Data Akrab M",
       "categoryId": "kuota",
@@ -2556,10 +2506,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964958",
+      "_id": "6adf0fb006642629e5186415",
       "id": "df-datas",
       "name": "XL Data Akrab S",
       "categoryId": "kuota",
@@ -2578,10 +2528,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964959",
+      "_id": "6adf0fb006642629e5186416",
       "id": "df-dataxl",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -2600,10 +2550,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495a",
+      "_id": "6adf0fb006642629e5186417",
       "id": "df-falsh1",
       "name": "Telkomsel Data Flash 1 GB 30 Hari",
       "categoryId": "kuota",
@@ -2622,10 +2572,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495b",
+      "_id": "6adf0fb006642629e5186418",
       "id": "df-falsh10",
       "name": "Telkomsel Data Flash 10 GB 30 Hari",
       "categoryId": "kuota",
@@ -2635,8 +2585,8 @@
       "sellerName": "SAKA NUSANTARA",
       "digiflazzCategory": "Data",
       "digiflazzType": "Flash",
-      "supplierPrice": 46935,
-      "basePrice": 46935,
+      "supplierPrice": 46875,
+      "basePrice": 46875,
       "sellingPrice": 48500,
       "description": "24 jam nasional.",
       "quotaDetails": "24 jam nasional.",
@@ -2644,10 +2594,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495c",
+      "_id": "6adf0fb006642629e5186419",
       "id": "df-falsh100gb",
       "name": "Telkomsel Data Flash 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -2666,10 +2616,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495d",
+      "_id": "6adf0fb006642629e518641a",
       "id": "df-falsh12",
       "name": "Telkomsel Data Flash 12 GB 30 Hari",
       "categoryId": "kuota",
@@ -2688,10 +2638,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495e",
+      "_id": "6adf0fb006642629e518641b",
       "id": "df-falsh200",
       "name": "Telkomsel Data Flash 200 GB 30 Hari",
       "categoryId": "kuota",
@@ -2710,10 +2660,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096495f",
+      "_id": "6adf0fb006642629e518641c",
       "id": "df-falsh23",
       "name": "Telkomsel Data Flash 23 GB 30 Hari",
       "categoryId": "kuota",
@@ -2729,13 +2679,13 @@
       "description": "24 jam nasional.",
       "quotaDetails": "24 jam nasional.",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964960",
+      "_id": "6adf0fb006642629e518641d",
       "id": "df-falsh3",
       "name": "Telkomsel Data Flash 2 GB 30 Hari",
       "categoryId": "kuota",
@@ -2754,10 +2704,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964961",
+      "_id": "6adf0fb006642629e518641e",
       "id": "df-falsh5",
       "name": "Telkomsel Data Flash 5 GB 30 Hari",
       "categoryId": "kuota",
@@ -2767,8 +2717,8 @@
       "sellerName": "SAKA NUSANTARA",
       "digiflazzCategory": "Data",
       "digiflazzType": "Flash",
-      "supplierPrice": 38250,
-      "basePrice": 38250,
+      "supplierPrice": 38675,
+      "basePrice": 38675,
       "sellingPrice": 39300,
       "description": "24 jam nasional.",
       "quotaDetails": "24 jam nasional.",
@@ -2776,10 +2726,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964962",
+      "_id": "6adf0fb006642629e518641f",
       "id": "df-falsh60",
       "name": "Telkomsel Data Flash 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -2798,10 +2748,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964963",
+      "_id": "6adf0fb006642629e5186420",
       "id": "df-falsh75",
       "name": "Telkomsel Data Flash 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -2820,10 +2770,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964964",
+      "_id": "6adf0fb006642629e5186421",
       "id": "df-falsh8",
       "name": "Telkomsel Data Flash 8 GB 30 Hari",
       "categoryId": "kuota",
@@ -2842,10 +2792,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964965",
+      "_id": "6adf0fb006642629e5186422",
       "id": "df-falxmax10",
       "name": "XL Data FlexMax 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -2864,10 +2814,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964966",
+      "_id": "6adf0fb006642629e5186423",
       "id": "df-falxmax100",
       "name": "XL Data FlexMax 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -2886,10 +2836,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964967",
+      "_id": "6adf0fb006642629e5186424",
       "id": "df-falxmax150",
       "name": "XL Data FlexMax 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -2908,10 +2858,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964968",
+      "_id": "6adf0fb006642629e5186425",
       "id": "df-falxmax65",
       "name": "XL Data FlexMax 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -2930,10 +2880,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964969",
+      "_id": "6adf0fb006642629e5186426",
       "id": "df-ff12",
       "name": "Free Fire 12 Diamond",
       "categoryId": "game",
@@ -2952,10 +2902,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496a",
+      "_id": "6adf0fb006642629e5186427",
       "id": "df-ff140",
       "name": "Free Fire 140 Diamond",
       "categoryId": "game",
@@ -2974,10 +2924,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496b",
+      "_id": "6adf0fb006642629e5186428",
       "id": "df-ff355",
       "name": "Free Fire 355 Diamond",
       "categoryId": "game",
@@ -2987,8 +2937,8 @@
       "sellerName": "Mitra Niaga Nusantara",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 39825,
-      "basePrice": 39825,
+      "supplierPrice": 39725,
+      "basePrice": 39725,
       "sellingPrice": 41600,
       "description": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
       "quotaDetails": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
@@ -2996,10 +2946,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496c",
+      "_id": "6adf0fb006642629e5186429",
       "id": "df-ff50",
       "name": "Free Fire 50 Diamond",
       "categoryId": "game",
@@ -3009,8 +2959,8 @@
       "sellerName": "Mekarsari Online",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 7765,
-      "basePrice": 7765,
+      "supplierPrice": 6186,
+      "basePrice": 6186,
       "sellingPrice": 8300,
       "description": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
       "quotaDetails": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
@@ -3018,10 +2968,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496d",
+      "_id": "6adf0fb006642629e518642a",
       "id": "df-ff70",
       "name": "Free Fire 70 Diamond",
       "categoryId": "game",
@@ -3031,8 +2981,8 @@
       "sellerName": "JOSJIS DIAMOND",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 8005,
-      "basePrice": 8005,
+      "supplierPrice": 7925,
+      "basePrice": 7925,
       "sellingPrice": 8600,
       "description": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
       "quotaDetails": "Jumlah diamond sesuai diamond normal, bonus tidak dihitung",
@@ -3040,10 +2990,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496e",
+      "_id": "6adf0fb006642629e518642b",
       "id": "df-flash1",
       "name": "Telkomsel Data Flash 1 GB 30 Hari",
       "categoryId": "kuota",
@@ -3062,10 +3012,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096496f",
+      "_id": "6adf0fb006642629e518642c",
       "id": "df-flash11",
       "name": "Telkomsel Data Flash 11 GB 30 Hari",
       "categoryId": "kuota",
@@ -3084,10 +3034,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964970",
+      "_id": "6adf0fb006642629e518642d",
       "id": "df-flash14gb",
       "name": "Telkomsel Data Flash 14 GB 30 Hari",
       "categoryId": "kuota",
@@ -3106,10 +3056,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964971",
+      "_id": "6adf0fb006642629e518642e",
       "id": "df-flash20gb",
       "name": "Telkomsel Data Flash 20 GB 30 Hari",
       "categoryId": "kuota",
@@ -3128,10 +3078,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964972",
+      "_id": "6adf0fb006642629e518642f",
       "id": "df-flash25",
       "name": "Telkomsel Data Flash 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -3150,10 +3100,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964973",
+      "_id": "6adf0fb006642629e5186430",
       "id": "df-flash3",
       "name": "Telkomsel Data Flash 3 GB 30 Hari",
       "categoryId": "kuota",
@@ -3172,10 +3122,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964974",
+      "_id": "6adf0fb006642629e5186431",
       "id": "df-flash30gb",
       "name": "Telkomsel Data Flash 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -3194,10 +3144,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964975",
+      "_id": "6adf0fb006642629e5186432",
       "id": "df-flash4gb",
       "name": "Telkomsel Data Flash 4 GB 30 Hari",
       "categoryId": "kuota",
@@ -3216,10 +3166,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964976",
+      "_id": "6adf0fb006642629e5186433",
       "id": "df-flash6gb",
       "name": "Telkomsel Data Flash 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -3238,10 +3188,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964977",
+      "_id": "6adf0fb006642629e5186434",
       "id": "df-flash7gb",
       "name": "Telkomsel Data Flash 7 GB 30 Hari",
       "categoryId": "kuota",
@@ -3260,10 +3210,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964978",
+      "_id": "6adf0fb006642629e5186435",
       "id": "df-flash80",
       "name": "Telkomsel Data Flash 80 GB 30 Hari",
       "categoryId": "kuota",
@@ -3282,10 +3232,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964979",
+      "_id": "6adf0fb006642629e5186436",
       "id": "df-flash90",
       "name": "Telkomsel Data Flash 90 GB 30 Hari",
       "categoryId": "kuota",
@@ -3304,10 +3254,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096497a",
+      "_id": "6adf0fb006642629e5186437",
       "id": "df-flashh100gb",
       "name": "Telkomsel Data Flash 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -3326,32 +3276,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6acf3bcf0bf6afc50094ca0a",
-      "id": "df-flaxmax20",
-      "name": "XL Data FlexMax 20 GB 28 Hari",
-      "categoryId": "kuota",
-      "provider": "XL",
-      "sku": "flaxmax20",
-      "supplierSku": "flaxmax20",
-      "sellerName": "Premium Pulsa",
-      "digiflazzCategory": "Data",
-      "digiflazzType": "FlexMax",
-      "supplierPrice": 55805,
-      "basePrice": 55805,
-      "sellingPrice": 56500,
-      "description": "-",
-      "quotaDetails": "-",
-      "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
-      "stock": 9999,
-      "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-14T08:22:39.311Z"
-    },
-    {
-      "_id": "6ad845170bf6afc50096497b",
+      "_id": "6adf0fb006642629e5186438",
       "id": "df-flaxmax6gb",
       "name": "XL Data FlexMax 6 GB 28 Hari",
       "categoryId": "kuota",
@@ -3370,10 +3298,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096497c",
+      "_id": "6adf0fb006642629e5186439",
       "id": "df-flexmax10gb",
       "name": "XL Data FlexMax 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -3392,10 +3320,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096497d",
+      "_id": "6adf0fb006642629e518643a",
       "id": "df-flexmax15gb",
       "name": "XL Data FlexMax 15 GB 28 Hari",
       "categoryId": "kuota",
@@ -3414,10 +3342,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096497e",
+      "_id": "6adf0fb006642629e518643b",
       "id": "df-flexmax23gb",
       "name": "XL Data FlexMax 23 GB 28 Hari",
       "categoryId": "kuota",
@@ -3436,10 +3364,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096497f",
+      "_id": "6adf0fb006642629e518643c",
       "id": "df-flexmax31gb",
       "name": "XL Data FlexMax 31 GB 28 Hari",
       "categoryId": "kuota",
@@ -3458,10 +3386,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964980",
+      "_id": "6adf0fb006642629e518643d",
       "id": "df-flexmax7",
       "name": "XL Data FlexMax 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -3480,10 +3408,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964981",
+      "_id": "6adf0fb006642629e518643e",
       "id": "df-flexmax7gb",
       "name": "XL Data FlexMax 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -3502,10 +3430,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964982",
+      "_id": "6adf0fb006642629e518643f",
       "id": "df-flexs",
       "name": "XL Xtra Combo Flex S 28 Hari",
       "categoryId": "kuota",
@@ -3515,8 +3443,8 @@
       "sellerName": "Syandanapay",
       "digiflazzCategory": "Data",
       "digiflazzType": "Xtra Combo Flex",
-      "supplierPrice": 31860,
-      "basePrice": 31860,
+      "supplierPrice": 31510,
+      "basePrice": 31510,
       "sellingPrice": 32900,
       "description": "Xtra Combo Flex S",
       "quotaDetails": "Xtra Combo Flex S",
@@ -3524,10 +3452,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964983",
+      "_id": "6adf0fb006642629e5186440",
       "id": "df-fredom150g",
       "name": "Indosat Freedom Internet Sensasi 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3546,10 +3474,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964984",
+      "_id": "6adf0fb006642629e5186441",
       "id": "df-fredom150gb",
       "name": "Indosat Freedom Internet 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3568,10 +3496,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964985",
+      "_id": "6adf0fb006642629e5186442",
       "id": "df-fredom150gbb",
       "name": "Indosat Freedom Internet Sensasi 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3590,10 +3518,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964986",
+      "_id": "6adf0fb006642629e5186443",
       "id": "df-fredom200gb",
       "name": "Indosat Freedom Internet Sensasi 200 GB 28 Hari",
       "categoryId": "kuota",
@@ -3612,10 +3540,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964987",
+      "_id": "6adf0fb006642629e5186444",
       "id": "df-fredom250gb",
       "name": "Indosat Freedom Internet 250 GB 28 Hari",
       "categoryId": "kuota",
@@ -3634,10 +3562,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964988",
+      "_id": "6adf0fb006642629e5186445",
       "id": "df-fredom25gb",
       "name": "Indosat Freedom Internet 25 GB 28 Hari",
       "categoryId": "kuota",
@@ -3656,10 +3584,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964989",
+      "_id": "6adf0fb006642629e5186446",
       "id": "df-fredom40gb",
       "name": "Indosat Freedom Internet 40 GB 28 Hari",
       "categoryId": "kuota",
@@ -3678,10 +3606,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498a",
+      "_id": "6adf0fb006642629e5186447",
       "id": "df-fredom45gb",
       "name": "Indosat Freedom Internet 45 GB 28 Hari",
       "categoryId": "kuota",
@@ -3700,10 +3628,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498b",
+      "_id": "6adf0fb006642629e5186448",
       "id": "df-fredom52gb",
       "name": "Indosat Freedom Internet 52 GB 28 Hari",
       "categoryId": "kuota",
@@ -3722,10 +3650,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498c",
+      "_id": "6adf0fb006642629e5186449",
       "id": "df-fredom55gb",
       "name": "Indosat Freedom Internet 55 GB 28 Hari",
       "categoryId": "kuota",
@@ -3744,10 +3672,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498d",
+      "_id": "6adf0fb006642629e518644a",
       "id": "df-fredom62gb",
       "name": "Indosat Freedom Internet 62 GB 28 Hari",
       "categoryId": "kuota",
@@ -3757,8 +3685,8 @@
       "sellerName": "BINGO",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 91125,
-      "basePrice": 91125,
+      "supplierPrice": 90425,
+      "basePrice": 90425,
       "sellingPrice": 92000,
       "description": "Freedom Internet 62GB/28 Hari",
       "quotaDetails": "Freedom Internet 62GB/28 Hari",
@@ -3766,10 +3694,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498e",
+      "_id": "6adf0fb006642629e518644b",
       "id": "df-fredom70gb",
       "name": "Indosat Freedom Internet 70 GB 28 Hari",
       "categoryId": "kuota",
@@ -3779,8 +3707,8 @@
       "sellerName": "Rapid Reloads",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 93275,
-      "basePrice": 93275,
+      "supplierPrice": 92875,
+      "basePrice": 92875,
       "sellingPrice": 94800,
       "description": "-",
       "quotaDetails": "-",
@@ -3788,10 +3716,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096498f",
+      "_id": "6adf0fb006642629e518644c",
       "id": "df-fredom7gb",
       "name": "Indosat Freedom Internet 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -3810,10 +3738,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964990",
+      "_id": "6adf0fb006642629e518644d",
       "id": "df-fredom80gb",
       "name": "Indosat Freedom Internet 80 GB 28 Hari",
       "categoryId": "kuota",
@@ -3823,8 +3751,8 @@
       "sellerName": "BAKULAN ELEKTRIK",
       "digiflazzCategory": "Data",
       "digiflazzType": "Freedom Internet",
-      "supplierPrice": 106525,
-      "basePrice": 106525,
+      "supplierPrice": 106275,
+      "basePrice": 106275,
       "sellingPrice": 107800,
       "description": "Freedom Internet 80GB/28 Hari",
       "quotaDetails": "Freedom Internet 80GB/28 Hari",
@@ -3832,10 +3760,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964991",
+      "_id": "6adf0fb006642629e518644e",
       "id": "df-fredom8gb",
       "name": "Indosat Freedom Internet 8 GB 28 Hari",
       "categoryId": "kuota",
@@ -3854,10 +3782,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964992",
+      "_id": "6adf0fb006642629e518644f",
       "id": "df-fredom9b",
       "name": "Indosat Freedom Internet 9 GB 28 Hari",
       "categoryId": "kuota",
@@ -3876,10 +3804,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964993",
+      "_id": "6adf0fb006642629e5186450",
       "id": "df-freedom20gb",
       "name": "Indosat Freedom Internet 20 GB 28 Hari",
       "categoryId": "kuota",
@@ -3898,10 +3826,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964994",
+      "_id": "6adf0fb006642629e5186451",
       "id": "df-happy100",
       "name": "Tri Data Happy 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -3920,10 +3848,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964995",
+      "_id": "6adf0fb006642629e5186452",
       "id": "df-happy150",
       "name": "Tri Data Happy 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3942,10 +3870,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964996",
+      "_id": "6adf0fb006642629e5186453",
       "id": "df-happy150gb",
       "name": "Tri Data Happy 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3964,10 +3892,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964997",
+      "_id": "6adf0fb006642629e5186454",
       "id": "df-happy16gb",
       "name": "Tri Data Happy 16 GB 28 Hari",
       "categoryId": "kuota",
@@ -3986,10 +3914,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964998",
+      "_id": "6adf0fb006642629e5186455",
       "id": "df-happy20gb",
       "name": "Tri Data Happy 20 GB 28 Hari",
       "categoryId": "kuota",
@@ -4008,10 +3936,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964999",
+      "_id": "6adf0fb006642629e5186456",
       "id": "df-happy24gb",
       "name": "Tri Data Happy 24 GB 28 Hari",
       "categoryId": "kuota",
@@ -4030,10 +3958,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499a",
+      "_id": "6adf0fb006642629e5186457",
       "id": "df-happy250",
       "name": "Tri Data Happy 250 GB 28 Hari",
       "categoryId": "kuota",
@@ -4052,10 +3980,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499b",
+      "_id": "6adf0fb006642629e5186458",
       "id": "df-happy26",
       "name": "Tri Data Happy 26 GB 28 Hari",
       "categoryId": "kuota",
@@ -4074,10 +4002,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499c",
+      "_id": "6adf0fb006642629e5186459",
       "id": "df-happy300",
       "name": "Tri Data Happy 300 GB 28 Hari",
       "categoryId": "kuota",
@@ -4096,10 +4024,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499d",
+      "_id": "6adf0fb006642629e518645a",
       "id": "df-happy32",
       "name": "Tri Data Happy 32 GB 28 Hari",
       "categoryId": "kuota",
@@ -4118,10 +4046,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499e",
+      "_id": "6adf0fb006642629e518645b",
       "id": "df-happy35",
       "name": "Tri Data Happy 35 GB 28 Hari",
       "categoryId": "kuota",
@@ -4140,10 +4068,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc50096499f",
+      "_id": "6adf0fb006642629e518645c",
       "id": "df-happy40",
       "name": "Tri Data Happy 40 GB 28 Hari",
       "categoryId": "kuota",
@@ -4162,10 +4090,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a0",
+      "_id": "6adf0fb006642629e518645d",
       "id": "df-happy42",
       "name": "Tri Data Happy 42 GB 28 Hari",
       "categoryId": "kuota",
@@ -4184,32 +4112,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6acdf1570bf6afc5009492ed",
-      "id": "df-happy42gb",
-      "name": "Tri Data Happy 42 GB 28 Hari",
-      "categoryId": "kuota",
-      "provider": "TRI",
-      "sku": "happy42gb",
-      "supplierSku": "happy42gb",
-      "sellerName": "Patriot Jaya Group",
-      "digiflazzCategory": "Data",
-      "digiflazzType": "Happy",
-      "supplierPrice": 75100,
-      "basePrice": 75100,
-      "sellingPrice": 76600,
-      "description": "Tri Data Happy 42 GB / 28 Hari",
-      "quotaDetails": "Tri Data Happy 42 GB / 28 Hari",
-      "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
-      "stock": 9999,
-      "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-13T08:52:39.372Z"
-    },
-    {
-      "_id": "6ad845170bf6afc5009649a1",
+      "_id": "6adf0fb006642629e518645e",
       "id": "df-happy47",
       "name": "Tri Data Happy 47 GB 28 Hari",
       "categoryId": "kuota",
@@ -4228,10 +4134,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a2",
+      "_id": "6adf0fb006642629e518645f",
       "id": "df-happy50",
       "name": "Tri Data Happy 50 GB 28 Hari",
       "categoryId": "kuota",
@@ -4250,10 +4156,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a3",
+      "_id": "6adf0fb006642629e5186460",
       "id": "df-happy60",
       "name": "Tri Data Happy Spesial 60 GB 28 Hari",
       "categoryId": "kuota",
@@ -4272,10 +4178,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a4",
+      "_id": "6adf0fb006642629e5186461",
       "id": "df-happy65",
       "name": "Tri Data Happy 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -4294,10 +4200,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a5",
+      "_id": "6adf0fb006642629e5186462",
       "id": "df-happy65gb",
       "name": "Tri Data Happy 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -4316,10 +4222,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a6",
+      "_id": "6adf0fb006642629e5186463",
       "id": "df-happy75",
       "name": "Tri Data Happy 75 GB 28 Hari",
       "categoryId": "kuota",
@@ -4338,10 +4244,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a7",
+      "_id": "6adf0fb006642629e5186464",
       "id": "df-home60gb",
       "name": "Tri Data Home 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -4360,10 +4266,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a8",
+      "_id": "6adf0fb006642629e5186465",
       "id": "df-hotrod3g10d",
       "name": "Aktivasi Voucher XL XTRA HotRod Special 3 GB 10 Hari",
       "categoryId": "aktivasi voucher",
@@ -4382,10 +4288,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649a9",
+      "_id": "6adf0fb006642629e5186466",
       "id": "df-hppy150",
       "name": "Tri Data Happy Spesial 150 GB 30 Hari",
       "categoryId": "kuota",
@@ -4404,10 +4310,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649aa",
+      "_id": "6adf0fb006642629e5186467",
       "id": "df-hppy30gb",
       "name": "Tri Data Happy 30 GB 28 Hari",
       "categoryId": "kuota",
@@ -4426,10 +4332,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ab",
+      "_id": "6adf0fb006642629e5186468",
       "id": "df-hppy70",
       "name": "Tri Data Happy 70 GB 28 Hari",
       "categoryId": "kuota",
@@ -4448,10 +4354,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ac",
+      "_id": "6adf0fb006642629e5186469",
       "id": "df-i10",
       "name": "Indosat 10.000",
       "categoryId": "pulsa",
@@ -4470,10 +4376,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ad",
+      "_id": "6adf0fb006642629e518646a",
       "id": "df-i20",
       "name": "Indosat 20.000",
       "categoryId": "pulsa",
@@ -4492,10 +4398,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ae",
+      "_id": "6adf0fb006642629e518646b",
       "id": "df-i25",
       "name": "Indosat 25.000",
       "categoryId": "pulsa",
@@ -4514,10 +4420,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649af",
+      "_id": "6adf0fb006642629e518646c",
       "id": "df-i5",
       "name": "Indosat 5.000",
       "categoryId": "pulsa",
@@ -4536,10 +4442,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b0",
+      "_id": "6adf0fb006642629e518646d",
       "id": "df-i50",
       "name": "Indosat 50.000",
       "categoryId": "pulsa",
@@ -4555,13 +4461,13 @@
       "description": "Reguler",
       "quotaDetails": "Reguler",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b1",
+      "_id": "6adf0fb006642629e518646e",
       "id": "df-iactive90",
       "name": "Indosat Tambah Masa Aktif Kartu 90 Hari",
       "categoryId": "pulsa",
@@ -4580,10 +4486,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b2",
+      "_id": "6adf0fb006642629e518646f",
       "id": "df-if2",
       "name": "Indosat Freedom Internet 2.5 GB 5 Hari",
       "categoryId": "kuota",
@@ -4602,10 +4508,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b3",
+      "_id": "6adf0fb006642629e5186470",
       "id": "df-if3g30d",
       "name": "Indosat Freedom Internet 3 GB 28 Hari",
       "categoryId": "kuota",
@@ -4624,10 +4530,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b4",
+      "_id": "6adf0fb006642629e5186471",
       "id": "df-if3g3d",
       "name": "Indosat Freedom Internet 3 GB 3 Hari",
       "categoryId": "kuota",
@@ -4646,10 +4552,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b5",
+      "_id": "6adf0fb006642629e5186472",
       "id": "df-jabo80gb",
       "name": "Telkomsel Data 80 GB 30 Hari (Jabodetabek)",
       "categoryId": "kuota",
@@ -4668,10 +4574,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b6",
+      "_id": "6adf0fb006642629e5186473",
       "id": "df-kvision180d",
       "name": "K-Vision & GOL Paket CLING (CL06)  180 Hari",
       "categoryId": "tv",
@@ -4690,10 +4596,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b7",
+      "_id": "6adf0fb006642629e5186474",
       "id": "df-kvision30d",
       "name": "K-Vision & GOL Paket CLING (CL01)  30 Hari",
       "categoryId": "tv",
@@ -4712,10 +4618,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b8",
+      "_id": "6adf0fb006642629e5186475",
       "id": "df-ma30",
       "name": "Telkomsel Tambah Masa Aktif Kartu 30 Hari",
       "categoryId": "pulsa",
@@ -4725,8 +4631,8 @@
       "sellerName": "BAHTERA GROUP",
       "digiflazzCategory": "Masa Aktif",
       "digiflazzType": "Umum",
-      "supplierPrice": 14130,
-      "basePrice": 14130,
+      "supplierPrice": 13440,
+      "basePrice": 13440,
       "sellingPrice": 15200,
       "description": "Telkomsel Tambah Masa Aktif Kartu 30 Hari",
       "quotaDetails": "Telkomsel Tambah Masa Aktif Kartu 30 Hari",
@@ -4734,10 +4640,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649b9",
+      "_id": "6adf0fb006642629e5186476",
       "id": "df-max80gb",
       "name": "XL Data FlexMax 80 GB 28 Hari",
       "categoryId": "kuota",
@@ -4756,10 +4662,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ba",
+      "_id": "6adf0fb006642629e5186477",
       "id": "df-ml10",
       "name": "MOBILE LEGENDS 10 Diamond",
       "categoryId": "game",
@@ -4778,10 +4684,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649bb",
+      "_id": "6adf0fb006642629e5186478",
       "id": "df-ml12",
       "name": "MOBILE LEGENDS 12 Diamond",
       "categoryId": "game",
@@ -4800,10 +4706,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649bc",
+      "_id": "6adf0fb006642629e5186479",
       "id": "df-ml365",
       "name": "MOBILE LEGENDS 565 Diamond",
       "categoryId": "game",
@@ -4813,8 +4719,8 @@
       "sellerName": "FAUZAN SHOP",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 157095,
-      "basePrice": 157095,
+      "supplierPrice": 158730,
+      "basePrice": 158730,
       "sellingPrice": 159200,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -4822,10 +4728,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649bd",
+      "_id": "6adf0fb006642629e518647a",
       "id": "df-ml370",
       "name": "MOBILE LEGENDS 570 Diamond",
       "categoryId": "game",
@@ -4835,8 +4741,8 @@
       "sellerName": "FAUZAN SHOP",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 158665,
-      "basePrice": 158665,
+      "supplierPrice": 160316,
+      "basePrice": 160316,
       "sellingPrice": 160800,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -4844,10 +4750,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649be",
+      "_id": "6adf0fb006642629e518647b",
       "id": "df-ml5",
       "name": "MOBILE LEGENDS 5 Diamond",
       "categoryId": "game",
@@ -4866,10 +4772,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649bf",
+      "_id": "6adf0fb006642629e518647c",
       "id": "df-ml600",
       "name": "MOBILE LEGENDS 600 Diamond",
       "categoryId": "game",
@@ -4888,10 +4794,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c0",
+      "_id": "6adf0fb006642629e518647d",
       "id": "df-mlb100",
       "name": "MOBILE LEGENDS 100 Diamond",
       "categoryId": "game",
@@ -4901,8 +4807,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 28905,
-      "basePrice": 28905,
+      "supplierPrice": 29289,
+      "basePrice": 29289,
       "sellingPrice": 29300,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -4910,10 +4816,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c1",
+      "_id": "6adf0fb006642629e518647e",
       "id": "df-mlb1050",
       "name": "MOBILE LEGENDS 1050 Diamond",
       "categoryId": "game",
@@ -4923,19 +4829,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 291480,
-      "basePrice": 291480,
-      "sellingPrice": 293700,
+      "supplierPrice": 295378,
+      "basePrice": 295378,
+      "sellingPrice": 296400,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c2",
+      "_id": "6adf0fb006642629e518647f",
       "id": "df-mlb1065",
       "name": "MOBILE LEGENDS 1065 Diamond",
       "categoryId": "game",
@@ -4945,19 +4851,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 296729,
-      "basePrice": 296729,
-      "sellingPrice": 298900,
+      "supplierPrice": 300696,
+      "basePrice": 300696,
+      "sellingPrice": 301600,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c3",
+      "_id": "6adf0fb006642629e5186480",
       "id": "df-mlb110",
       "name": "MOBILE LEGENDS 110 Diamond",
       "categoryId": "game",
@@ -4967,19 +4873,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 32055,
-      "basePrice": 32055,
-      "sellingPrice": 32200,
+      "supplierPrice": 32481,
+      "basePrice": 32481,
+      "sellingPrice": 33400,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c4",
+      "_id": "6adf0fb006642629e5186481",
       "id": "df-mlb20",
       "name": "MOBILE LEGENDS 20 Diamond",
       "categoryId": "game",
@@ -4989,8 +4895,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 6305,
-      "basePrice": 6305,
+      "supplierPrice": 6389,
+      "basePrice": 6389,
       "sellingPrice": 6900,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -4998,10 +4904,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c5",
+      "_id": "6adf0fb006642629e5186482",
       "id": "df-mlb224",
       "name": "MOBILE LEGENDS 224 Diamond",
       "categoryId": "game",
@@ -5011,19 +4917,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 64088,
-      "basePrice": 64088,
-      "sellingPrice": 64800,
+      "supplierPrice": 64942,
+      "basePrice": 64942,
+      "sellingPrice": 66400,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c6",
+      "_id": "6adf0fb006642629e5186483",
       "id": "df-mlb250",
       "name": "MOBILE LEGENDS 250 Diamond",
       "categoryId": "game",
@@ -5033,19 +4939,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 71434,
-      "basePrice": 71434,
-      "sellingPrice": 71700,
+      "supplierPrice": 72389,
+      "basePrice": 72389,
+      "sellingPrice": 73600,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c7",
+      "_id": "6adf0fb006642629e5186484",
       "id": "df-mlb257",
       "name": "MOBILE LEGENDS 257 Diamond",
       "categoryId": "game",
@@ -5055,19 +4961,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 73533,
-      "basePrice": 73533,
-      "sellingPrice": 73700,
+      "supplierPrice": 74514,
+      "basePrice": 74514,
+      "sellingPrice": 75700,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c8",
+      "_id": "6adf0fb006642629e5186485",
       "id": "df-mlb3",
       "name": "MOBILE LEGENDS 3 Diamond",
       "categoryId": "game",
@@ -5086,10 +4992,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649c9",
+      "_id": "6adf0fb006642629e5186486",
       "id": "df-mlb344",
       "name": "MOBILE LEGENDS 344 Diamond",
       "categoryId": "game",
@@ -5099,8 +5005,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 98183,
-      "basePrice": 98183,
+      "supplierPrice": 99486,
+      "basePrice": 99486,
       "sellingPrice": 99600,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5108,10 +5014,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ca",
+      "_id": "6adf0fb006642629e5186487",
       "id": "df-mlb345",
       "name": "MOBILE LEGENDS 345 Diamond",
       "categoryId": "game",
@@ -5121,8 +5027,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 98183,
-      "basePrice": 98183,
+      "supplierPrice": 99486,
+      "basePrice": 99486,
       "sellingPrice": 99600,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5130,10 +5036,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649cb",
+      "_id": "6adf0fb006642629e5186488",
       "id": "df-mlb350",
       "name": "MOBILE LEGENDS 350 Diamond",
       "categoryId": "game",
@@ -5143,8 +5049,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 99758,
-      "basePrice": 99758,
+      "supplierPrice": 101082,
+      "basePrice": 101082,
       "sellingPrice": 101200,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5152,10 +5058,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649cc",
+      "_id": "6adf0fb006642629e5186489",
       "id": "df-mlb355",
       "name": "MOBILE LEGENDS 355 Diamond",
       "categoryId": "game",
@@ -5165,8 +5071,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 100806,
-      "basePrice": 100806,
+      "supplierPrice": 102145,
+      "basePrice": 102145,
       "sellingPrice": 103200,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5174,10 +5080,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649cd",
+      "_id": "6adf0fb006642629e518648a",
       "id": "df-mlb370",
       "name": "MOBILE LEGENDS 370 Diamond",
       "categoryId": "game",
@@ -5187,8 +5093,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 105531,
-      "basePrice": 105531,
+      "supplierPrice": 106933,
+      "basePrice": 106933,
       "sellingPrice": 108000,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5196,10 +5102,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ce",
+      "_id": "6adf0fb006642629e518648b",
       "id": "df-mlb384",
       "name": "MOBILE LEGENDS 384 Diamond",
       "categoryId": "game",
@@ -5209,8 +5115,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 109211,
-      "basePrice": 109211,
+      "supplierPrice": 110661,
+      "basePrice": 110661,
       "sellingPrice": 111600,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5218,10 +5124,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649cf",
+      "_id": "6adf0fb006642629e518648c",
       "id": "df-mlb448",
       "name": "MOBILE LEGENDS 448 Diamond",
       "categoryId": "game",
@@ -5231,8 +5137,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 127587,
-      "basePrice": 127587,
+      "supplierPrice": 129283,
+      "basePrice": 129283,
       "sellingPrice": 130000,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5240,10 +5146,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d0",
+      "_id": "6adf0fb006642629e518648d",
       "id": "df-mlb460",
       "name": "MOBILE LEGENDS 460 Diamond",
       "categoryId": "game",
@@ -5253,8 +5159,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 131261,
-      "basePrice": 131261,
+      "supplierPrice": 133005,
+      "basePrice": 133005,
       "sellingPrice": 133700,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5262,10 +5168,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d1",
+      "_id": "6adf0fb006642629e518648e",
       "id": "df-mlb500",
       "name": "MOBILE LEGENDS 500 Diamond",
       "categoryId": "game",
@@ -5275,8 +5181,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 142327,
-      "basePrice": 142327,
+      "supplierPrice": 144226,
+      "basePrice": 144226,
       "sellingPrice": 144700,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5284,10 +5190,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d2",
+      "_id": "6adf0fb006642629e518648f",
       "id": "df-mlb530",
       "name": "MOBILE LEGENDS 530 Diamond",
       "categoryId": "game",
@@ -5297,8 +5203,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 150691,
-      "basePrice": 150691,
+      "supplierPrice": 152695,
+      "basePrice": 152695,
       "sellingPrice": 153100,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5306,10 +5212,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d3",
+      "_id": "6adf0fb006642629e5186490",
       "id": "df-mlb568",
       "name": "MOBILE LEGENDS 568 Diamond",
       "categoryId": "game",
@@ -5319,19 +5225,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 157560,
-      "basePrice": 157560,
-      "sellingPrice": 158500,
+      "supplierPrice": 159665,
+      "basePrice": 159665,
+      "sellingPrice": 161400,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d4",
+      "_id": "6adf0fb006642629e5186491",
       "id": "df-mlb570",
       "name": "MOBILE LEGENDS 570 Diamond",
       "categoryId": "game",
@@ -5341,19 +5247,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 159135,
-      "basePrice": 159135,
-      "sellingPrice": 159900,
+      "supplierPrice": 161261,
+      "basePrice": 161261,
+      "sellingPrice": 163000,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d5",
+      "_id": "6adf0fb006642629e5186492",
       "id": "df-mlb60",
       "name": "MOBILE LEGENDS 60 Diamond",
       "categoryId": "game",
@@ -5363,8 +5269,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 17862,
-      "basePrice": 17862,
+      "supplierPrice": 18099,
+      "basePrice": 18099,
       "sellingPrice": 18200,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5372,10 +5278,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d6",
+      "_id": "6adf0fb006642629e5186493",
       "id": "df-mlb600",
       "name": "MOBILE LEGENDS 600 Diamond",
       "categoryId": "game",
@@ -5385,8 +5291,8 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 167532,
-      "basePrice": 167532,
+      "supplierPrice": 169770,
+      "basePrice": 169770,
       "sellingPrice": 169900,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5394,10 +5300,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d7",
+      "_id": "6adf0fb006642629e5186494",
       "id": "df-mlb635",
       "name": "MOBILE LEGENDS 635 Diamond",
       "categoryId": "game",
@@ -5407,8 +5313,8 @@
       "sellerName": "FAUZAN SHOP",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 176986,
-      "basePrice": 176986,
+      "supplierPrice": 178714,
+      "basePrice": 178714,
       "sellingPrice": 178900,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
@@ -5416,10 +5322,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d8",
+      "_id": "6adf0fb006642629e5186495",
       "id": "df-mlb642",
       "name": "MOBILE LEGENDS 642 Diamond",
       "categoryId": "game",
@@ -5429,19 +5335,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 179086,
-      "basePrice": 179086,
-      "sellingPrice": 181400,
+      "supplierPrice": 181479,
+      "basePrice": 181479,
+      "sellingPrice": 184000,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649d9",
+      "_id": "6adf0fb006642629e5186496",
       "id": "df-mlb666",
       "name": "MOBILE LEGENDS 666 Diamond",
       "categoryId": "game",
@@ -5451,19 +5357,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 185916,
-      "basePrice": 185916,
-      "sellingPrice": 188200,
+      "supplierPrice": 188399,
+      "basePrice": 188399,
+      "sellingPrice": 190900,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649da",
+      "_id": "6adf0fb006642629e5186497",
       "id": "df-mlb760",
       "name": "MOBILE LEGENDS 760 Diamond",
       "categoryId": "game",
@@ -5473,19 +5379,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 212694,
-      "basePrice": 212694,
-      "sellingPrice": 215000,
+      "supplierPrice": 215533,
+      "basePrice": 215533,
+      "sellingPrice": 217800,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649db",
+      "_id": "6adf0fb006642629e5186498",
       "id": "df-mlbn240",
       "name": "MOBILE LEGENDS 240 Diamond",
       "categoryId": "game",
@@ -5495,19 +5401,19 @@
       "sellerName": "TOPUPKUY GG",
       "digiflazzCategory": "Games",
       "digiflazzType": "Umum",
-      "supplierPrice": 68284,
-      "basePrice": 68284,
-      "sellingPrice": 68800,
+      "supplierPrice": 69197,
+      "basePrice": 69197,
+      "sellingPrice": 70400,
       "description": "no pelanggan = gabungan antara user_id dan zone_id",
       "quotaDetails": "no pelanggan = gabungan antara user_id dan zone_id",
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649dc",
+      "_id": "6adf0fb006642629e5186499",
       "id": "df-mlweek",
       "name": "MOBILE LEGENDS Weekly Diamond Pass",
       "categoryId": "game",
@@ -5517,8 +5423,8 @@
       "sellerName": "FFZ STORE",
       "digiflazzCategory": "Games",
       "digiflazzType": "Membership",
-      "supplierPrice": 30200,
-      "basePrice": 30200,
+      "supplierPrice": 30300,
+      "basePrice": 30300,
       "sellingPrice": 30800,
       "description": "-",
       "quotaDetails": "-",
@@ -5526,10 +5432,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649dd",
+      "_id": "6adf0fb006642629e518649a",
       "id": "df-nonpum25gb",
       "name": "Telkomsel Data Non Puma 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -5548,10 +5454,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649de",
+      "_id": "6adf0fb006642629e518649b",
       "id": "df-paket",
       "name": "Telkomsel Cek Paket Data Super Seru",
       "categoryId": "kuota",
@@ -5570,10 +5476,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649df",
+      "_id": "6adf0fb006642629e518649c",
       "id": "df-pas10",
       "name": "Telkomsel Telepon Pas 10.000",
       "categoryId": "pulsa",
@@ -5592,10 +5498,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e0",
+      "_id": "6adf0fb006642629e518649d",
       "id": "df-pas20",
       "name": "Telkomsel Telepon Pas 20.000",
       "categoryId": "pulsa",
@@ -5614,10 +5520,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e1",
+      "_id": "6adf0fb006642629e518649e",
       "id": "df-pas50",
       "name": "Telkomsel Telepon Pas 50.000",
       "categoryId": "pulsa",
@@ -5636,10 +5542,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e2",
+      "_id": "6adf0fb006642629e518649f",
       "id": "df-pertagas20",
       "name": "Pertagas 20.000",
       "categoryId": "gas",
@@ -5658,10 +5564,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e3",
+      "_id": "6adf0fb006642629e51864a0",
       "id": "df-pln100",
       "name": "PLN 100.000",
       "categoryId": "pln",
@@ -5680,10 +5586,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e4",
+      "_id": "6adf0fb006642629e51864a1",
       "id": "df-pln1000",
       "name": "PLN 1.000.000",
       "categoryId": "pln",
@@ -5702,10 +5608,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e5",
+      "_id": "6adf0fb006642629e51864a2",
       "id": "df-pln20",
       "name": "PLN 20.000",
       "categoryId": "pln",
@@ -5724,10 +5630,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e6",
+      "_id": "6adf0fb006642629e51864a3",
       "id": "df-pln50",
       "name": "PLN 50.000",
       "categoryId": "pln",
@@ -5746,10 +5652,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e7",
+      "_id": "6adf0fb006642629e51864a4",
       "id": "df-puma60gb",
       "name": "Telkomsel Data Non Puma 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -5768,10 +5674,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e8",
+      "_id": "6adf0fb006642629e51864a5",
       "id": "df-s10",
       "name": "Telkomsel 10.000",
       "categoryId": "pulsa",
@@ -5790,10 +5696,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649e9",
+      "_id": "6adf0fb006642629e51864a6",
       "id": "df-s100",
       "name": "Telkomsel 100.000",
       "categoryId": "pulsa",
@@ -5812,10 +5718,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ea",
+      "_id": "6adf0fb006642629e51864a7",
       "id": "df-s15",
       "name": "Telkomsel 15.000",
       "categoryId": "pulsa",
@@ -5834,10 +5740,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649eb",
+      "_id": "6adf0fb006642629e51864a8",
       "id": "df-s20",
       "name": "Telkomsel 20.000",
       "categoryId": "pulsa",
@@ -5856,10 +5762,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ec",
+      "_id": "6adf0fb006642629e51864a9",
       "id": "df-s25",
       "name": "Telkomsel 25.000",
       "categoryId": "pulsa",
@@ -5869,19 +5775,19 @@
       "sellerName": "Pay Store Mobile",
       "digiflazzCategory": "Pulsa",
       "digiflazzType": "Umum",
-      "supplierPrice": 24560,
-      "basePrice": 24560,
+      "supplierPrice": 24550,
+      "basePrice": 24550,
       "sellingPrice": 25600,
       "description": "Reguler",
       "quotaDetails": "Reguler",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ed",
+      "_id": "6adf0fb006642629e51864aa",
       "id": "df-s30",
       "name": "Telkomsel 30.000",
       "categoryId": "pulsa",
@@ -5900,10 +5806,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ee",
+      "_id": "6adf0fb006642629e51864ab",
       "id": "df-s5",
       "name": "Telkomsel 5.000",
       "categoryId": "pulsa",
@@ -5922,10 +5828,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ef",
+      "_id": "6adf0fb006642629e51864ac",
       "id": "df-s50",
       "name": "Telkomsel 50.000",
       "categoryId": "pulsa",
@@ -5941,13 +5847,13 @@
       "description": "Reguler",
       "quotaDetails": "Reguler",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f0",
+      "_id": "6adf0fb006642629e51864ad",
       "id": "df-s90",
       "name": "Telkomsel 90.000",
       "categoryId": "pulsa",
@@ -5957,8 +5863,8 @@
       "sellerName": "BCA PULSA  CV BALI CAKRA AMERTA",
       "digiflazzCategory": "Pulsa",
       "digiflazzType": "Umum",
-      "supplierPrice": 88660,
-      "basePrice": 88660,
+      "supplierPrice": 88613,
+      "basePrice": 88613,
       "sellingPrice": 90100,
       "description": "Reguler",
       "quotaDetails": "Reguler",
@@ -5966,10 +5872,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f1",
+      "_id": "6adf0fb006642629e51864ae",
       "id": "df-sm10",
       "name": "Smartfren 10.000",
       "categoryId": "pulsa",
@@ -5988,10 +5894,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f2",
+      "_id": "6adf0fb006642629e51864af",
       "id": "df-smdu1",
       "name": "Smartfren Data Unlimited Harian 1 GB Berlaku 7 Hari",
       "categoryId": "kuota",
@@ -6010,10 +5916,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f3",
+      "_id": "6adf0fb006642629e51864b0",
       "id": "df-smdu2",
       "name": "Smartfren Data Unlimited Harian 2 GB Berlaku 28 Hari",
       "categoryId": "kuota",
@@ -6032,10 +5938,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f4",
+      "_id": "6adf0fb006642629e51864b1",
       "id": "df-supp85gb",
       "name": "Telkomsel Data Surprise Deal 85 GB 30 Hari",
       "categoryId": "kuota",
@@ -6054,10 +5960,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f5",
+      "_id": "6adf0fb006642629e51864b2",
       "id": "df-t10",
       "name": "Three 10.000",
       "categoryId": "pulsa",
@@ -6076,10 +5982,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f6",
+      "_id": "6adf0fb006642629e51864b3",
       "id": "df-t20",
       "name": "Three 20.000",
       "categoryId": "pulsa",
@@ -6098,10 +6004,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f7",
+      "_id": "6adf0fb006642629e51864b4",
       "id": "df-t5",
       "name": "Three 5.000",
       "categoryId": "pulsa",
@@ -6120,10 +6026,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f8",
+      "_id": "6adf0fb006642629e51864b5",
       "id": "df-telko180",
       "name": "Telkomsel 180.000",
       "categoryId": "pulsa",
@@ -6142,10 +6048,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649f9",
+      "_id": "6adf0fb006642629e51864b6",
       "id": "df-tlkm25gb",
       "name": "Telkomsel Data 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -6164,10 +6070,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649fa",
+      "_id": "6adf0fb006642629e51864b7",
       "id": "df-tlkm30gb",
       "name": "Telkomsel Data 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -6186,10 +6092,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649fb",
+      "_id": "6adf0fb006642629e51864b8",
       "id": "df-ts6",
       "name": "Indosat Freedom Combo 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -6208,10 +6114,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649fc",
+      "_id": "6adf0fb006642629e51864b9",
       "id": "df-tst10",
       "name": "Indosat 10 GB 30 Hari",
       "categoryId": "kuota",
@@ -6221,8 +6127,8 @@
       "sellerName": "PT MAXPRO ADV INDONESIA",
       "digiflazzCategory": "Data",
       "digiflazzType": "Umum",
-      "supplierPrice": 56350,
-      "basePrice": 56350,
+      "supplierPrice": 44975,
+      "basePrice": 44975,
       "sellingPrice": 57900,
       "description": "Kuota 10GB 30 hari",
       "quotaDetails": "Kuota 10GB 30 hari",
@@ -6230,10 +6136,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649fd",
+      "_id": "6adf0fb006642629e51864ba",
       "id": "df-tst11",
       "name": "Indosat 11 GB 30 Hari",
       "categoryId": "kuota",
@@ -6252,10 +6158,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649fe",
+      "_id": "6adf0fb006642629e51864bb",
       "id": "df-tst12",
       "name": "Indosat 12 GB 30 Hari",
       "categoryId": "kuota",
@@ -6274,10 +6180,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc5009649ff",
+      "_id": "6adf0fb006642629e51864bc",
       "id": "df-tst30",
       "name": "Indosat Freedom Combo 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -6296,10 +6202,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a00",
+      "_id": "6adf0fb006642629e51864bd",
       "id": "df-tst6",
       "name": "Indosat Freedom Combo 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -6318,10 +6224,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a01",
+      "_id": "6adf0fb006642629e51864be",
       "id": "df-ulti30",
       "name": "Voucher Vidio Ultimate Mobile 30 Hari",
       "categoryId": "voucher",
@@ -6337,13 +6243,13 @@
       "description": "Nomor tujuan diisi dengan nomor hp yang terdaftar di Vidio",
       "quotaDetails": "Nomor tujuan diisi dengan nomor hp yang terdaftar di Vidio",
       "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
+      "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a02",
+      "_id": "6adf0fb006642629e51864bf",
       "id": "df-ultimat30",
       "name": "Voucher Vidio Ultimate All Screen 30 Hari",
       "categoryId": "voucher",
@@ -6353,8 +6259,8 @@
       "sellerName": "SMI",
       "digiflazzCategory": "Voucher",
       "digiflazzType": "Umum",
-      "supplierPrice": 185000,
-      "basePrice": 185000,
+      "supplierPrice": 199980,
+      "basePrice": 199980,
       "sellingPrice": 200000,
       "description": "Nomor tujuan diisi dengan nomor hp yang terdaftar di Vidio",
       "quotaDetails": "Nomor tujuan diisi dengan nomor hp yang terdaftar di Vidio",
@@ -6362,10 +6268,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a03",
+      "_id": "6adf0fb006642629e51864c0",
       "id": "df-ultimate30d",
       "name": "Vidio Ultimate Mobile 30 Hari",
       "categoryId": "streaming",
@@ -6384,10 +6290,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a04",
+      "_id": "6adf0fb006642629e51864c1",
       "id": "df-umum60gb",
       "name": "Indosat 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -6406,10 +6312,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a05",
+      "_id": "6adf0fb006642629e51864c2",
       "id": "df-vax1",
       "name": "Aktivasi Voucher Axis 1 GB 1 Hari",
       "categoryId": "aktivasi voucher",
@@ -6428,32 +6334,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad19f870bf6afc50095308a",
-      "id": "df-vax2",
-      "name": "Aktivasi Voucher Axis 3 GB 3 Hari",
-      "categoryId": "aktivasi voucher",
-      "provider": "AXIS",
-      "sku": "vax2",
-      "supplierSku": "vax2",
-      "sellerName": "BCA PULSA  CV BALI CAKRA AMERTA",
-      "digiflazzCategory": "Aktivasi Voucher",
-      "digiflazzType": "Aigo",
-      "supplierPrice": 11665,
-      "basePrice": 11665,
-      "sellingPrice": 12500,
-      "description": "AIGO Mini 3GB + Kuota di Kota-mu 3hr",
-      "quotaDetails": "AIGO Mini 3GB + Kuota di Kota-mu 3hr",
-      "deliveryMethod": "AUTOMATIC",
-      "isActive": true,
-      "stock": 9999,
-      "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-16T03:52:39.526Z"
-    },
-    {
-      "_id": "6ad845170bf6afc500964a06",
+      "_id": "6adf0fb006642629e51864c3",
       "id": "df-vflexs",
       "name": "Aktivasi Voucher XL Xtra Combo Flex S 28 Hari",
       "categoryId": "aktivasi voucher",
@@ -6472,10 +6356,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a07",
+      "_id": "6adf0fb006642629e51864c4",
       "id": "df-vidioplat",
       "name": "Voucher Vidio Platinum 30 Hari",
       "categoryId": "voucher",
@@ -6494,10 +6378,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a08",
+      "_id": "6adf0fb006642629e51864c5",
       "id": "df-vidioplat1thun",
       "name": "Voucher Vidio Platinum 1 Tahun",
       "categoryId": "voucher",
@@ -6516,10 +6400,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a09",
+      "_id": "6adf0fb006642629e51864c6",
       "id": "df-vidioultimate",
       "name": "Voucher Vidio Ultimate Mobile 1 Tahun",
       "categoryId": "voucher",
@@ -6538,10 +6422,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0a",
+      "_id": "6adf0fb006642629e51864c7",
       "id": "df-visionbein",
       "name": "Voucher Vision+ BEIN Sport 30 Hari",
       "categoryId": "voucher",
@@ -6560,10 +6444,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0b",
+      "_id": "6adf0fb006642629e51864c8",
       "id": "df-visionultimate",
       "name": "Voucher Vision+ Paket Premium Ultimate 30 Hari",
       "categoryId": "voucher",
@@ -6582,10 +6466,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0c",
+      "_id": "6adf0fb006642629e51864c9",
       "id": "df-visiultimate1thn",
       "name": "Voucher Vision+ Paket Premium Ultimate 1 Tahun",
       "categoryId": "voucher",
@@ -6604,10 +6488,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0d",
+      "_id": "6adf0fb006642629e51864ca",
       "id": "df-vs2g5d",
       "name": "Voucher Telkomsel 2.5 GB 5 Hari (Jawa Barat)",
       "categoryId": "voucher",
@@ -6626,10 +6510,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0e",
+      "_id": "6adf0fb006642629e51864cb",
       "id": "df-wdtsl70",
       "name": "Telkomsel Data Flash 70 GB 30 Hari",
       "categoryId": "kuota",
@@ -6648,10 +6532,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a0f",
+      "_id": "6adf0fb006642629e51864cc",
       "id": "df-wdxlumplus5gb",
       "name": "XL Data Umroh Plus 5 GB 10 Hari",
       "categoryId": "kuota",
@@ -6670,10 +6554,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a10",
+      "_id": "6adf0fb006642629e51864cd",
       "id": "df-wdxlumroh",
       "name": "XL Internet Umroh Haji 40 Hari",
       "categoryId": "kuota",
@@ -6692,10 +6576,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a11",
+      "_id": "6adf0fb006642629e51864ce",
       "id": "df-wdxlumroh2-5gb",
       "name": "XL Internet Umroh Haji 20 Hari",
       "categoryId": "kuota",
@@ -6714,10 +6598,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a12",
+      "_id": "6adf0fb006642629e51864cf",
       "id": "df-wstsl40",
       "name": "Telkomsel Data Flash 40 GB 30 Hari",
       "categoryId": "kuota",
@@ -6736,10 +6620,10 @@
       "isActive": false,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a13",
+      "_id": "6adf0fb006642629e51864d0",
       "id": "df-x10",
       "name": "Xl 10.000",
       "categoryId": "pulsa",
@@ -6758,10 +6642,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a14",
+      "_id": "6adf0fb006642629e51864d1",
       "id": "df-xl100k",
       "name": "Xl 100.000",
       "categoryId": "pulsa",
@@ -6780,10 +6664,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a15",
+      "_id": "6adf0fb006642629e51864d2",
       "id": "df-xl50",
       "name": "Xl 50.000",
       "categoryId": "pulsa",
@@ -6802,10 +6686,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     },
     {
-      "_id": "6ad845170bf6afc500964a16",
+      "_id": "6adf0fb006642629e51864d3",
       "id": "df-yellow1",
       "name": "Indosat Yellow 1 GB 1 Hari",
       "categoryId": "kuota",
@@ -6824,9 +6708,10 @@
       "isActive": true,
       "stock": 9999,
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-10-21T04:52:39.528Z"
+      "lastSyncedAt": "2026-10-26T08:30:40.242Z"
     }
   ],
+  "manualInventoryRevision": 17,
   "orders": [
     {
       "_id": "6ac8a958856f04f0dc1818f0",
@@ -9245,9 +9130,5 @@
   },
   "banners": [],
   "catalogs": [],
-  "pushSubscriptions": [],
-  "qiospayEvents": {},
-  "wifiVoucherItems": {},
-  "digiflazzLogs": [],
-  "promoCodes": {}
+  "pushSubscriptions": []
 }

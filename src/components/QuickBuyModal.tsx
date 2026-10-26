@@ -24,7 +24,7 @@ interface QuickBuyModalProps {
   initialDestination?: string;
   isOpen: boolean;
   onClose: () => void;
-  onOrderCreated: (order: Order, snapToken: string) => void;
+  onOrderCreated: (order: Order, gatewayRefId: string) => void;
   onOpenFullCheckout: (product: Product, targetDestination: string) => void;
   onShowToast: (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }
@@ -229,7 +229,7 @@ export function QuickBuyModal({
 
     try {
       const currentUser = storage.getUser();
-      const { order, snapToken } = await apiAdapter.createOrder({
+      const { order, gatewayRefId } = await apiAdapter.createOrder({
         productId: product.id,
         variantId: activeVariant?.id,
         variantName: activeVariant?.name,
@@ -245,7 +245,7 @@ export function QuickBuyModal({
       setIsLoading(false);
       onClose();
       onShowToast('Sesi Pembayaran Dibuat', `Invoice ${order.invoiceNumber} siap dibayar via QRIS`, 'success');
-      onOrderCreated(order, snapToken);
+      onOrderCreated(order, gatewayRefId);
     } catch (err: any) {
       setIsLoading(false);
       setErrorMessage(err.message || 'Gagal membuat sesi pembayaran.');

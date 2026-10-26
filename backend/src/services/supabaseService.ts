@@ -986,8 +986,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     guest_access_token TEXT,
     "idempotencyKey" TEXT,
     idempotency_key TEXT,
-    "snapToken" TEXT,
-    snap_token TEXT,
+    "gatewayRef" TEXT,
+    gateway_ref TEXT,
     "qrString" TEXT,
     qr_string TEXT,
     "isDynamic" BOOLEAN DEFAULT TRUE,
@@ -1044,8 +1044,8 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "guestAccessToken" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS guest_access_token TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS items JSONB;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS raw_data JSONB;
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "snapToken" TEXT;
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS snap_token TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "gatewayRef" TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS gateway_ref TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "qrString" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS qr_string TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "isDynamic" BOOLEAN DEFAULT TRUE;
@@ -1111,7 +1111,7 @@ CREATE TABLE IF NOT EXISTS public.payment_attempts (
     "orderId" TEXT REFERENCES public.orders(id) ON DELETE CASCADE,
     "paymentMethod" TEXT NOT NULL,
     "transactionId" TEXT,
-    "snapToken" TEXT,
+    "gatewayRef" TEXT,
     amount INTEGER NOT NULL,
     status TEXT DEFAULT 'PENDING',
     "rawPayload" JSONB,

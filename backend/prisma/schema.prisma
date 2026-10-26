@@ -116,8 +116,13 @@ model Order {
   deliveryMethod    DeliveryMethod    @default(AUTOMATIC)
   guestAccessToken  String            @default(uuid()) // Token keamanan tracking order tamu
   idempotencyKey    String?           @unique
-  midtransSnapToken String?
-  midtransOrderId   String?
+  // Referensi transaksi gateway (QRIS/VA) — untuk pencocokan callback.
+  gatewayRefId      String?
+  // Kolom Virtual Account (diisi hanya bila channel VA dipilih)
+  vaNumber          String?
+  vaBankCode        String?
+  vaBankName        String?
+  vaPartnerReff     String?
   paidAt            DateTime?
   fulfilledAt       DateTime?
   createdAt         DateTime          @default(now())
@@ -176,7 +181,7 @@ model PaymentAttempt {
   orderId       String
   order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   paymentMethod String
-  snapToken     String?
+  gatewayRef    String?
   transactionId String?
   amount        Int
   status        PaymentStatus @default(PENDING)

@@ -25,6 +25,8 @@ export interface CreateOrderParams {
   qty?: number;
   smmQty?: number;
   smmComments?: string;
+  /** 'qris' (default) atau 'va:<kode bank>' / '<bank>_va' bila pembeli memilih Virtual Account. */
+  paymentMethod?: string;
 }
 
 export interface PaymentSimulationResult {
@@ -75,7 +77,7 @@ export const apiAdapter = {
   },
 
   // 2. CREATE ORDER (Backend calculates prices strictly)
-  async createOrder(params: CreateOrderParams): Promise<{ order: Order; snapToken: string }> {
+  async createOrder(params: CreateOrderParams): Promise<{ order: Order; gatewayRefId: string }> {
     const product = await this.getProductById(params.productId);
     if (!product || product.isActive === false) throw new Error('Produk tidak tersedia.');
     const target = String(params.targetDestination || '').trim();
@@ -92,6 +94,8 @@ export const apiAdapter = {
         customerEmail: params.customerEmail, customerPhone: params.customerPhone,
         promoCode: params.promoCode?.trim().toUpperCase(),
         preferredGateway: settings.paymentGatewayProvider,
+        // Channel pembayaran dipilih pembeli (QRIS atau VA). Default QRIS.
+        paymentMethod: params.paymentMethod || 'qris',
       }),
     });
     const payload = await response.json().catch(() => null);
@@ -101,7 +105,7 @@ export const apiAdapter = {
     const confirmed: Order = payload.data;
     // Preserve server amount, owner, variant and QR payload verbatim.
     storage.cacheServerOrder(confirmed);
-    return { order: confirmed, snapToken: confirmed.snapToken || payload.snapToken || '' };
+    return { order: confirmed, gatewayRefId: confirmed.gatewayRefId || payload.gatewayRefId || '' };
   },
 
   // SIMULASI PEMBAYARAN SANDBOX PAKASIR
@@ -563,10 +567,6 @@ export const apiAdapter = {
       : 'FAILED';
     const orderId = payload.order_id || payload.depositId || payload.id;
     return this.processPaymentWebhook(orderId, status, payload.payment_type || payload.method || 'QRIS');
-  },
-
-  async handleMidtransWebhook(payload: any): Promise<Order> {
-    return this.handlePaymentWebhook(payload);
   },
 
   /**

@@ -47,7 +47,7 @@ interface HomePageProps {
   currentUser?: User | null;
   onNavigate: (tab: string) => void;
   onSelectProductToCheckout: (product: Product, targetNumber?: string) => void;
-  onOrderCreated?: (order: Order, snapToken: string) => void;
+  onOrderCreated?: (order: Order, gatewayRefId: string) => void;
   onShowToast?: (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
   isAdmin?: boolean;
 }
