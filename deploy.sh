@@ -16,7 +16,9 @@ echo "=========================================="
 echo "🚀 [Wayahe Deploy] Memulai proses deploy..."
 echo "=========================================="
 echo "📥 Menarik kode terbaru dari GitHub..."
-git pull origin main || git pull origin master || true
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "   Branch aktif: $BRANCH"
+git pull origin "$BRANCH" || git pull origin main || git pull origin master || true
 echo "🧹 Membersihkan build lama..."
 rm -rf dist
 echo "📦 Install frontend..."
@@ -41,9 +43,15 @@ cd "$BACKEND_DIR"
 echo "🏗️  Build backend (tsc)..."
 npm run build 2>&1 | tail -n 30 || npx tsc 2>&1 | tail -n 30
 cd "$APP_DIR"
-echo "🔄 Restart backend PM2..."
-pm2 restart ecosystem.config.cjs --update-env 2>&1 | tail -n 20 || pm2 start ecosystem.config.cjs 2>&1 | tail -n 20
-pm2 save 2>&1 | tail -n 5
+echo "🔄 Restart backend service..."
+if systemctl is-active --quiet wayahetopup-backend.service; then
+  sudo systemctl restart wayahetopup-backend.service
+  echo "   systemd service restarted"
+else
+  echo "   ⚠️  systemd service tidak aktif, coba PM2..."
+  pm2 restart ecosystem.config.cjs --update-env 2>&1 | tail -n 20 || pm2 start ecosystem.config.cjs 2>&1 | tail -n 20
+  pm2 save 2>&1 | tail -n 5
+fi
 echo "=========================================="
 echo "✅ [Wayahe] Deploy selesai!"
 echo "   Frontend dist: $APP_DIR/dist"
