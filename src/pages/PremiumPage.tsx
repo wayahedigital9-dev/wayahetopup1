@@ -10,6 +10,7 @@ import {
   Lock
 } from 'lucide-react';
 import { Product, PromoBanner } from '../types';
+import { premiumAvailableStock, isManualPremium } from '../components/PremiumManualStockPanel';
 import { formatRupiah } from '../utils/operator';
 import { HeroAdBanner } from '../components/HeroAdBanner';
 import { ProductLogo } from '../components/ProductLogo';
@@ -69,6 +70,7 @@ export function PremiumPage({
   const banners = propBanners && propBanners.length > 0 ? propBanners : storage.getBanners();
 
   const handleCheckout = (product: Product) => {
+    if (isManualPremium(product) && premiumAvailableStock(product) <= 0) { alert('Stok premium kosong. Silakan pilih produk lain.'); return; }
     if (!targetAccount || targetAccount.trim().length < 5) {
       alert('Masukkan email akun atau nomor WhatsApp tujuan aktivasi.');
       return;
@@ -185,17 +187,20 @@ export function PremiumPage({
               >
                 <div>
                   {/* Top Badges & Logo */}
-                  <div className="flex items-start justify-between gap-2.5 mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <ProductLogo
-                        provider={p.provider}
-                        name={p.name}
-                        category={p.categoryId}
-                        iconUrl={p.iconUrl}
-                        size="md"
-                      />
+                  <div className="flex items-start justify-between gap-3 mb-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-[#181411] border border-[#3E352B]">
+                        <ProductLogo
+                          provider={p.provider}
+                          name={p.name}
+                          category={p.categoryId}
+                          iconUrl={p.iconUrl}
+                          size="xl"
+                          className="w-full h-full"
+                        />
+                      </div>
                       <div>
-                        <span className="text-[10px] font-extrabold text-[#D4A359] uppercase tracking-wider block">
+                        <span className="text-[11px] font-extrabold text-[#D4A359] uppercase tracking-wider block">
                           {p.provider}
                         </span>
                         <span className="text-xs font-semibold text-[#FAF4EB] line-clamp-1">
@@ -233,13 +238,13 @@ export function PremiumPage({
                     <div className="flex justify-between">
                       <span className="text-[#A89F91]">Status Stok:</span>
                       <span className={`font-bold ${
-                        (p.stock ?? 10) > 5
+                        premiumAvailableStock(p) > 5
                           ? 'text-[#84A951]'
-                          : (p.stock ?? 10) > 0
+                          : premiumAvailableStock(p) > 0
                           ? 'text-[#D4A359]'
                           : 'text-rose-400'
                       }`}>
-                        {(p.stock ?? 10) > 0 ? `Tersedia (${p.stock ?? 10} slot akun)` : 'Stok Habis'}
+                        {premiumAvailableStock(p) > 0 ? `Tersedia (${premiumAvailableStock(p)} slot akun)` : 'Stok Habis'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -271,15 +276,15 @@ export function PremiumPage({
 
                   <button
                     onClick={() => handleCheckout(p)}
-                    disabled={(p.stock ?? 10) <= 0}
+                    disabled={premiumAvailableStock(p) <= 0}
                     id={`buy-premium-${p.id}`}
                     className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                      (p.stock ?? 10) <= 0
+                      premiumAvailableStock(p) <= 0
                         ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
                         : 'bg-[#D4A359] hover:bg-[#E2B774] text-[#1D1814]'
                     }`}
                   >
-                    <span>{(p.stock ?? 10) <= 0 ? 'Habis' : 'Pilih Produk'}</span>
+                    <span>{premiumAvailableStock(p) <= 0 ? 'Habis' : 'Pilih Produk'}</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>

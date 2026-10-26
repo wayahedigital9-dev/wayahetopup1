@@ -40,14 +40,12 @@ export const DEFAULT_API_CONFIGS: Record<string, ApiProviderConfig> = {
     orderUrl: 'https://api.digiflazz.com/v1/transaction',
     statusUrl: 'https://api.digiflazz.com/v1/transaction',
     apiKey: '',
-    isActive: true,
+    isActive: false,
     autoPublish: true,
     priceMarginType: 'PERCENT',
     priceMarginValue: 10,
     rounding: 500,
-    connectionStatus: 'CONNECTED',
-    lastTestedAt: new Date().toISOString(),
-    lastSyncStatus: 'SUCCESS',
+    connectionStatus: 'NOT_TESTED',
   },
   gateway_tambahan: {
     id: 'cfg-gateway-tambahan',
@@ -189,6 +187,7 @@ export const MOCK_SMM_SERVICES_XAVIERA = [
 ];
 
 export class ProviderIntegrationService {
+  private gameConnectionCheck: Pick<ApiProviderConfig, 'connectionStatus' | 'lastTestedAt'> = { connectionStatus: 'NOT_TESTED', lastTestedAt: undefined };
   /**
    * Hitung harga jual otomatis berdasarkan margin dan pembulatan
    */
@@ -252,7 +251,7 @@ export class ProviderIntegrationService {
     return {
       premium: { ...DEFAULT_API_CONFIGS.premium, ...(stored.premium || {}) },
       smm: { ...DEFAULT_API_CONFIGS.smm, ...(stored.smm || {}) },
-      game: { ...DEFAULT_API_CONFIGS.game, ...(stored.game || {}) },
+      game: { ...DEFAULT_API_CONFIGS.game, ...(stored.game || {}), ...this.gameConnectionCheck },
       gateway_tambahan: { ...DEFAULT_API_CONFIGS.gateway_tambahan, ...(stored.gateway_tambahan || {}) },
     };
   }
@@ -273,6 +272,17 @@ export class ProviderIntegrationService {
   async testConnection(category: string, config: ApiProviderConfig): Promise<{ success: boolean; message: string }> {
     const now = new Date().toISOString();
     try {
+      if (category === 'game') {
+        // Digiflazz uses server-side username + MD5 signing, not generic Bearer/GET.
+        const res = await fetch('/api/digiflazz/ip-status', { credentials: 'include' });
+        const json = await res.json();
+        if (!res.ok || !json.success || json.data?.isWhitelisted !== true || json.data?.connectionStatus !== 'CONNECTED') {
+          throw new Error(json.data?.digiflazzMessage || json.message || 'Koneksi Digiflazz belum terverifikasi.');
+        }
+        this.gameConnectionCheck = { connectionStatus: 'CONNECTED', lastTestedAt: now };
+        await this.saveApiConfig({ ...config, ...this.gameConnectionCheck });
+        return { success: true, message: 'Koneksi Digiflazz terverifikasi melalui cek saldo. Transaksi game berbayar belum diuji.' };
+      }
       if (category === 'premium') {
         const url = config.apiUrl || 'https://xavierastore.com/api/v1/products';
         let res: Response | null = null;
@@ -399,6 +409,7 @@ export class ProviderIntegrationService {
         };
       }
     } catch (err: any) {
+      if (category === 'game') this.gameConnectionCheck = { connectionStatus: 'FAILED', lastTestedAt: now };
       const updatedConfig: ApiProviderConfig = {
         ...config,
         connectionStatus: 'FAILED',
@@ -419,6 +430,14 @@ export class ProviderIntegrationService {
     const configs = this.getApiConfigs();
     const config = configs[category] || DEFAULT_API_CONFIGS[category];
     const now = new Date().toISOString();
+
+    if (category === 'game') {
+      const response = await fetch('/api/digiflazz/sync-products?category=game', { method: 'POST', credentials: 'include' });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Sinkronisasi Digiflazz gagal.');
+      await this.saveApiConfig({ ...config, lastSyncAt: now, lastSyncStatus: 'SUCCESS' });
+      return { added: result.added || 0, updated: result.updated || 0, skipped: 0, total: result.count || 0, message: result.message || 'Katalog game Digiflazz diperbarui oleh server.' };
+    }
 
     let addedCount = 0;
     let updatedCount = 0;
@@ -651,10 +670,6 @@ export class ProviderIntegrationService {
           addedCount++;
         }
       }
-    } else if (category === 'game') {
-      // 3. Top Up Game (Digiflazz / Game Provider)
-      const gameProducts = allProducts.filter(p => p.categoryId === 'game');
-      updatedCount = gameProducts.length;
     } else if (category === 'gateway_tambahan') {
       // 4. Clouvia AI Router & Developer Sandbox (Model coding-high)
       const clouviaModels = [

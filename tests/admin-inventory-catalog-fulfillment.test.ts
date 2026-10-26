@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import test from 'node:test';
+
+const root = path.resolve('.');
+const fulfillment = fs.readFileSync(path.join(root, 'backend/src/services/fulfillment.ts'), 'utf8');
+const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+
+test('paid WiFi orders stored in Mongo can be fulfilled without a Prisma mirror', () => {
+  assert.match(fulfillment, /const state = await mongoDbService\.getAllState\(\)/);
+  assert.match(fulfillment, /fulfillManualWifiOrder/);
+  assert.match(fulfillment, /reserveManualWifiVoucher/);
+});
+
+test('customer catalog hydrates manual inventory from the admin database on app startup', () => {
+  assert.match(app, /storage\.hydrateManualInventory\(\).*loadData\(\)/s);
+});
+
+test('WiFi category always uses local voucher fulfillment even when the order carries a buyer SKU', () => {
+  assert.match(fulfillment, /const isDigiflazz\s*=\s*rawCat\s*!==\s*['"]WIFI['"]\s*&&/);
+  assert.match(fulfillment, /else if \(rawCat === ['"]WIFI['"]\)\s*\{\s*await this\.fulfillWifiVoucher/);
+});
+
+test('WiFi fulfillment never generates a voucher and fails closed when admin stock is empty', () => {
+  const start = fulfillment.indexOf('private async fulfillWifiVoucher');
+  const end = fulfillment.indexOf('private async fulfillPremium', start);
+  assert.ok(start >= 0 && end > start);
+  const handler = fulfillment.slice(start, end);
+  assert.match(handler, /reserveManualWifiVoucher/);
+  assert.match(handler, /fulfillmentStatus:\s*'MANUAL_REVIEW'/);
+  assert.doesNotMatch(handler, /Math\.random|wifiVoucherItem\.(findFirst|create)|WF-/);
+});

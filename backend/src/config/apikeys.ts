@@ -30,6 +30,24 @@ export const QIOSPAY_CONFIG = {
   QR_STRING: process.env.QIOSPAY_QRIS_STRING || process.env.QIOSPAY_QR_STRING || process.env.STATIC_QRIS_STRING || '',
   QRIS_STRING: process.env.QIOSPAY_QRIS_STRING || process.env.QIOSPAY_QR_STRING || process.env.STATIC_QRIS_STRING || '',
   LOCAL_DYNAMIC_CONFIRMED: process.env.QIOSPAY_LOCAL_DYNAMIC_CONFIRMED !== 'false',
+  // ── Virtual Account H2H (endpoint /api/create/va) ──────────────────────
+  // Autentikasi VA memakai username (User ID mitra) + pin (us_apikey) yang
+  // bersifat CASE-SENSITIVE. Fitur ini hanya aktif bila keduanya terisi.
+  H2H_USERNAME: process.env.QIOSPAY_H2H_USERNAME || process.env.QIOSPAY_USERNAME || '',
+  H2H_PIN: process.env.QIOSPAY_H2H_PIN || process.env.QIOSPAY_US_APIKEY || '',
+  VA_ENABLED: process.env.QIOSPAY_VA_ENABLED !== 'false',
+  VA_CALLBACK_URL: process.env.QIOSPAY_VA_CALLBACK_URL || '',
+  // Hanya bank besar yang ditampilkan (keputusan pemilik). Fee TIDAK di-hardcode:
+  // selalu dibaca dari parameter `additionalfee` pada respons create VA.
+  VA_BANKS: (process.env.QIOSPAY_VA_BANKS || 'BRI:002,BNI:009,Mandiri:008,BSI:451')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [name, code] = entry.split(':');
+      return { name: (name || '').trim(), code: (code || '').trim() };
+    })
+    .filter((bank) => bank.name && bank.code),
 };
 
 // ── 2b. DIGIFLAZZ (Pulsa & Paket Data) ─────────────────────────

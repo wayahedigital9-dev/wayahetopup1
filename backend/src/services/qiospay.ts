@@ -53,15 +53,44 @@ export function parseNominalRupiah(val: any): number {
   return parseInt(digits, 10) || 0;
 }
 
+const QIOSPAY_PAYMENT_WINDOW_MS = 20 * 60 * 1000;
+const QIOSPAY_EVENT_CLOCK_TOLERANCE_MS = 30 * 1000;
+const QIOSPAY_EXPIRY_GRACE_MS = 5 * 60 * 1000;
+
+export function isQiospayEventEligibleForOrder(order: any, eventReceivedAt: Date | string): boolean {
+  const createdAtMs = new Date(order?.createdAt || '').getTime();
+  const eventAtMs = new Date(eventReceivedAt || '').getTime();
+  if (!Number.isFinite(createdAtMs) || !Number.isFinite(eventAtMs)) return false;
+  if (eventAtMs < createdAtMs - QIOSPAY_EVENT_CLOCK_TOLERANCE_MS) return false;
+
+  const expiredAtMs = new Date(order?.expiredAt || '').getTime();
+  const deadlineMs = Number.isFinite(expiredAtMs)
+    ? expiredAtMs + QIOSPAY_EXPIRY_GRACE_MS
+    : createdAtMs + QIOSPAY_PAYMENT_WINDOW_MS;
+  return eventAtMs <= deadlineMs;
+}
+
 interface MutasiCacheEntry {
   timestamp: number;
   statusCode: number;
   data: any;
 }
 const mutasiCache = new Map<string, MutasiCacheEntry>();
-const MUTASI_CACHE_TTL_MS = 6000; // 6 seconds debounce / cache
+const MUTASI_CACHE_TTL_MS = 1500; // short debounce so new QRIS payments appear promptly
+
+function mutationRows(value: any, depth = 0): any[] | null {
+  if (depth > 5) return null;
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== 'object' || value.success === false || /^(error|fail|failed|reject)$/i.test(String(value.status || ''))) return null;
+  for (const key of ['data', 'result']) {
+    if (key in value) { const rows = mutationRows(value[key], depth + 1); if (rows) return rows; }
+  }
+  return null;
+}
 
 export class QiospayPaymentService {
+  private reconciliationQueue: Promise<void> = Promise.resolve();
+  private reconciliationInFlight = new Map<string, Promise<any>>();
   /**
    * 1. Memproses Webhook Callback Qiospay dengan Kontrak Aman
    * - Verifikasi timingSafeEqual untuk secret key (mendukung path param, header, query, dan body)
@@ -287,7 +316,31 @@ export class QiospayPaymentService {
     event: { nmid: string; refid: string; amount: number | null; receivedAt: Date; payload?: any; type?: string | null; issuer?: string | null; [key: string]: any },
     fulfillmentService?: any
   ): Promise<any | null> {
+    const key = JSON.stringify([event.nmid, event.refid]);
+    const running = this.reconciliationInFlight.get(key);
+    if (running) return running;
+    const attempt = this.reconciliationQueue.then(() => this.reconcileOrderForEventOnce(prisma, event, fulfillmentService));
+    this.reconciliationQueue = attempt.then(() => undefined, () => undefined);
+    this.reconciliationInFlight.set(key, attempt);
+    try { return await attempt; }
+    finally { if (this.reconciliationInFlight.get(key) === attempt) this.reconciliationInFlight.delete(key); }
+  }
+
+  private async reconcileOrderForEventOnce(
+    prisma: PrismaClient,
+    event: { nmid: string; refid: string; amount: number | null; receivedAt: Date; payload?: any; type?: string | null; issuer?: string | null; [key: string]: any },
+    fulfillmentService?: any
+  ): Promise<any | null> {
     if (!event.amount || event.amount <= 0) return null;
+    // A reference already verified is consumed, not credit for another order.
+    if (event.verificationStatus === 'verified') return null;
+    try {
+      const consumed = await prisma.qiospayEvent.findUnique({ where: { nmid_refid: { nmid: event.nmid, refid: event.refid } } });
+      if (consumed?.verificationStatus === 'verified') return null;
+    } catch (_) {}
+    // Mongo receipts remain authoritative if the legacy Prisma event store is offline.
+    const state = await mongoDbService.getAllState();
+    if ((state.orders || []).some((order: any) => order.paymentStatus === 'PAID' && order.qiospayRefid === event.refid && (!order.qiospayNmid || order.qiospayNmid === event.nmid))) return null;
 
     let targetOrder: any = null;
     let matchedOrders: any[] = [];
@@ -318,6 +371,7 @@ export class QiospayPaymentService {
           orderBy: { createdAt: 'desc' },
           take: 5,
         });
+        matchedOrders = matchedOrders.filter((order: any) => isQiospayEventEligibleForOrder(order, event.receivedAt));
       } catch (_) {}
 
       // Fallback pencarian di MongoDB jika Prisma kosong
@@ -330,7 +384,8 @@ export class QiospayPaymentService {
           matchedOrders = ordersList.filter(
             (o: any) =>
               ['PENDING', 'UNPAID', 'EXPIRED'].includes(o.paymentStatus) &&
-              o.totalAmount === event.amount
+              o.totalAmount === event.amount &&
+              isQiospayEventEligibleForOrder(o, event.receivedAt)
           );
         } catch (_) {}
       }
@@ -444,13 +499,10 @@ export class QiospayPaymentService {
             await fulfillmentService.fulfillOrder(updatedOrder.id);
             // Ambil data order terbaru setelah fulfillment selesai untuk disinkronkan ke Supabase
             try {
-              const freshAfterFulfill = await prisma.order.findUnique({
-                where: { id: updatedOrder.id },
-                include: { items: true },
-              });
+              const freshState = await mongoDbService.getAllState();
+              const freshAfterFulfill = (freshState.orders || []).find((o: any) => o.id === updatedOrder.id);
               if (freshAfterFulfill) {
                 await supabaseService.saveOrder(freshAfterFulfill);
-                await mongoDbService.saveOrder(freshAfterFulfill);
                 updatedOrder = freshAfterFulfill;
               }
             } catch (_) {}
@@ -517,29 +569,15 @@ export class QiospayPaymentService {
       };
     }
 
-    let order: any = null;
-    try {
-      order = await prisma.order.findFirst({
-        where: {
-          OR: [
-            { id: cleanId },
-            { invoiceNumber: cleanId },
-          ],
-        },
-        include: { items: true },
-      });
-    } catch (_) {}
-
-    // Fallback cari di MongoDB / Local File jika Prisma tidak menemukan
+    const state = await mongoDbService.getAllState();
+    const ordersList = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+    let order: any = ordersList.find((o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase());
     if (!order) {
       try {
-        const state = await mongoDbService.getAllState();
-        const ordersList = Array.isArray(state?.orders)
-          ? state.orders
-          : (state?.orders ? Object.values(state.orders) : []);
-        order = ordersList.find(
-          (o: any) => o.id === cleanId || o.invoiceNumber?.toLowerCase() === cleanId.toLowerCase()
-        );
+        order = await prisma.order.findFirst({
+          where: { OR: [{ id: cleanId }, { invoiceNumber: cleanId }] },
+          include: { items: true },
+        });
       } catch (_) {}
     }
 
@@ -579,6 +617,7 @@ export class QiospayPaymentService {
 
     if (matchingEvents.length > 0) {
       for (const ev of matchingEvents) {
+        if (!isQiospayEventEligibleForOrder(order, ev.receivedAt)) continue;
         const reconciled = await this.reconcileOrderForEvent(prisma, ev, fulfillmentService);
         if (reconciled && reconciled.id === order.id) {
           const freshOrder = await prisma.order.findUnique({
@@ -777,21 +816,24 @@ export class QiospayPaymentService {
     prisma: PrismaClient,
     fulfillmentService?: any,
     customMerchantCode?: string,
-    customApiKey?: string
+    customApiKey?: string,
+    databaseOnly = false
   ): Promise<{
     success: boolean;
     syncedCount: number;
     reconciledInvoices: string[];
     mutasiCount: number;
     message: string;
+    diagnosticCode?: string;
   }> {
-    const mutasiRes = await this.getMutasi(customMerchantCode, customApiKey, fetch, true);
+    const mutasiRes = await this.getMutasi(customMerchantCode, customApiKey, fetch, true, databaseOnly);
     if (mutasiRes.statusCode !== 200 || !mutasiRes.data) {
       return {
         success: false,
         syncedCount: 0,
         reconciledInvoices: [],
         mutasiCount: 0,
+        diagnosticCode: mutasiRes.data?.diagnosticCode,
         message: mutasiRes.data?.message || 'Gagal menghubungi server mutasi Qiospay',
       };
     }
@@ -938,10 +980,12 @@ export class QiospayPaymentService {
     customMerchantCode?: string,
     customApiKey?: string,
     fetchImpl: typeof fetch = fetch,
-    bypassCache = false
+    bypassCache = false,
+    databaseOnly = false
   ): Promise<{ statusCode: number; data: any }> {
-    const rawMerchantCode = (customMerchantCode || QIOSPAY_CONFIG.MERCHANT_CODE || '').trim();
-    const apiKey = (customApiKey || QIOSPAY_CONFIG.API_KEY || '').trim();
+    // DB-backed admin paths must never combine saved and runtime credentials.
+    const rawMerchantCode = (typeof customMerchantCode === 'string' && customMerchantCode || (!databaseOnly && QIOSPAY_CONFIG.MERCHANT_CODE) || '').trim();
+    const apiKey = (typeof customApiKey === 'string' && customApiKey || (!databaseOnly && QIOSPAY_CONFIG.API_KEY) || '').trim();
 
     if (!rawMerchantCode || !apiKey) {
       return {
@@ -950,14 +994,8 @@ export class QiospayPaymentService {
       };
     }
 
-    // Auto normalisasi format merchant code (misal QP48797 -> QP048797)
+    // Identifiers are literal provider credentials; never guess alternate merchants.
     const candidateCodes: string[] = [rawMerchantCode];
-    const upper = rawMerchantCode.toUpperCase();
-    if (upper.startsWith('QP') && upper.length === 7) {
-      candidateCodes.unshift('QP0' + upper.slice(2));
-    } else if (upper.startsWith('QP0')) {
-      candidateCodes.push('QP' + upper.slice(3));
-    }
 
     const cacheKey = `${candidateCodes[0]}:${apiKey}`;
     const now = Date.now();
@@ -979,17 +1017,15 @@ export class QiospayPaymentService {
             'User-Agent': 'WayaheDigital-Backend/1.0',
           },
         });
-        if (res.ok) {
-          upstreamRes = res;
-          break;
-        }
+        upstreamRes = res;
+        break;
       } catch (_) {}
     }
 
     if (!upstreamRes || !upstreamRes.ok) {
       return {
-        statusCode: 502,
-        data: { message: 'Qiospay mengembalikan error atau tidak terhubung', upstream_status: upstreamRes?.status || 502 },
+        statusCode: [401, 403].includes(upstreamRes?.status || 0) ? 422 : 502,
+        data: { success: false, diagnosticCode: [401, 403].includes(upstreamRes?.status || 0) ? 'UPSTREAM_AUTH_REJECTED' : 'UPSTREAM_UNAVAILABLE', message: [401, 403].includes(upstreamRes?.status || 0) ? 'Qiospay menolak Merchant Code atau API Key yang tersimpan. Periksa kredensial Qiospay.' : 'Qiospay mengembalikan error atau tidak terhubung', upstream_status: upstreamRes?.status || 502 },
       };
     }
 
@@ -1029,9 +1065,11 @@ export class QiospayPaymentService {
         };
       }
 
+      const rows = mutationRows(parsedData);
+      if (!rows) return { statusCode: 502, data: { success: false, diagnosticCode: 'UPSTREAM_INVALID_RESPONSE', message: 'Respons mutasi Qiospay gagal atau format tidak dikenali; sinkronisasi tidak dilakukan.' } };
       const resObj = {
         statusCode: 200,
-        data: { source: 'qiospay', data: parsedData },
+        data: { success: true, source: 'qiospay', data: rows, fetchedAt: new Date().toISOString() },
       };
 
       mutasiCache.set(cacheKey, {
@@ -1049,75 +1087,280 @@ export class QiospayPaymentService {
     }
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  VIRTUAL ACCOUNT (VA H2H) — POST https://qiospay.id/api/create/va
+  //  Autentikasi memakai username (User ID mitra) + pin (us_apikey),
+  //  CASE-SENSITIVE. Fee admin TIDAK PERNAH di-hardcode: selalu dibaca dari
+  //  `additionalfee` pada respons sukses, sesuai catatan dokumentasi resmi.
+  // ══════════════════════════════════════════════════════════════════════
+
+  /** VA hanya boleh dipakai bila fitur diaktifkan DAN kredensial H2H terisi. */
+  isVaConfigured(): boolean {
+    return Boolean(QIOSPAY_CONFIG.VA_ENABLED && QIOSPAY_CONFIG.H2H_USERNAME && QIOSPAY_CONFIG.H2H_PIN);
+  }
+
+  /** Daftar bank VA yang ditampilkan ke pembeli (BRI, BNI, Mandiri, BSI). */
+  listVaBanks(): Array<{ name: string; code: string }> {
+    return QIOSPAY_CONFIG.VA_BANKS;
+  }
+
+  /** Partner reference VA harus unik per transaksi dan stabil saat diulang. */
+  buildVaPartnerReff(orderId: string): string {
+    return `WD-VA-${String(orderId || '').replace(/[^a-zA-Z0-9]/g, '')}`;
+  }
+
+  private resolveVaCallbackUrl(explicit?: string): string {
+    if (explicit && /^https:\/\//i.test(explicit)) return explicit;
+    if (QIOSPAY_CONFIG.VA_CALLBACK_URL) return QIOSPAY_CONFIG.VA_CALLBACK_URL;
+    const base = String(process.env.PUBLIC_BASE_URL || process.env.FRONTEND_URL || 'https://wayahetopup.my.id').replace(/\/+$/, '');
+    return `${base}/api/webhook/qiospay-va`;
+  }
+
+  async createVirtualAccount(params: {
+    orderId: string;
+    amount: number;
+    bankCode: string;
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    callbackUrl?: string;
+  }): Promise<{
+    status: 'success' | 'error';
+    virtualAccount?: string;
+    bankCode: string;
+    bankName?: string;
+    amount: number;
+    additionalfee?: number;
+    customerName?: string;
+    partnerReff: string;
+    message?: string;
+  }> {
+    const partnerReff = this.buildVaPartnerReff(params.orderId);
+    const bankCode = String(params.bankCode || '').trim();
+    const bank = this.listVaBanks().find((b) => b.code === bankCode);
+    const amount = Math.max(0, Math.round(Number(params.amount || 0)));
+
+    if (!this.isVaConfigured()) {
+      return {
+        status: 'error', bankCode, bankName: bank?.name, amount, partnerReff,
+        message: 'Fitur Virtual Account Qiospay belum aktif. Isi QIOSPAY_H2H_USERNAME & QIOSPAY_H2H_PIN setelah VA H2H disetujui di dashboard Qiospay.',
+      };
+    }
+    if (!amount || !bankCode) {
+      return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: 'Nominal dan kode bank wajib diisi.' };
+    }
+
+    try {
+      const response = await fetch('https://qiospay.id/api/create/va', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: QIOSPAY_CONFIG.H2H_USERNAME,
+          pin: QIOSPAY_CONFIG.H2H_PIN,
+          amount,
+          bank_code: bankCode,
+          partner_reff: partnerReff,
+          customer_id: String(params.customerId || params.orderId || '').slice(0, 64),
+          customer_name: String(params.customerName || 'Pelanggan').slice(0, 64),
+          customer_phone: String(params.customerPhone || '').slice(0, 32),
+          customer_email: String(params.customerEmail || '').slice(0, 96),
+          url_callback: this.resolveVaCallbackUrl(params.callbackUrl),
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      const text = await response.text();
+      let json: any = null;
+      try { json = JSON.parse(text); } catch (_) {}
+
+      if (!json || String(json.status || '').toLowerCase() !== 'success' || !json.virtual_account) {
+        const reason = json?.response || json?.message || `HTTP ${response.status}`;
+        console.warn(`⚠️ [Qiospay VA] Gagal membuat VA untuk ${partnerReff}: ${reason}`);
+        return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: String(reason) };
+      }
+
+      // additionalfee = fee admin dari Qiospay (dipotong dari amount). Jangan di-hardcode.
+      const additionalfee = parseNominalRupiah(json.additionalfee);
+      console.log(`✅ [Qiospay VA] VA ${json.bank_name || bankCode} dibuat untuk ${partnerReff} (fee Rp ${additionalfee})`);
+      return {
+        status: 'success',
+        virtualAccount: String(json.virtual_account),
+        bankCode: String(json.bank_code || bankCode),
+        bankName: String(json.bank_name || bank?.name || ''),
+        amount: parseNominalRupiah(json.amount) || amount,
+        additionalfee,
+        customerName: json.customer_name,
+        partnerReff,
+      };
+    } catch (err: any) {
+      console.warn(`⚠️ [Qiospay VA] Kesalahan koneksi: ${err?.message}`);
+      return { status: 'error', bankCode, bankName: bank?.name, amount, partnerReff, message: `Koneksi ke Qiospay gagal: ${err?.message}` };
+    }
+  }
+
+  /**
+   * Callback VA (POST ke url_callback mitra). WAJIB membalas HTTP 200.
+   * Pencocokan memakai partner_reff (identitas eksplisit dari provider) — bukan
+   * nominal — lalu order di-update PAID dan diteruskan ke fulfillment.
+   */
+  async processVaCallback(
+    payload: any,
+    prisma: PrismaClient,
+    fulfillmentService?: any
+  ): Promise<{ statusCode: number; response: any }> {
+    const partnerReff = String(payload?.partner_reff || '').trim();
+    const statusRaw = String(payload?.status || '').trim().toUpperCase();
+    const amount = parseNominalRupiah(payload?.amount);
+    const vaNumber = String(payload?.va_number || '').trim();
+    const vaCode = String(payload?.va_code || '').trim();
+    const serial = String(payload?.serialnumber || '').trim();
+
+    if (!partnerReff) {
+      console.warn('⚠️ [Qiospay VA Callback] partner_reff tidak ada; ditolak.');
+      return { statusCode: 400, response: { status: 'reject', message: 'partner_reff wajib ada' } };
+    }
+    if (statusRaw !== 'SUCCESS') {
+      return { statusCode: 200, response: { status: 'accept', message: `Status "${statusRaw || 'kosong'}" diabaikan` } };
+    }
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
+      console.warn(`⚠️ [Qiospay VA Callback] amount tidak valid untuk ${partnerReff}:`, payload?.amount);
+      return { statusCode: 400, response: { status: 'reject', message: 'amount tidak valid' } };
+    }
+
+    try {
+      const state = await mongoDbService.getAllState();
+      const orders: any[] = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+      const sameReff = orders.filter((o: any) => String(o.vaPartnerReff || '') === partnerReff);
+
+      // Idempotensi: VA yang sudah pernah dicairkan tidak boleh mengkredit dua kali.
+      if (sameReff.some((o: any) => o.paymentStatus === 'PAID')) {
+        console.log(`🔁 [Qiospay VA] ${partnerReff} sudah PAID; callback duplikat diabaikan.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Duplicate VA callback ignored' } };
+      }
+
+      const targetOrder = sameReff[0];
+      if (!targetOrder) {
+        // Tanpa order yang cocok, jangan pernah menebak: simpan untuk review manual.
+        try {
+          await prisma.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_UNMATCHED',
+              performedBy: 'Qiospay VA Callback',
+              details: `Callback VA ${vaNumber || '(tanpa nomor)'} Rp ${amount.toLocaleString('id-ID')} dengan partner_reff ${partnerReff} tidak cocok dengan pesanan mana pun. Butuh peninjauan manual.`,
+            },
+          });
+        } catch (_) {}
+        console.warn(`⚠️ [Qiospay VA] Callback ${partnerReff} tidak menemukan pesanan; masuk antrean manual review.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Diterima untuk peninjauan manual' } };
+      }
+
+      // Nominal harus sama dengan tagihan pesanan; selisih = tidak boleh dikreditkan otomatis.
+      const expected = Number(targetOrder.totalAmount || targetOrder.amount || 0);
+      if (expected > 0 && amount !== expected) {
+        try {
+          await prisma.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_AMOUNT_MISMATCH',
+              performedBy: 'Qiospay VA Callback',
+              details: `Invoice ${targetOrder.invoiceNumber}: callback VA Rp ${amount.toLocaleString('id-ID')} tidak sama dengan tagihan Rp ${expected.toLocaleString('id-ID')} (ref ${partnerReff}). Menunggu review manual.`,
+            },
+          });
+        } catch (_) {}
+        console.warn(`⚠️ [Qiospay VA] Nominal tidak cocok untuk ${targetOrder.invoiceNumber}; manual review.`);
+        return { statusCode: 200, response: { status: 'accept', message: 'Nominal tidak cocok; peninjauan manual' } };
+      }
+
+      if (targetOrder.paymentStatus === 'PAID') {
+        return { statusCode: 200, response: { status: 'accept', message: 'Sudah lunas' } };
+      }
+
+      const now = new Date();
+      let updatedOrder: any = {
+        ...targetOrder,
+        paymentStatus: 'PAID',
+        paidAt: now.toISOString(),
+        paymentMethod: targetOrder.paymentMethod || `VA ${targetOrder.vaBankName || vaCode || ''}`.trim(),
+        vaNumber: targetOrder.vaNumber || vaNumber,
+        vaBankCode: targetOrder.vaBankCode || vaCode,
+        vaSerialNumber: serial || undefined,
+        qiospayRefid: partnerReff,
+        updatedAt: now.toISOString(),
+      };
+
+      try {
+        const txResult = await prisma.$transaction(async (tx) => {
+          const fresh = await tx.order.findUnique({ where: { id: targetOrder.id } });
+          if (!fresh || fresh.paymentStatus === 'PAID') return fresh;
+          const updated = await tx.order.update({
+            where: { id: fresh.id },
+            data: { paymentStatus: 'PAID', paidAt: now, paymentMethod: updatedOrder.paymentMethod, updatedAt: now },
+          });
+          await tx.auditLog.create({
+            data: {
+              action: 'PAYMENT_VA_RECONCILED',
+              performedBy: 'Qiospay VA Callback',
+              details: `Invoice ${fresh.invoiceNumber} lunas via VA ${updatedOrder.vaBankName || vaCode} (Rp ${amount.toLocaleString('id-ID')}, ref ${partnerReff})`,
+            },
+          });
+          return updated;
+        });
+        if (txResult) updatedOrder = { ...updatedOrder, ...txResult };
+      } catch (txErr: any) {
+        console.warn('[Qiospay VA] Prisma transaction notice:', txErr.message);
+      }
+
+      try {
+        await supabaseService.saveOrder(updatedOrder);
+        await mongoDbService.saveOrder(updatedOrder);
+        console.log(`✅ [QIOSPAY_VA_PAID] Order ${updatedOrder.invoiceNumber} PAID via VA ${updatedOrder.vaBankName || vaCode}`);
+      } catch (syncErr: any) {
+        console.warn('⚠️ [Qiospay VA] Cloud sync notice:', syncErr.message);
+      }
+
+      try {
+        pushNotificationService.sendPaymentSuccessNotification({
+          id: updatedOrder.id,
+          invoiceNumber: updatedOrder.invoiceNumber,
+          productName: updatedOrder.productName || targetOrder.productName || 'Produk Digital',
+          totalAmount: amount,
+          paidAt: updatedOrder.paidAt,
+        }).catch(() => {});
+      } catch (_) {}
+
+      if (fulfillmentService && typeof fulfillmentService.fulfillOrder === 'function') {
+        try { await fulfillmentService.fulfillOrder(updatedOrder.id); } catch (fErr: any) {
+          console.error(`[Fulfillment] Gagal memproses order ${updatedOrder.invoiceNumber}:`, fErr.message);
+        }
+      }
+
+      return { statusCode: 200, response: { status: 'accept', message: 'VA payment recorded' } };
+    } catch (dbError: any) {
+      console.error('[Qiospay VA Callback] Exception:', dbError.message);
+      return { statusCode: 500, response: { status: 'reject', message: 'Gagal memproses callback VA' } };
+    }
+  }
+
   /**
    * 4. Pembuatan Payload QRIS Menggunakan Modul qris.mjs
    * - Membaca QIOSPAY_QRIS_STRING dari environment
    * - Memeriksa QIOSPAY_LOCAL_DYNAMIC_CONFIRMED
    * - Memvalidasi struktur TLV & CRC16 QR asli sebelum konversi
    */
-  createPaymentQris(params: {
-    amount: number;
-    orderId?: string;
-  }): {
-    status: 'success' | 'unconfirmed_fallback';
-    qrString: string;
-    qrImage: string;
-    amount: number;
-    orderId?: string;
-    method: string;
-    paymentStatus: string;
-    isDynamic: boolean;
-    providerConfirmed: boolean;
-    message?: string;
+  createPaymentQris(params: { amount: number; orderId?: string; staticQrString?: string }): {
+    status: 'success'; qrString: string; qrImage: string; amount: number; orderId?: string;
+    method: string; paymentStatus: string; isDynamic: boolean; providerConfirmed: boolean; message?: string;
   } {
-    const rawStaticString = (QIOSPAY_CONFIG.QRIS_STRING || QIOSPAY_CONFIG.QR_STRING || '').trim();
-    const effectiveStatic = (
-      rawStaticString && rawStaticString.length >= 25
-        ? rawStaticString
-        : '00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF'
-    ).trim();
-
-    const amount = Math.round(params.amount);
-
-    try {
-      const dynamicResult = createQris(effectiveStatic, amount, { providerConfirmed: true });
-      const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dynamicResult.qrString)}`;
-      return {
-        status: 'success',
-        qrString: dynamicResult.qrString,
-        qrImage,
-        amount,
-        orderId: params.orderId,
-        method: dynamicResult.method || 'dynamic-qris-qiospay',
-        paymentStatus: 'pending',
-        isDynamic: true,
-        providerConfirmed: true,
-        message: 'QRIS Dinamis Lokal Aktif (Nominal Otomatis Diterapkan)',
-      };
-    } catch (err: any) {
-      console.warn('[QRIS Service] Konversi gagal, fallback generateDynamicQRIS:', err.message);
-      const generated = generateDynamicQRIS({
-        amount,
-        invoiceNumber: params.orderId,
-        merchantName: QIOSPAY_CONFIG.MERCHANT_NAME || 'WAROENG DIGITAL QP48797',
-        merchantCity: 'SIDOARJO',
-        nmid: QIOSPAY_CONFIG.NMID || 'ID1026524496431',
-        gateway: 'QIOSPAY',
-      });
-      const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(generated)}`;
-      return {
-        status: 'success',
-        qrString: generated,
-        qrImage,
-        amount,
-        orderId: params.orderId,
-        method: 'generated-dynamic',
-        paymentStatus: 'pending',
-        isDynamic: true,
-        providerConfirmed: true,
-        message: 'QRIS Dinamis Otomatis Nominal Aktif (Generated)',
-      };
-    }
+    // Never replace a malformed merchant account with invented routing identifiers.
+    const raw = params.staticQrString !== undefined ? params.staticQrString : (QIOSPAY_CONFIG.QRIS_STRING || QIOSPAY_CONFIG.QR_STRING || '');
+    const result = createQris(String(raw).trim(), params.amount);
+    return {
+      status: 'success', qrString: result.qrString,
+      qrImage: `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=16&data=${encodeURIComponent(result.qrString)}`,
+      amount: params.amount, orderId: params.orderId, method: result.method,
+      paymentStatus: 'pending', isDynamic: true, providerConfirmed: false,
+      message: 'QRIS menggunakan identitas merchant asli yang tersimpan.',
+    };
   }
 }
 

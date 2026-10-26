@@ -9,7 +9,7 @@ import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
-import { SnapSimulatorModal } from './components/SnapSimulatorModal';
+import { PaymentDialog } from './components/PaymentDialog';
 import { InvoiceModal } from './components/InvoiceModal';
 import { QuickBuyModal } from './components/QuickBuyModal';
 import { FloatingCsBot } from './components/FloatingCsBot';
@@ -86,8 +86,8 @@ export default function App() {
   const [checkoutTarget, setCheckoutTarget] = useState<string>('');
 
   // Modals
-  const [activeSnapOrder, setActiveSnapOrder] = useState<Order | null>(null);
-  const [activeSnapToken, setActiveSnapToken] = useState<string | null>(null);
+  const [activePaymentOrder, setActivePaymentOrder] = useState<Order | null>(null);
+  const [activeGatewayRef, setActiveGatewayRef] = useState<string | null>(null);
   const [activeInvoiceOrder, setActiveInvoiceOrder] = useState<Order | null>(null);
 
   // Toast notifications
@@ -143,6 +143,8 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+    storage.hydrateManualInventory().then(loadData).catch(() => {});
+    storage.hydrateMemberFromBackend().then(() => storage.hydrateMemberOrders()).then(loadData).catch(() => {});
 
     // Sinkronisasi config gateway dari backend (penting saat deploy production)
     apiAdapter.syncGatewayConfigFromBackend().then((result) => {
@@ -164,24 +166,19 @@ export default function App() {
     window.addEventListener('wayahe_storage_synced', loadData);
     window.addEventListener('storage', loadData);
 
-    // Background worker simulation for fulfillment and reconciliation
-    const workerInterval = setInterval(() => {
-      const currentOrders = storage.getOrders();
-      const needsFulfillment = currentOrders.filter(
-        o => o.paymentStatus === 'PAID' && (o.fulfillmentStatus === 'NOT_STARTED' || o.fulfillmentStatus === 'QUEUED')
-      );
-
-      if (needsFulfillment.length > 0) {
-        needsFulfillment.forEach(async (order) => {
-          try {
-            await apiAdapter.retryFulfillment(order.id);
-            setOrders(storage.getOrders());
-          } catch (e) {
-            // Ignore background worker transient error
-          }
-        });
-      }
-    }, 12000);
+    // Customers refresh confirmed catalog/history; only the backend fulfills orders.
+    let refreshing = false;
+    const refreshConfirmedData = async () => {
+      if (refreshing || document.visibilityState === 'hidden') return;
+      refreshing = true;
+      try {
+        await storage.hydrateManualInventory();
+        if (storage.getUser()) await storage.hydrateMemberOrders();
+        loadData();
+      } catch (_) {} finally { refreshing = false; }
+    };
+    const workerInterval = setInterval(() => { void refreshConfirmedData(); }, 15000);
+    window.addEventListener('focus', refreshConfirmedData);
 
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
@@ -189,6 +186,7 @@ export default function App() {
       window.removeEventListener('wayahe_storage_synced', loadData);
       window.removeEventListener('storage', loadData);
       clearInterval(workerInterval);
+      window.removeEventListener('focus', refreshConfirmedData);
     };
   }, []);
 
@@ -235,30 +233,30 @@ export default function App() {
   };
 
   // Handling Order Created & opening QRIS Payment Modal
-  const handleOrderCreated = (order: Order, snapToken: string) => {
+  const handleOrderCreated = (order: Order, gatewayRefId: string) => {
     setOrders(storage.getOrders());
-    setActiveSnapOrder(order);
-    setActiveSnapToken(snapToken);
+    setActivePaymentOrder(order);
+    setActiveGatewayRef(gatewayRefId);
   };
 
-  // Simulating payment result from Snap Simulator Modal
+  // Menutup dialog pembayaran setelah status terverifikasi (QRIS/VA)
   const handleSimulatePaymentResult = async (
     status: 'PAID' | 'FAILED' | 'EXPIRED',
     method: string,
     withFulfillmentError: boolean = false
   ) => {
-    if (!activeSnapOrder) return;
+    if (!activePaymentOrder) return;
     try {
       const updated = await apiAdapter.processPaymentWebhook(
-        activeSnapOrder.id,
+        activePaymentOrder.id,
         status,
         method,
         withFulfillmentError
       );
 
       setOrders(storage.getOrders());
-      setActiveSnapOrder(null);
-      setActiveSnapToken(null);
+      setActivePaymentOrder(null);
+      setActiveGatewayRef(null);
 
       if (status === 'PAID') {
         setActiveInvoiceOrder(updated);
@@ -471,8 +469,8 @@ export default function App() {
               orders={orders}
               onOpenInvoice={(order) => setActiveInvoiceOrder(order)}
               onOpenPaymentSession={(order) => {
-                setActiveSnapOrder(order);
-                setActiveSnapToken('SNAP-' + order.id.replace('ord-', '').toUpperCase());
+                setActivePaymentOrder(order);
+                setActiveGatewayRef(order.gatewayRefId || ('REF-' + order.id.replace('ord-', '').toUpperCase()));
               }}
               onCopyText={handleCopyText}
             />
@@ -546,14 +544,14 @@ export default function App() {
         />
       )}
 
-      {activeSnapOrder && activeSnapToken && (
-        <SnapSimulatorModal
-          order={activeSnapOrder}
-          snapToken={activeSnapToken}
-          isOpen={Boolean(activeSnapOrder && activeSnapToken)}
+      {activePaymentOrder && activeGatewayRef && (
+        <PaymentDialog
+          order={activePaymentOrder}
+          gatewayRefId={activeGatewayRef}
+          isOpen={Boolean(activePaymentOrder && activeGatewayRef)}
           onClose={() => {
-            setActiveSnapOrder(null);
-            setActiveSnapToken(null);
+            setActivePaymentOrder(null);
+            setActiveGatewayRef(null);
             setOrders(storage.getOrders());
           }}
           onSimulateResult={handleSimulatePaymentResult}

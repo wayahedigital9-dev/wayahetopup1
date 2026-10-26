@@ -34,10 +34,10 @@ import {
   Wrench,
   AlertTriangle
 } from 'lucide-react';
-import { Product, Order, PromoBanner, User } from '../types';
+import { Product, Order, PromoBanner, User, HeroPromoSlide } from '../types';
 import { formatRupiah, detectOperator } from '../utils/operator';
 import { ProductLogo } from '../components/ProductLogo';
-import { storage, INITIAL_BANNERS, INITIAL_PREMIUM_PRODUCTS, INITIAL_AI_TOKEN_PRODUCTS } from '../services/storage';
+import { storage, INITIAL_BANNERS, INITIAL_PREMIUM_PRODUCTS, INITIAL_AI_TOKEN_PRODUCTS, INITIAL_HERO_SLIDES } from '../services/storage';
 import { GameTopUpModal, SelectedGameInfo } from '../components/GameTopUpModal';
 import { useTheme } from '../context/ThemeContext';
 
@@ -47,7 +47,7 @@ interface HomePageProps {
   currentUser?: User | null;
   onNavigate: (tab: string) => void;
   onSelectProductToCheckout: (product: Product, targetNumber?: string) => void;
-  onOrderCreated?: (order: Order, snapToken: string) => void;
+  onOrderCreated?: (order: Order, gatewayRefId: string) => void;
   onShowToast?: (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
   isAdmin?: boolean;
 }
@@ -243,144 +243,72 @@ export function HomePage({
     return () => clearInterval(timer);
   }, []);
 
-  // Interactive Promo Products Carousel Slides (Sliding banner promo produk)
-  const promoSlides = useMemo(() => [
-    {
-      id: 'slide-game',
-      badge: '🔥 FLASH SALE GAME • DISKON S/D 25%',
-      badgeColor: 'amber',
-      title: 'Pesta Top Up Game & Diamond Tercepat',
-      subtitle: 'Bonus diamond melimpah dan cashback koin instan untuk Mobile Legends, Free Fire, Valorant, & Genshin. Otomatis masuk 1-3 detik non-stop 24 jam.',
-      tags: ['⚡ Proses 1-3 Detik Masuk', '🛡️ Garansi 100% Legal', '💰 Cashback Koin Member'],
-      ctaText: 'Top Up Game Sekarang',
-      ctaAction: () => {
-        const el = document.getElementById('katalog-game-unggulan');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Jelajahi Semua Game',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('katalog-game-unggulan');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Promo Game Terpopuler',
-      cardSubtitle: 'Harga Spesial Hari Ini',
-      cardItems: [
-        { name: 'Mobile Legends', sub: '86 💎 Diamond', price: 'Rp 21.000', discount: '-18%' },
-        { name: 'Free Fire', sub: '140 💎 Diamond', price: 'Rp 19.500', discount: '-22%' },
-        { name: 'Valorant Point', sub: '1125 VP Points', price: 'Rp 135.000', discount: '-15%' },
-      ],
-      serverStatus: '🟢 Server Otomatis 1-3 Detik',
-      accentGlow: 'from-amber-500/20 via-orange-500/10 to-transparent',
-    },
-    {
-      id: 'slide-kuota',
-      badge: '🌐 HARGA AGEN RESMI • BEBAS FUP',
-      badgeColor: 'sky',
-      title: 'Paket Data Kuota Sakti 24 Jam All Operator',
-      subtitle: 'Telkomsel, Indosat Ooredoo, XL Axiata, Tri & Smartfren tanpa pembagian waktu malam. Harga agen langsung hemat hingga 35%!',
-      tags: ['📶 Semua Operator Resmi', '⏱️ Kuota 24 Jam Full', '🏷️ Harga Distributor Termurah'],
-      ctaText: 'Beli Paket Kuota Murah',
-      ctaAction: () => {
-        setPulsaOrKuotaTab('kuota');
-        const el = document.getElementById('pulsa-kuota-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Isi Pulsa Reguler',
-      secondaryCtaAction: () => {
-        setPulsaOrKuotaTab('pulsa');
-        const el = document.getElementById('pulsa-kuota-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Paket Kuota Paling Laris',
-      cardSubtitle: 'Semua Operator Siap Isi',
-      cardItems: [
-        { name: 'Telkomsel Data', sub: '35 GB / 30 Hari Full', price: 'Rp 45.000', discount: '-30%' },
-        { name: 'Indosat Freedom', sub: '50 GB / 30 Hari Bebas FUP', price: 'Rp 58.000', discount: '-25%' },
-        { name: 'XL Xtra Combo', sub: '40 GB / 30 Hari 24 Jam', price: 'Rp 49.000', discount: '-28%' },
-      ],
-      serverStatus: '⚡ Jalur Host-to-Host Resmi Digiflazz',
-      accentGlow: 'from-sky-500/20 via-blue-500/10 to-transparent',
-    },
-    {
-      id: 'slide-premium',
-      badge: '⭐ AKUN RESMI RESELLER • GARANSI PENUH',
-      badgeColor: 'emerald',
-      title: 'Streaming 4K UHD & Musik Bebas Iklan',
-      subtitle: 'Nikmati Netflix 4K UHD Ultra, Spotify Family, YouTube Premium & Canva Pro tanpa kartu kredit luar negeri. Akun langsung aktif & garansi ganti baru.',
-      tags: ['🛡️ Garansi Full 30 Hari', '🎬 Kualitas 4K UHD Ultra', '⚡ Pengiriman Instan Detik Ini'],
-      ctaText: 'Pilih Akun Premium',
-      ctaAction: () => {
-        const el = document.getElementById('katalog-akun-premium');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Lihat Semua Aplikasi',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('katalog-akun-premium');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Langganan Premium Populer',
-      cardSubtitle: 'Legal & Bergaransi Resmi',
-      cardItems: [
-        { name: 'Netflix 4K UHD', sub: '1 Bulan Private Profile', price: 'Rp 28.000', discount: 'Garansi' },
-        { name: 'Spotify Family', sub: '1 Bulan Akun Pribadi', price: 'Rp 15.000', discount: 'Bebas Iklan' },
-        { name: 'YouTube Premium', sub: '1 Bulan Bebas Iklan + Music', price: 'Rp 12.000', discount: 'Hemat' },
-      ],
-      serverStatus: '🔒 Garansi Full 30 Hari Ganti Baru',
-      accentGlow: 'from-emerald-500/20 via-teal-500/10 to-transparent',
-    },
-    {
-      id: 'slide-ai',
-      badge: '🤖 DEVELOPER AI SANDBOX • SIAP PAKAI',
-      badgeColor: 'violet',
-      title: 'Token API Key AI Terjangkau untuk Developer',
-      subtitle: 'Akses OpenAI GPT-4o, Claude 3.5 Sonnet & DeepSeek R1 tanpa perlu kartu kredit internasional. Latensi rendah, saldo otomatis terisi dan siap request.',
-      tags: ['🚀 Latency Cepat <300ms', '🔑 Saldo Token Siap Pakai', '💻 Ready cURL/Node/Python'],
-      ctaText: 'Beli Saldo Token AI',
-      ctaAction: () => {
-        const el = document.getElementById('api-gateway-ai');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      secondaryCtaText: 'Coba Sandbox API',
-      secondaryCtaAction: () => {
-        const el = document.getElementById('api-gateway-ai');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      },
-      cardTitle: 'Pilihan Model AI Populer',
-      cardSubtitle: 'Saldo Token Langsung Aktif',
-      cardItems: [
-        { name: 'OpenAI GPT-4o', sub: 'Saldo $5 (~78rb Token)', price: 'Rp 82.500', discount: 'Populer' },
-        { name: 'Claude 3.5 Sonnet', sub: 'Saldo $10 Instant Token', price: 'Rp 165.000', discount: 'Ready Key' },
-        { name: 'DeepSeek R1/V3', sub: '20 Juta Token Output', price: 'Rp 45.000', discount: 'Hemat' },
-      ],
-      serverStatus: '🚀 Uptime 99.98% Latensi Rendah',
-      accentGlow: 'from-violet-500/20 via-purple-500/10 to-transparent',
-    },
-    {
-      id: 'slide-wifi',
-      badge: '📡 INTERNET WARGA CEPAT • TANPA KUOTA',
-      badgeColor: 'yellow',
-      title: 'Voucher WiFi Hotspot Unlimited Warga & RT/RW Net',
-      subtitle: 'Akses internet warga tanpa batas kuota mulai Rp 2.000 / hari. Kecepatan stabil hingga 50 Mbps untuk streaming video, belajar, dan usaha online.',
-      tags: ['🚀 Speed Up to 50 Mbps', '💵 Mulai Rp 2.000/hari', '📶 Unlimited Bebas FUP'],
-      ctaText: 'Pilih Voucher WiFi',
-      ctaAction: () => {
-        onNavigate('wifi');
-      },
-      secondaryCtaText: 'Cek Lokasi Hotspot',
-      secondaryCtaAction: () => {
-        onNavigate('wifi');
-      },
-      cardTitle: 'Paket Voucher Hotspot Desa',
-      cardSubtitle: 'Langsung Konek Sekali Klik',
-      cardItems: [
-        { name: 'WiFi Harian', sub: '24 Jam Non-Stop Full Speed', price: 'Rp 2.000', discount: 'Favorit' },
-        { name: 'WiFi Mingguan', sub: '7 Hari Unlimited Tanpa FUP', price: 'Rp 10.000', discount: 'Hemat' },
-        { name: 'WiFi Bulanan', sub: '30 Hari Unlimited Puas', price: 'Rp 35.000', discount: 'Best Value' },
-      ],
-      serverStatus: '📶 Jaringan Hotspot Siaga 24 Jam',
-      accentGlow: 'from-amber-400/20 via-yellow-500/10 to-transparent',
-    },
-  ], [onNavigate]);
+  // Interactive Promo Products Carousel Slides (Dikelola dinamis dari Admin & Storage)
+  const [heroSlidesList, setHeroSlidesList] = useState<HeroPromoSlide[]>(() => storage.getHeroSlides());
+
+  useEffect(() => {
+    const handleSync = () => {
+      setHeroSlidesList(storage.getHeroSlides());
+    };
+    window.addEventListener('storage_synced', handleSync);
+    return () => window.removeEventListener('storage_synced', handleSync);
+  }, []);
+
+  const promoSlides = useMemo(() => {
+    const activeList = heroSlidesList.filter(s => s.isActive !== false);
+    const list = activeList.length > 0 ? activeList : INITIAL_HERO_SLIDES;
+
+    const resolveAction = (target?: string) => {
+      const t = (target || '').toLowerCase().trim();
+      if (t === 'game' || t.includes('game')) {
+        return () => {
+          const el = document.getElementById('katalog-game-unggulan');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'kuota' || t.includes('kuota')) {
+        return () => {
+          setPulsaOrKuotaTab('kuota');
+          const el = document.getElementById('pulsa-kuota-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'pulsa' || t.includes('pulsa')) {
+        return () => {
+          setPulsaOrKuotaTab('pulsa');
+          const el = document.getElementById('pulsa-kuota-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'premium' || t.includes('premium') || t.includes('aplikasi') || t.includes('akun')) {
+        return () => {
+          const el = document.getElementById('katalog-akun-premium');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'ai' || t.includes('ai') || t.includes('token') || t.includes('api')) {
+        return () => {
+          const el = document.getElementById('api-gateway-ai');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        };
+      }
+      if (t === 'wifi' || t.includes('wifi') || t.includes('hotspot')) {
+        return () => {
+          onNavigate('wifi');
+        };
+      }
+      if (t === 'transaksi' || t.includes('transaksi')) {
+        return () => onNavigate('transaksi');
+      }
+      return () => {};
+    };
+
+    return list.map(slide => ({
+      ...slide,
+      ctaAction: resolveAction(slide.ctaCategory),
+      secondaryCtaAction: resolveAction(slide.secondaryCtaAction || slide.ctaCategory),
+    }));
+  }, [heroSlidesList, onNavigate]);
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
   const [isBannerHovered, setIsBannerHovered] = useState<boolean>(false);
@@ -1003,8 +931,8 @@ export function HomePage({
 
         {/* 1.1 MEMBER ACCESS & STATUS BAR */}
         <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-          isDark 
-            ? 'bg-gradient-to-r from-[#1B1F1C] via-[#1E251F] to-[#141815] border-[#2E3A31]' 
+          isDark
+            ? 'bg-gradient-to-r from-[#1B1F1C] via-[#1E251F] to-[#141815] border-[#2E3A31]'
             : 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/50 border-amber-200/80 shadow-xs'
         } flex flex-col sm:flex-row sm:items-center justify-between gap-3.5`}>
           {currentUser ? (
@@ -1101,60 +1029,198 @@ export function HomePage({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
             {[
-              { id: 'cat-game', catKey: 'game', label: 'Top Up Game', desc: 'MLBB, FF, Valo, Steam', icon: Gamepad2, badge: 'Populer', iconStyle: isDark ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-amber-50 text-amber-600 border-amber-200/60', action: () => {
-                if (categoryStatus.game === false) {
-                  onShowToast('Top Up Game', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              {
+                id: 'cat-game',
+                catKey: 'game',
+                label: 'Top Up Game',
+                desc: 'MLBB, FF, Valo, Steam',
+                icon: Gamepad2,
+                badge: 'POPULER',
+                glow: 'bg-amber-500/20',
+                accentText: 'group-hover:text-amber-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-amber-500/25 via-amber-600/10 to-amber-950/20 border-amber-500/35 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
+                  : 'bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200 text-amber-600 shadow-xs',
+                badgeStyle: isDark
+                  ? 'bg-amber-500/15 border-amber-500/35 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                  : 'bg-amber-100/80 border-amber-300 text-amber-800',
+                hoverBorder: isDark ? 'group-hover:border-amber-500/50' : 'group-hover:border-amber-400',
+                action: () => {
+                  if (categoryStatus.game === false) {
+                    onShowToast('Top Up Game', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('katalog-game-unggulan');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('katalog-game-unggulan');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-pulsa', catKey: 'pulsa', label: 'Pulsa & Data', desc: 'Semua Operator 24 Jam', icon: Smartphone, badge: 'Auto 5s', iconStyle: isDark ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200/60', action: () => {
-                if (categoryStatus.pulsa === false && categoryStatus.kuota === false) {
-                  onShowToast('Pulsa & Data', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-pulsa',
+                catKey: 'pulsa',
+                label: 'Pulsa & Data',
+                desc: 'Semua Operator 24 Jam',
+                icon: Smartphone,
+                badge: 'AUTO 5S',
+                glow: 'bg-emerald-500/20',
+                accentText: 'group-hover:text-emerald-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-emerald-500/25 via-emerald-600/10 to-emerald-950/20 border-emerald-500/35 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                  : 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-600 shadow-xs',
+                badgeStyle: isDark
+                  ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+                  : 'bg-emerald-100/80 border-emerald-300 text-emerald-800',
+                hoverBorder: isDark ? 'group-hover:border-emerald-500/50' : 'group-hover:border-emerald-400',
+                action: () => {
+                  if (categoryStatus.pulsa === false && categoryStatus.kuota === false) {
+                    onShowToast('Pulsa & Data', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('section-pulsa-kuota');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('section-pulsa-kuota');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-pln', catKey: 'pln', label: 'PLN & Token', desc: 'Token Listrik Prabayar', icon: Zap, iconStyle: isDark ? 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30' : 'bg-yellow-50 text-yellow-600 border-yellow-200/60', action: () => {
-                if (categoryStatus.pln === false) {
-                  onShowToast('Token PLN', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-pln',
+                catKey: 'pln',
+                label: 'PLN & Token',
+                desc: 'Token Listrik Prabayar',
+                icon: Zap,
+                glow: 'bg-yellow-500/20',
+                accentText: 'group-hover:text-yellow-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-yellow-500/25 via-yellow-600/10 to-yellow-950/20 border-yellow-500/35 text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]'
+                  : 'bg-gradient-to-br from-yellow-100 to-yellow-50 border-yellow-200 text-yellow-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-yellow-500/50' : 'group-hover:border-yellow-400',
+                action: () => {
+                  if (categoryStatus.pln === false) {
+                    onShowToast('Token PLN', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onShowToast('Token PLN', 'Masukkan nomor meter di menu pulsa/tagihan', 'info');
                 }
-                onShowToast('Token PLN', 'Masukkan nomor meter di menu pulsa/tagihan', 'info');
-              }},
-              { id: 'cat-voucher', catKey: 'wifi', label: 'Voucher Digital', desc: 'WiFi RT/RW Net & Game', icon: Radio, iconStyle: isDark ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200/60', action: () => {
-                if (categoryStatus.wifi === false) {
-                  onShowToast('Voucher WiFi', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-voucher',
+                catKey: 'wifi',
+                label: 'Voucher Digital',
+                desc: 'WiFi RT/RW Net & Game',
+                icon: Radio,
+                glow: 'bg-blue-500/20',
+                accentText: 'group-hover:text-blue-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-blue-500/25 via-blue-600/10 to-blue-950/20 border-blue-500/35 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+                  : 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-200 text-blue-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-blue-500/50' : 'group-hover:border-blue-400',
+                action: () => {
+                  if (categoryStatus.wifi === false) {
+                    onShowToast('Voucher WiFi', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onNavigate('wifi');
                 }
-                onNavigate('wifi');
-              }},
-              { id: 'cat-premium', catKey: 'premium', label: 'App Premium', desc: 'Netflix, Spotify, Viu, AI', icon: Crown, badge: 'Garansi', iconStyle: isDark ? 'bg-purple-500/15 text-purple-300 border-purple-500/30' : 'bg-purple-50 text-purple-600 border-purple-200/60', action: () => {
-                if (categoryStatus.premium === false) {
-                  onShowToast('App Premium', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-premium',
+                catKey: 'premium',
+                label: 'App Premium',
+                desc: 'Netflix, Spotify, Viu, AI',
+                icon: Crown,
+                badge: 'GARANSI',
+                glow: 'bg-purple-500/20',
+                accentText: 'group-hover:text-purple-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-purple-500/25 via-purple-600/10 to-purple-950/20 border-purple-500/35 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]'
+                  : 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 text-purple-600 shadow-xs',
+                badgeStyle: isDark
+                  ? 'bg-purple-500/15 border-purple-500/35 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]'
+                  : 'bg-purple-100/80 border-purple-300 text-purple-800',
+                hoverBorder: isDark ? 'group-hover:border-purple-500/50' : 'group-hover:border-purple-400',
+                action: () => {
+                  if (categoryStatus.premium === false) {
+                    onShowToast('App Premium', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  const el = document.getElementById('section-premium-apps');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-                const el = document.getElementById('section-premium-apps');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }},
-              { id: 'cat-smm', catKey: 'smm', label: 'Sosmed SMM', desc: 'Follower & Like Cepat', icon: Share2, iconStyle: isDark ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-rose-50 text-rose-600 border-rose-200/60', action: () => {
-                if (categoryStatus.smm === false) {
-                  onShowToast('Sosmed SMM', 'Maintenance akan segera kembali', 'warning');
-                  return;
+              },
+              {
+                id: 'cat-smm',
+                catKey: 'smm',
+                label: 'Sosmed SMM',
+                desc: 'Follower & Like Cepat',
+                icon: Share2,
+                glow: 'bg-rose-500/20',
+                accentText: 'group-hover:text-rose-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-rose-500/25 via-rose-600/10 to-rose-950/20 border-rose-500/35 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]'
+                  : 'bg-gradient-to-br from-rose-100 to-rose-50 border-rose-200 text-rose-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-rose-500/50' : 'group-hover:border-rose-400',
+                action: () => {
+                  if (categoryStatus.smm === false) {
+                    onShowToast('Sosmed SMM', 'Maintenance akan segera kembali', 'warning');
+                    return;
+                  }
+                  onShowToast('Sosmed SMM', 'Layanan SMM diproses server 24 jam otomatis', 'info');
                 }
-                onShowToast('Sosmed SMM', 'Layanan SMM diproses server 24 jam otomatis', 'info');
-              }},
-              { id: 'cat-roblox', label: 'Roblox RFT', desc: 'Robux Kilat & Giftcard', icon: Boxes, iconStyle: isDark ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-indigo-50 text-indigo-600 border-indigo-200/60', action: () => {
-                const robloxGame = featuredGamesCatalog.find(g => g.id === 'roblox');
-                if (robloxGame) setSelectedGameModal(robloxGame as any);
-              }},
-              { id: 'cat-steam', label: 'Steam & TF2', desc: 'Wallet IDR & Global Key', icon: Flame, iconStyle: isDark ? 'bg-orange-500/15 text-orange-300 border-orange-500/30' : 'bg-orange-50 text-orange-600 border-orange-200/60', action: () => onShowToast('Steam Wallet', 'Voucher Steam Wallet IDR terkirim otomatis', 'info') },
-              { id: 'cat-tax', label: 'Payment TAX', desc: 'Pascabayar & PBB Online', icon: ReceiptText, iconStyle: isDark ? 'bg-teal-500/15 text-teal-300 border-teal-500/30' : 'bg-teal-50 text-teal-600 border-teal-200/60', action: () => onShowToast('Pascabayar', 'Pascabayar siap diproses secara real-time', 'info') },
-              { id: 'cat-jasa', label: 'Jasa Sosmed', desc: 'Verified & Optimasi Akun', icon: ShieldCheck, iconStyle: isDark ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' : 'bg-cyan-50 text-cyan-600 border-cyan-200/60', action: () => onShowToast('Jasa Sosmed', 'Hubungi CS WhatsApp kami untuk bantuan optimasi', 'info') },
+              },
+              {
+                id: 'cat-roblox',
+                label: 'Roblox RFT',
+                desc: 'Robux Kilat & Giftcard',
+                icon: Boxes,
+                glow: 'bg-indigo-500/20',
+                accentText: 'group-hover:text-indigo-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-indigo-500/25 via-indigo-600/10 to-indigo-950/20 border-indigo-500/35 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
+                  : 'bg-gradient-to-br from-indigo-100 to-indigo-50 border-indigo-200 text-indigo-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-indigo-500/50' : 'group-hover:border-indigo-400',
+                action: () => {
+                  const robloxGame = featuredGamesCatalog.find(g => g.id === 'roblox');
+                  if (robloxGame) setSelectedGameModal(robloxGame as any);
+                }
+              },
+              {
+                id: 'cat-steam',
+                label: 'Steam & TF2',
+                desc: 'Wallet IDR & Global Key',
+                icon: Flame,
+                glow: 'bg-orange-500/20',
+                accentText: 'group-hover:text-orange-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-orange-500/25 via-orange-600/10 to-orange-950/20 border-orange-500/35 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]'
+                  : 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-200 text-orange-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-orange-500/50' : 'group-hover:border-orange-400',
+                action: () => onShowToast('Steam Wallet', 'Voucher Steam Wallet IDR terkirim otomatis', 'info')
+              },
+              {
+                id: 'cat-tax',
+                label: 'Payment TAX',
+                desc: 'Pascabayar & PBB Online',
+                icon: ReceiptText,
+                glow: 'bg-teal-500/20',
+                accentText: 'group-hover:text-teal-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-teal-500/25 via-teal-600/10 to-teal-950/20 border-teal-500/35 text-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)]'
+                  : 'bg-gradient-to-br from-teal-100 to-teal-50 border-teal-200 text-teal-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-teal-500/50' : 'group-hover:border-teal-400',
+                action: () => onShowToast('Pascabayar', 'Pascabayar siap diproses secara real-time', 'info')
+              },
+              {
+                id: 'cat-jasa',
+                label: 'Jasa Sosmed',
+                desc: 'Verified & Optimasi Akun',
+                icon: ShieldCheck,
+                glow: 'bg-cyan-500/20',
+                accentText: 'group-hover:text-cyan-400',
+                iconStyle: isDark
+                  ? 'bg-gradient-to-br from-cyan-500/25 via-cyan-600/10 to-cyan-950/20 border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
+                  : 'bg-gradient-to-br from-cyan-100 to-cyan-50 border-cyan-200 text-cyan-600 shadow-xs',
+                hoverBorder: isDark ? 'group-hover:border-cyan-500/50' : 'group-hover:border-cyan-400',
+                action: () => onShowToast('Jasa Sosmed', 'Hubungi CS WhatsApp kami untuk bantuan optimasi', 'info')
+              },
             ].map((cat) => {
               const IconComp = cat.icon;
               const isMaintenance = cat.catKey ? categoryStatus[cat.catKey] === false : false;
@@ -1163,37 +1229,66 @@ export function HomePage({
                 <button
                   key={cat.id}
                   onClick={cat.action}
-                  className={`p-3.5 rounded-2xl ${
+                  className={`group relative p-3 sm:p-3.5 rounded-2xl text-left transition-all duration-300 cursor-pointer overflow-hidden flex items-center gap-3 border ${
                     isMaintenance
                       ? isDark
                         ? 'bg-amber-950/20 border-amber-600/40 text-amber-200'
                         : 'bg-amber-50/70 border-amber-300 text-amber-900'
                       : isDark
-                      ? 'bg-[#1B1F1C] border-[#28302A] hover:border-[#3E4C41] text-[#F5F7F2]'
-                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
-                  } border flex items-center gap-3 transition-all duration-200 cursor-pointer group text-left relative overflow-hidden shadow-xs hover:-translate-y-0.5`}
+                      ? `bg-gradient-to-b from-[#1C211D]/90 via-[#151916]/95 to-[#101311]/95 border-white/[0.08] ${cat.hoverBorder} shadow-[0_4px_20px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]`
+                      : `bg-gradient-to-b from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 ${cat.hoverBorder} shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.07)]`
+                  } hover:-translate-y-1 active:scale-[0.98]`}
                 >
-                  <div className={`w-10 h-10 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-transform group-hover:scale-105 shrink-0`}>
-                    <IconComp size={18} />
+                  {/* Subtle Top Chamfer Highlight */}
+                  {isDark && (
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.16] to-transparent pointer-events-none" />
+                  )}
+
+                  {/* Ambient Glow on Hover */}
+                  <div
+                    className={`absolute -right-8 -bottom-8 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none ${cat.glow}`}
+                  />
+
+                  {/* Glowing Icon Frame */}
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-all duration-300 group-hover:scale-108 group-hover:-rotate-2 shrink-0 relative z-10`}>
+                    <IconComp size={19} className="transition-transform duration-300 group-hover:scale-110" />
                   </div>
-                  <div className="flex-1 min-w-0">
+
+                  {/* Text Content */}
+                  <div className="flex-1 min-w-0 relative z-10">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`font-space font-bold text-xs ${isDark ? 'text-[#F5F7F2] group-hover:text-[#C7FF4D]' : 'text-slate-900 group-hover:text-amber-600'} transition-colors truncate`}>
+                      <span className={`font-space font-extrabold text-xs sm:text-[13px] tracking-tight transition-colors duration-200 truncate ${
+                        isDark
+                          ? `text-[#F5F7F2] ${cat.accentText}`
+                          : `text-slate-900 ${cat.accentText}`
+                      }`}>
                         {cat.label}
                       </span>
                       {isMaintenance ? (
-                        <span className="text-[8px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 uppercase tracking-tighter">
+                        <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 uppercase tracking-tighter shadow-xs">
                           Maintenance
                         </span>
                       ) : cat.badge ? (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${isDark ? 'bg-[#C7FF4D]/15 text-[#C7FF4D]' : 'bg-amber-100 text-amber-700'} uppercase`}>
-                          {cat.badge}
+                        <span className={`inline-flex items-center gap-1 text-[8.5px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider border backdrop-blur-xs ${cat.badgeStyle}`}>
+                          <span className="w-1 h-1 rounded-full bg-current animate-pulse shrink-0" />
+                          <span>{cat.badge}</span>
                         </span>
                       ) : null}
                     </div>
-                    <p className={`text-[10px] ${isMaintenance ? 'text-amber-600 dark:text-amber-400 font-bold' : isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} truncate font-jakarta`}>
+                    <p className={`text-[10px] mt-0.5 truncate font-jakarta transition-colors ${
+                      isMaintenance
+                        ? 'text-amber-500 font-bold'
+                        : isDark
+                        ? 'text-[#9DA69F] group-hover:text-[#CBD5CD]'
+                        : 'text-slate-500 group-hover:text-slate-700'
+                    }`}>
                       {isMaintenance ? 'Maintenance akan segera kembali' : cat.desc}
                     </p>
+                  </div>
+
+                  {/* Interactive Micro Chevron */}
+                  <div className="hidden xl:block shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300 text-slate-400 group-hover:text-white relative z-10">
+                    <ChevronRight size={13} />
                   </div>
                 </button>
               );
@@ -1272,117 +1367,6 @@ export function HomePage({
           </div>
         </section>
 
-        {/* 5. PROMO SPESIAL HARI INI (TAGIHAN BERKURANG PAKAI INI) */}
-        <section className="rounded-3xl p-5 sm:p-7 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0B132B] text-white shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-l-2 border-amber-400 pl-3">
-            <div>
-              <span className="text-[10px] font-space font-bold text-amber-400 uppercase tracking-wider block">
-                TAGIHAN BERKURANG PAKAI INI
-              </span>
-              <h2 className="text-base sm:text-lg font-bold font-space text-white tracking-tight">
-                Promo Spesial Hari Ini
-              </h2>
-            </div>
-            <span className="text-xs text-slate-300 font-space font-medium hidden sm:inline">
-              VOUCHER DISKON AKTIF
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {/* Promo Card 1: QRIS Cashback */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold font-space">
-                  FLASH SALE 20%
-                </span>
-                <span className="text-[10px] text-slate-400">Exp. Hari Ini</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Cashback 20% Pembayaran QRIS
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Gunakan saluran QRIS UNIK untuk transaksi pertama semua server game mobile.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">WAYAHEQRIS</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('WAYAHEQRIS')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Promo Card 2: MLBB Starlight Discount */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold font-space">
-                  DISCOUNT 15.000
-                </span>
-                <span className="text-[10px] text-slate-400">Jam Begadang</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Diskon Kilat Malam MLBB
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Khusus pukul 21:00-05:00 WIB hemat Rp 15.000 untuk Starlight &amp; Weekly Pass.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">BEGADANGMLBB</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('BEGADANGMLBB')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Promo Card 3: Saldo Deposit Bonus */}
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-slate-600 flex flex-col justify-between space-y-3 shadow-md relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold font-space">
-                  CASHBACK TOP UP SALDO
-                </span>
-                <span className="text-[10px] text-slate-400">VIP Only</span>
-              </div>
-              <div>
-                <h3 className="font-space font-bold text-sm sm:text-base text-white">
-                  Bonus Top Up Saldo Deposit 5%
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 font-jakarta leading-relaxed">
-                  Bonus ekstra masuk saldo hingga Rp 50.000 untuk user reseller aktif Wayahe Digital.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">KODE PROMO</span>
-                  <span className="font-mono font-bold text-xs text-[#FACC15]">WAYAHEDEPOSIT</span>
-                </div>
-                <button
-                  onClick={() => handleCopyPromoCode('WAYAHEDEPOSIT')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-[#FACC15] text-slate-200 hover:text-slate-900 text-[11px] font-space font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                >
-                  <Copy size={12} />
-                  <span>Salin</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* 6. KATALOG PRODUK GAME UNGGULAN (10 GAME CARDS MATRIX) */}
         <section id="katalog-game-unggulan" className="space-y-4 scroll-mt-20">
@@ -1609,14 +1593,15 @@ export function HomePage({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2.5">
-                        {/* Icon Gambar Akun Premium (Bisa diedit admin) */}
-                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center bg-slate-900 border border-slate-700/60">
+                        {/* Icon Gambar Akun Premium */}
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-slate-900 border border-slate-700/60">
                           <ProductLogo
                             provider={app.provider || app.name}
+                            name={app.name}
                             iconUrl={app.iconUrl}
                             category="premium"
-                            size="lg"
-                            className="w-full h-full object-cover"
+                            size="xl"
+                            className="w-full h-full"
                           />
                         </div>
                         <div className="flex items-center gap-1">

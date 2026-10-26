@@ -284,6 +284,10 @@ const fallbackStore = {
     },
     create: async ({ data }: any) => {
       const id = data.id || 'ord-' + Date.now();
+      // File fallback must preserve the same insert-only identity contract as SQL.
+      if (Object.values(inMemoryState.orders).some(o => o.id === id || o.invoiceNumber === data.invoiceNumber || (data.idempotencyKey && o.idempotencyKey === data.idempotencyKey))) {
+        throw Object.assign(new Error('Order identity conflict'), { code: 'P2002' });
+      }
       const order = {
         ...data,
         id,
@@ -633,6 +637,8 @@ export const db: any = new Proxy(rawPrisma, {
                 }
                 return await originalFn.apply(tableTarget, args);
               } catch (err: any) {
+                // A uniqueness failure is a conflict, not a database outage.
+                if (err.code === 'P2002') throw err;
                 // If any Prisma DB error occurs (connection refused, relation not found, auth failed), gracefully fallback
                 isPgAvailable = false;
                 if (fallbackFn) {

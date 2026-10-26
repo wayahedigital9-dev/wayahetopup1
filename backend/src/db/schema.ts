@@ -81,8 +81,13 @@ export const orders = pgTable('Order', {
   deliveryMethod: deliveryMethodEnum('deliveryMethod').default('AUTOMATIC'),
   guestAccessToken: text('guestAccessToken').notNull().$defaultFn(() => crypto.randomUUID()),
   idempotencyKey: text('idempotencyKey').unique(),
-  midtransSnapToken: text('midtransSnapToken'),
-  midtransOrderId: text('midtransOrderId'),
+  // Referensi transaksi gateway (QRIS/VA) — dipakai untuk pencocokan callback.
+  gatewayRefId: text('gatewayRefId'),
+  // Kolom Virtual Account (diisi hanya bila pembeli memilih channel VA)
+  vaNumber: text('vaNumber'),
+  vaBankCode: text('vaBankCode'),
+  vaBankName: text('vaBankName'),
+  vaPartnerReff: text('vaPartnerReff'),
   supplierRefId: text('supplierRefId'),
   serialNumber: text('serialNumber'),
   voucherCode: text('voucherCode'),
@@ -118,7 +123,8 @@ export const paymentAttempts = pgTable('PaymentAttempt', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   orderId: text('orderId').notNull().references(() => orders.id, { onDelete: 'cascade' }),
   paymentMethod: text('paymentMethod').notNull(),
-  snapToken: text('snapToken'),
+  // Referensi transaksi gateway untuk percobaan pembayaran ini.
+  gatewayRef: text('gatewayRef'),
   transactionId: text('transactionId'),
   amount: integer('amount').notNull(),
   status: paymentStatusEnum('status').default('PENDING').notNull(),

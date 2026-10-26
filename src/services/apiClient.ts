@@ -2,27 +2,13 @@ import { storage } from './storage';
 
 export const apiClient = {
   async getSettings() {
-    try {
-      const res = await fetch('/api/settings');
-      if (res.ok) return await res.json();
-    } catch (_) {}
-    return storage.getSettings();
+    const settings = await storage.hydrateSettingsFromBackend();
+    if (!settings) throw new Error('Konfigurasi admin tidak dapat dimuat dari server.');
+    return settings;
   },
 
   async updateSettings(newSettings: any) {
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        storage.saveSettings(newSettings);
-        return data;
-      }
-    } catch (_) {}
-    storage.saveSettings(newSettings);
+    await storage.saveSettings(newSettings);
     return { success: true };
   },
 

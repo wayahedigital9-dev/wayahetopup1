@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ApiProviderConfig } from '../types';
 import { providerIntegrationService, DEFAULT_API_CONFIGS } from '../services/providerIntegrationService';
+import { storage } from '../services/storage';
 import { formatRupiah, formatDateWIB } from '../utils/operator';
 import { triggerTopLoading } from './TopProgressBar';
 
@@ -36,14 +37,23 @@ export function AdminApiSettingsSection({
 }: AdminApiSettingsSectionProps) {
   const [activeCategory, setActiveCategory] = useState<'premium' | 'smm' | 'game' | 'gateway_tambahan'>(initialCategory);
   const [configs, setConfigs] = useState<Record<string, ApiProviderConfig>>({});
+  const [configsReady, setConfigsReady] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSummary, setSyncSummary] = useState<{ message: string; added: number; updated: number; skipped: number } | null>(null);
 
   // Load configs on mount
   useEffect(() => {
-    const loaded = providerIntegrationService.getApiConfigs();
-    setConfigs(loaded);
+    let cancelled = false;
+    const load = async () => {
+      const settings = await storage.hydrateSettingsFromBackend();
+      if (cancelled) return;
+      if (!settings) { onShowToast('Gagal Memuat', 'Konfigurasi provider belum dimuat dari server. Muat ulang sebelum menyimpan.', 'error'); return; }
+      setConfigs(providerIntegrationService.getApiConfigs());
+      setConfigsReady(true);
+    };
+    void load();
+    return () => { cancelled = true; };
   }, []);
 
   const currentConfig: ApiProviderConfig = configs[activeCategory] || DEFAULT_API_CONFIGS[activeCategory] || {
@@ -71,9 +81,12 @@ export function AdminApiSettingsSection({
   };
 
   const handleSaveConfig = async () => {
+    if (!configsReady) return;
     triggerTopLoading.start();
     try {
       await providerIntegrationService.saveApiConfig(currentConfig);
+      setConfigs(providerIntegrationService.getApiConfigs());
+      onRefreshData();
       onShowToast(
         'Konfigurasi Disimpan',
         `Pengaturan API untuk ${currentConfig.providerName} (${activeCategory.toUpperCase()}) berhasil disimpan di server.`,
@@ -87,10 +100,12 @@ export function AdminApiSettingsSection({
   };
 
   const handleTestConnection = async () => {
+    if (!configsReady) return;
     setIsTesting(true);
     triggerTopLoading.start();
     try {
       const result = await providerIntegrationService.testConnection(activeCategory, currentConfig);
+      onRefreshData();
       if (result.success) {
         onShowToast('Koneksi Berhasil', result.message, 'success');
         updateCurrentConfig({
@@ -117,6 +132,7 @@ export function AdminApiSettingsSection({
   };
 
   const handleToggleActive = async () => {
+    if (!configsReady) return;
     const nextState = !currentConfig.isActive;
     const updated = {
       ...currentConfig,
@@ -124,7 +140,8 @@ export function AdminApiSettingsSection({
     };
     try {
       await providerIntegrationService.saveApiConfig(updated);
-      updateCurrentConfig({ isActive: nextState });
+      setConfigs(providerIntegrationService.getApiConfigs());
+      onRefreshData();
       onShowToast(
         nextState ? 'Integrasi Diaktifkan' : 'Integrasi Dinonaktifkan',
         `Integrasi ${currentConfig.providerName} untuk kategori ${activeCategory.toUpperCase()} kini ${nextState ? 'AKTIF' : 'NONAKTIF'}.`,
@@ -136,6 +153,7 @@ export function AdminApiSettingsSection({
   };
 
   const handleSyncProducts = async () => {
+    if (!configsReady) return;
     setIsSyncing(true);
     setSyncSummary(null);
     triggerTopLoading.start();
@@ -155,6 +173,8 @@ export function AdminApiSettingsSection({
       triggerTopLoading.done();
     }
   };
+
+  if (!configsReady) return <div className="p-4 text-sm text-slate-400">Memuat konfigurasi provider dari database. Jika gagal, muat ulang sebelum menyimpan.</div>;
 
   return (
     <div className="space-y-6">
@@ -383,12 +403,13 @@ export function AdminApiSettingsSection({
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-300 flex items-center justify-between">
               <span>Alamat API Katalog</span>
-              <span className="text-[10px] font-mono text-indigo-400">GET Endpoint</span>
+              <span className="text-[10px] font-mono text-indigo-400">{activeCategory === 'game' ? 'POST H2H • MD5' : 'GET Endpoint'}</span>
             </label>
             <div className="relative">
               <input
                 type="text"
                 value={currentConfig.apiUrl}
+                disabled={activeCategory === 'game'}
                 onChange={(e) => updateCurrentConfig({ apiUrl: e.target.value })}
                 placeholder={
                   activeCategory === 'premium'
@@ -403,7 +424,7 @@ export function AdminApiSettingsSection({
             <p className="text-[10px] text-slate-500">
               {activeCategory === 'premium' && 'Default: https://xavierastore.com/api/v1/products'}
               {activeCategory === 'smm' && 'Default: https://xavierastore.com/api/v1/smm/services'}
-              {activeCategory === 'game' && 'Endpoint katalog provider top up game.'}
+              {activeCategory === 'game' && 'Game menggunakan konfigurasi utama Digiflazz (username dan key sesuai mode). Katalog: POST price-list; topup/status: POST transaction dengan ref_id yang sama. Sinkronisasi dari tab ini hanya memperbarui kategori game.'}
               {activeCategory === 'gateway_tambahan' && 'Default: https://router.clouvia.id/v1 (Model coding-high)'}
             </p>
           </div>
@@ -411,18 +432,19 @@ export function AdminApiSettingsSection({
           {/* API Key / Token */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-300 flex items-center justify-between">
-              <span>Kredensial API (Bearer Token / Secret Key)</span>
+              <span>{activeCategory === 'game' ? 'Kredensial dari Pengaturan Digiflazz Utama' : 'Kredensial API (Bearer Token / Secret Key)'}</span>
               <span className="text-[10px] text-emerald-400 font-semibold">🔒 Server Secured</span>
             </label>
             <input
               type="password"
-              value={currentConfig.apiKey || ''}
+              value={activeCategory === 'game' ? '' : currentConfig.apiKey || ''}
+              disabled={activeCategory === 'game'}
               onChange={(e) => updateCurrentConfig({ apiKey: e.target.value })}
-              placeholder="Masukkan API Token Provider Anda..."
+              placeholder={activeCategory === 'game' ? 'Gunakan username + Production/Development Key di Digiflazz Utama' : 'Masukkan API Token Provider Anda...'}
               className="w-full px-4 py-2.5 rounded-xl bg-[#141A29] border border-slate-700/80 text-white font-mono text-xs focus:border-indigo-500"
             />
             <p className="text-[10px] text-slate-500">
-              Kredensial disimpan aman di sisi server. Token tidak pernah dikirim ke browser pembeli.
+              {activeCategory === 'game' ? 'Bukan Bearer Token. Key kategori game dan nama provider bukan sumber kredensial H2H. Cek koneksi hanya memverifikasi akses API; pemenuhan game berbayar belum diuji. Margin kategori ini tidak digunakan oleh sinkronisasi H2H; gunakan harga produk Digiflazz.' : 'Kredensial disimpan aman di sisi server. Token tidak pernah dikirim ke browser pembeli.'}
             </p>
           </div>
 

@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Zap,
   Download,
+  CreditCard,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Order } from '../types';
@@ -24,23 +25,24 @@ import {
 import { storage } from '../services/storage';
 import { apiAdapter } from '../services/apiAdapter';
 
-interface SnapSimulatorModalProps {
+interface PaymentDialogProps {
   order: Order;
-  snapToken: string;
+  /** Referensi transaksi gateway (QRIS/VA). Nilai dari server saat order dibuat. */
+  gatewayRefId: string;
   isOpen: boolean;
   onClose: () => void;
   onSimulateResult: (status: 'PAID' | 'FAILED' | 'EXPIRED', method: string, withFulfillmentError?: boolean) => void;
   onCopyText: (text: string, label: string) => void;
 }
 
-export function SnapSimulatorModal({
+export function PaymentDialog({
   order,
-  snapToken,
+  gatewayRefId,
   isOpen,
   onClose,
   onSimulateResult,
   onCopyText,
-}: SnapSimulatorModalProps) {
+}: PaymentDialogProps) {
   const [loadingDeposit, setLoadingDeposit] = useState<boolean>(false);
   const [pollStatus, setPollStatus] = useState<string>('Menunggu scan pembayaran QRIS...');
   const [isCheckingManual, setIsCheckingManual] = useState<boolean>(false);
@@ -56,6 +58,9 @@ export function SnapSimulatorModal({
 
   const settings = storage.getSettings();
   const selectedProvider = (order?.paymentGatewayProvider || settings.paymentGatewayProvider || 'QIOSPAY').toUpperCase();
+  // Virtual Account: nomor VA dikirim server saat order dibuat (channel VA dipilih pembeli).
+  const vaNumber = String(order?.vaNumber || '').trim();
+  const isVA = vaNumber.length > 0;
   const isPakasir = selectedProvider === 'PAKASIR';
   const isQiospay = selectedProvider === 'QIOSPAY';
   const activeGateway = isPakasir ? 'PAKASIR' : 'QIOSPAY';
@@ -79,64 +84,13 @@ export function SnapSimulatorModal({
     ''
   ).trim();
 
-  // Dynamic QR String (Dipisahkan Murni Sesuai Payment Gateway Masing-Masing)
-  const targetAmount = Math.max(1, Math.round(Number(order?.totalAmount || 10000)));
-  let activeQRString = '';
-
-  if (isPakasir) {
-    // ══════════════════════════════════════════════════════════════
-    // JALUR PAKASIR API v2 (MURNI TANPA DATA QIOSPAY)
-    // ══════════════════════════════════════════════════════════════
-    if (order?.qrString && order.qrString.startsWith('000201') && !order.qrString.includes('COM.NOBUBANK')) {
-      activeQRString = order.qrString;
-    } else if (settings.pakasirQrString && settings.pakasirQrString.startsWith('000201')) {
-      activeQRString = settings.pakasirQrString;
-    } else {
-      activeQRString = generateDynamicQRIS({
-        amount: targetAmount,
-        invoiceNumber: order?.invoiceNumber || 'INV-WD',
-        merchantName: merchantStoreName,
-        merchantCity: 'SURABAYA',
-        nmid: settings.pakasirNmid || undefined,
-        gateway: 'PAKASIR',
-      });
-    }
-  } else {
-    // ══════════════════════════════════════════════════════════════
-    // JALUR QIOSPAY QRIS (MURNI NOBU BANK / ASPI QIOSPAY)
-    // ══════════════════════════════════════════════════════════════
-    if (order?.qrString && order.qrString.startsWith('000201') && order.qrString.includes('COM.NOBUBANK')) {
-      activeQRString = order.qrString;
-    } else {
-      const qiospayOfficialStatic = (
-        settings.qiospayQrString ||
-        settings.staticQrisString ||
-        '00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF'
-      ).trim();
-      activeQRString = qiospayOfficialStatic;
-    }
-  }
-
-  // JAMINAN MUTLAK: Selalu pastikan activeQRString menyematkan Tag 54 dengan nominal dinamis produk terkini
-  if (activeQRString && activeQRString.startsWith('000201')) {
-    try {
-      activeQRString = convertStaticToDynamicQRIS(
-        activeQRString,
-        targetAmount,
-        order?.invoiceNumber || 'INV-WD',
-        {
-          preserveTag62: true,
-          forceDynamicPOI: true,
-          merchantName: isPakasir ? merchantStoreName : undefined,
-          gateway: isPakasir ? 'PAKASIR' : 'QIOSPAY',
-        }
-      );
-    } catch (_) {}
-  }
+  // Render only the QR payload issued for this canonical server order.
+  const targetAmount = Number(order?.totalPayment ?? order?.totalAmount ?? 0);
+  const activeQRString = typeof order?.qrString === 'string' && order.qrString.startsWith('000201') ? order.qrString : '';
 
   // Generate QR Code secara lokal langsung di browser (0 ms, aman dari blokir adblock/CORS)
   useEffect(() => {
-    if (!activeQRString) return;
+    if (!activeQRString) { setLocalQrDataUrl(''); return; }
     let isMounted = true;
     QRCode.toDataURL(activeQRString, {
       width: 420,
@@ -165,7 +119,7 @@ export function SnapSimulatorModal({
   const primaryQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&margin=10&data=${encodeURIComponent(activeQRString)}`;
   const fallbackQrUrl = `https://quickchart.io/qr?size=350&text=${encodeURIComponent(activeQRString)}`;
   // Prioritaskan Data URL lokal langsung dari memori browser, baru fallback ke online image jika diperlukan
-  const activeQrImage = localQrDataUrl || (!qrImgError ? primaryQrUrl : fallbackQrUrl);
+  const activeQrImage = activeQRString ? localQrDataUrl : '';
 
   const orderId = order?.id;
   const invoiceNumber = order?.invoiceNumber;
@@ -191,39 +145,58 @@ export function SnapSimulatorModal({
       });
     }, 1000);
 
-    // Auto-Polling Status Pembayaran Otomatis Setiap 4 Detik
+    // Cek segera saat modal terbuka, lalu polling setiap 2 detik tanpa request tumpang tindih.
     let consecutiveErrors = 0;
+    let isPollingRequest = false;
+    let stopped = false;
     if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
-    pollingTimerRef.current = setInterval(async () => {
+
+    const pollPaymentStatus = async () => {
+      if (isPollingRequest || stopped) return;
+      isPollingRequest = true;
       try {
         const checkResult = await apiAdapter.checkOrderStatus(invoiceNumber || orderId);
         consecutiveErrors = 0;
-        if (checkResult && checkResult.paymentStatus === 'PAID') {
+        let confirmedOrder = checkResult?.order;
+        if (checkResult?.paymentStatus === 'PAID' && !confirmedOrder) {
+          const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, { credentials: 'same-origin', cache: 'no-store', headers: order.guestAccessToken ? { 'x-guest-token': order.guestAccessToken } : {} });
+          if (response.ok) confirmedOrder = (await response.json()).data;
+        }
+        if (confirmedOrder?.id === orderId && confirmedOrder.paymentStatus === 'PAID') {
+          stopped = true;
           if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
           if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
           setIsPaymentSuccess(true);
 
           if (checkResult.fulfillmentStatus === 'SUCCESS') {
-            setPollStatus('✅ Pembayaran Berhasil! Membuka rincian invoice...');
+            setPollStatus('Pembayaran Berhasil! Membuka rincian invoice...');
           } else if (checkResult.fulfillmentStatus === 'FAILED' || checkResult.fulfillmentStatus === 'MANUAL_REVIEW') {
-            setPollStatus('⚠️ Pembayaran berhasil, pengiriman produk dalam tinjauan admin.');
+            setPollStatus('Pembayaran berhasil, pengiriman produk dalam tinjauan admin.');
           } else {
-            setPollStatus('⏳ Pembayaran terverifikasi! Menyiapkan produk...');
+            setPollStatus('Pembayaran terverifikasi! Menyiapkan produk...');
           }
 
           setTimeout(() => {
-            onSimulateResult('PAID', isPakasir ? 'QRIS (Pakasir)' : 'QRIS');
-          }, 1200);
+            onSimulateResult('PAID', order?.vaNumber ? ('VA ' + (order.vaBankName || order.vaBankCode || '')).trim() : (isPakasir ? 'QRIS (Pakasir)' : 'QRIS'));
+          }, 400);
         }
       } catch (e) {
         consecutiveErrors++;
         if (consecutiveErrors >= 3) {
-          setPollStatus(`⚠️ Menghubungkan ke server pembayaran ${gatewayTitle}...`);
+          setPollStatus(`Menghubungkan ke server pembayaran ${gatewayTitle}...`);
         }
+      } finally {
+        isPollingRequest = false;
       }
-    }, 4000);
+    };
+
+    void pollPaymentStatus();
+    pollingTimerRef.current = setInterval(() => {
+      void pollPaymentStatus();
+    }, 2000);
 
     return () => {
+      stopped = true;
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
     };
@@ -268,7 +241,7 @@ export function SnapSimulatorModal({
         }
         setTimeout(() => {
           setIsCheckingManual(false);
-          onSimulateResult('PAID', isPakasir ? 'QRIS (Pakasir)' : 'QRIS');
+          onSimulateResult('PAID', order?.vaNumber ? ('VA ' + (order.vaBankName || order.vaBankCode || '')).trim() : (isPakasir ? 'QRIS (Pakasir)' : 'QRIS'));
         }, 1000);
         return;
       }
@@ -350,7 +323,7 @@ export function SnapSimulatorModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 id="snap-modal-title" className="font-extrabold text-base tracking-tight text-white">
-                  Pembayaran QRIS Dinamis
+                  {isVA ? 'Pembayaran Virtual Account' : 'Pembayaran QRIS Dinamis'}
                 </h2>
                 {isPakasir ? (
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -367,6 +340,10 @@ export function SnapSimulatorModal({
                       </span>
                     )}
                   </div>
+                ) : isVA ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase tracking-wider flex items-center gap-1">
+                    <CreditCard size={11} className="text-indigo-400" /> {order?.vaBankName || 'Virtual Account'}
+                  </span>
                 ) : (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase tracking-wider flex items-center gap-1">
                     <Smartphone size={11} className="text-indigo-400" /> Qiospay QRIS
@@ -427,6 +404,24 @@ export function SnapSimulatorModal({
         <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
           {/* QR Container */}
           <div className="bg-slate-950 border border-slate-800 rounded-3xl p-4 flex flex-col items-center text-center space-y-3 shadow-inner">
+            {isVA ? (
+              <div className="w-full space-y-3">
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Nomor Virtual Account {order?.vaBankName || ''}</span>
+                  <div className="text-2xl font-black text-white font-mono tracking-wider select-all">{vaNumber}</div>
+                  <button
+                    type="button"
+                    onClick={() => onCopyText(vaNumber, 'Nomor Virtual Account')}
+                    className="mt-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700 inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Copy size={13} className="text-indigo-400" /> Salin Nomor VA
+                  </button>
+                </div>
+                <p className="text-[10.5px] text-slate-400 text-center leading-relaxed">
+                  Transfer <strong className="text-amber-300">{formatRupiah(order.totalAmount)}</strong> tepat sampai digit terakhir melalui m-Banking / ATM ke nomor di atas. Nominal yang berbeda tidak akan terverifikasi otomatis.
+                </p>
+              </div>
+            ) : (
             <div className="p-3 bg-white rounded-2xl shadow-xl relative flex items-center justify-center min-w-[210px] min-h-[210px]">
               {loadingDeposit ? (
                 <div className="flex flex-col items-center gap-2 p-6 text-slate-500">
@@ -449,6 +444,7 @@ export function SnapSimulatorModal({
                 </div>
               )}
             </div>
+            )}
 
             {/* Merchant Name */}
             <div className="w-full text-center px-2">
@@ -458,6 +454,7 @@ export function SnapSimulatorModal({
             </div>
 
             {/* Quick Actions for QRIS (Download & Salin String) */}
+            {!isVA && (
             <div className="flex items-center gap-2 w-full justify-center pt-1">
               {activeQrImage && (
                 <a
@@ -478,6 +475,7 @@ export function SnapSimulatorModal({
                 <span>Salin String QRIS</span>
               </button>
             </div>
+            )}
 
             {/* Status Poll Indicator */}
             <div className={`w-full flex items-center justify-center gap-2 text-[11px] px-3.5 py-2 rounded-2xl transition-all ${isPaymentSuccess
@@ -496,9 +494,19 @@ export function SnapSimulatorModal({
               <span>Cara Pembayaran:</span>
             </div>
             <ol className="list-decimal list-inside space-y-0.5 text-slate-400 text-[10.5px]">
-              <li>Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, DANA, ShopeePay).</li>
-              <li>Pilih menu <strong>Scan QRIS</strong> lalu arahkan kamera ke barcode di atas.</li>
-              <li>Periksa nama penerbit <strong>{isPakasir ? 'Pakasir' : 'Qiospay'}</strong>, nama toko <strong>{merchantStoreName}</strong>, dan nominal <strong>{formatRupiah(order.totalAmount)}</strong>, lalu selesaikan pembayaran.</li>
+              {isVA ? (
+                <>
+                  <li>Buka m-Banking / ATM, pilih menu <strong>Transfer ke Virtual Account</strong> ({order?.vaBankName || 'bank penerbit'}).</li>
+                  <li>Masukkan nomor VA <strong className="font-mono">{vaNumber}</strong>.</li>
+                  <li>Masukkan nominal <strong>{formatRupiah(order.totalAmount)}</strong> persis, lalu selesaikan transfer.</li>
+                </>
+              ) : (
+                <>
+                  <li>Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, DANA, ShopeePay).</li>
+                  <li>Pilih menu <strong>Scan QRIS</strong> lalu arahkan kamera ke barcode di atas.</li>
+                  <li>Periksa nama penerbit <strong>{isPakasir ? 'Pakasir' : 'Qiospay'}</strong>, nama toko <strong>{merchantStoreName}</strong>, dan nominal <strong>{formatRupiah(order.totalAmount)}</strong>, lalu selesaikan pembayaran.</li>
+                </>
+              )}
             </ol>
           </div>
 
@@ -531,7 +539,7 @@ export function SnapSimulatorModal({
               </div>
             )}
 
-            {isPakasir && (
+            {isPakasir && !isVA && (
               <a
                 href={order.paymentLink || `https://app.pakasir.com/pay/${encodeURIComponent(settings.pakasirSlug || 'waroengdigital')}/${order.totalAmount}?order_id=${encodeURIComponent(order.invoiceNumber)}&qris_only=1`}
                 target="_blank"
@@ -557,7 +565,7 @@ export function SnapSimulatorModal({
 
             <div className="flex items-center justify-center gap-2 pt-1 text-[11px] text-slate-500">
               <ShieldCheck size={13} className="text-emerald-400" />
-              <span>QRIS Standar Bank Indonesia • Diproses Otomatis oleh {gatewayTitle}</span>
+              <span>{isVA ? `Virtual Account ${order?.vaBankName || ''} • Diproses Otomatis oleh Qiospay`.trim() : `QRIS Standar Bank Indonesia • Diproses Otomatis oleh ${gatewayTitle}`}</span>
             </div>
           </div>
         </div>
@@ -566,4 +574,4 @@ export function SnapSimulatorModal({
   );
 }
 
-export default SnapSimulatorModal;
+export default PaymentDialog;

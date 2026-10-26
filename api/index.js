@@ -432,6 +432,59 @@ app.get(['/api/settings/load', '/settings/load'], (req, res) => {
   });
 });
 
+// ── Admin Authentication (Login & Logout) ──
+const ADMIN_SESSION_COOKIE = 'wd_admin_session';
+const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+
+function adminSessionSecret() {
+  return (process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_TOKEN || process.env.ADMIN_API_KEY || 'wayahe_admin_secret_token_1234').trim();
+}
+
+function sameSecret(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  return a === b;
+}
+
+function createAdminSession(username) {
+  const payload = Buffer.from(JSON.stringify({ username, exp: Date.now() + ADMIN_SESSION_TTL_MS })).toString('base64url');
+  const signature = crypto.createHmac('sha256', adminSessionSecret()).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+app.post(['/api/admin/login', '/admin/login'], (req, res) => {
+  const username = String(req.body?.username || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username dan password wajib diisi.' });
+  }
+
+  const db = readDatabase();
+  const settings = db.settings || {};
+  const configuredUser = String(process.env.ADMIN_USERNAME || settings.adminUsername || 'admin').trim().toLowerCase();
+  const configuredPassword = String(process.env.ADMIN_PASSWORD || settings.adminPassword || 'admin123');
+
+  if (!sameSecret(username, configuredUser) || !sameSecret(password, configuredPassword)) {
+    return res.status(401).json({ success: false, message: 'Kredensial admin tidak valid.' });
+  }
+
+  const secure = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+  res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=${createAdminSession(configuredUser)}; Path=/; Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}`);
+
+  return res.json({
+    success: true,
+    data: {
+      username: configuredUser,
+      name: settings.adminName || 'Administrator',
+      email: settings.supportEmail || ''
+    }
+  });
+});
+
+app.post(['/api/admin/logout', '/admin/logout'], (_req, res) => {
+  res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`);
+  res.json({ success: true });
+});
+
 // ── Save Settings Endpoint (Memisahkan Pakasir & Qiospay) ──
 // Disabled until the alternate API has server-verified authorization. Never
 // accept the browser's static token or fall back to unauthenticated disk writes.
