@@ -6,3 +6,23 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Transaction database (should be backed up, not versioned)
+backend/data/db.json
+
+# Package manager lock files
+yarn.lock
+package-lock.json
+
+# Environment & secrets
+.env
+.env.local
+
+# Build & cache
+dist/
+build/
+.next/
+
+# Backups
+*.backup
+*.tar.gz
