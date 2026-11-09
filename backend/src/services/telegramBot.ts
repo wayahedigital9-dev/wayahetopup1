@@ -1141,14 +1141,11 @@ export class TelegramBotService {
       await axios.post(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         { commands: [
-          { command: 'start', description: 'Buka menu toko utama' },
-          { command: 'stock', description: 'Lihat katalog produk' },
-          { command: 'saldo', description: 'Cek saldo & deposit' },
-          { command: 'id', description: 'Lihat Chat ID Anda' },
-          { command: 'kontak', description: 'Hubungi admin / CS' },
-          { command: 'katalog', description: 'Lihat katalog produk' },
-          { command: 'status', description: 'Cek status pesanan' },
-          { command: 'ping', description: 'Cek koneksi bot' },
+          { command: 'start', description: 'Buka Menu Toko Utama' },
+          { command: 'katalog', description: 'Lihat Semua Kategori Produk' },
+          { command: 'status', description: 'Cek Status &amp; Riwayat Pesanan' },
+          { command: 'cs', description: 'Layanan Bantuan Customer Service' },
+          { command: 'ping', description: 'Cek Kecepatan Respon Bot' },
         ] },
         { timeout: 15000 },
       );
