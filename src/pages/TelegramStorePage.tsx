@@ -411,6 +411,11 @@ export function TelegramStorePage({
                         <span className={`w-1 h-1 rounded-full ${stockInfo.badgeStyle.dot}`} />
                         {stockInfo.badgeLabel}
                       </span>
+                      {p.categoryId === 'premium' && p.voucherCodes && p.voucherCodes.length > 0 && (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 mb-1">
+                          Nomor: {p.voucherCodes[0]}
+                        </span>
+                      )}
                     </div>
 
                     <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider block truncate">
