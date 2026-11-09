@@ -21,6 +21,8 @@ import {
   Wifi,
   Bot
 } from 'lucide-react';
+const ICON_BY_NAME: Record<string, React.ElementType> = { ShoppingBag, Search, Sparkles, ShieldCheck, Clock, ArrowRight, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, QrCode, Copy, X, Zap, Smartphone, Gamepad2, Crown, Wifi, Bot };
+
 import { Product, Order } from '../types';
 import { formatRupiah } from '../utils/operator';
 import { ProductLogo } from '../components/ProductLogo';
@@ -56,6 +58,21 @@ export function TelegramStorePage({
   // Deteksi Telegram WebApp SDK
   const tg = typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null;
   const tgUser = tg?.initDataUnsafe?.user || null;
+  // Loading efek saat membuka data
+  const [isOpeningData, setIsOpeningData] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsOpeningData(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Quick-action menu untuk /start & fitur bot
+  const quickMenu = [
+    { label: '/start', icon: 'Bot', action: () => { if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light'); onShowToast?.('Menu Utama', 'Ketik /start di chat bot untuk memulai ulang.', 'info') } },
+    { label: 'Cek Produk', icon: 'ShoppingBag', action: () => { if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light'); setSelectedCategory('all') } },
+    { label: 'Pesan Admin', icon: 'Smartphone', action: () => { if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light'); onShowToast?.('Hubungi Admin', 'Silakan kirim pesan langsung ke bot Telegram admin.', 'info') } },
+    { label: 'Info Toko', icon: 'Sparkles', action: () => { if(tg?.HapticFeedback?.impactOccurred) tg.HapticFeedback.impactOccurred('light'); onShowToast?.('WayaheDigital Store', 'Top up otomatis 24 jam via Telegram Mini App.', 'success') } },
+  ];
 
   useEffect(() => {
     if (tg) {
@@ -205,6 +222,14 @@ export function TelegramStorePage({
 
   return (
     <div className="min-h-screen bg-[#070A12] text-slate-100 font-sans pb-24 selection:bg-amber-500 selection:text-slate-950">
+      {/* LOADING OVERLAY saat membuka data */}
+      {isOpeningData && (
+        <div className="fixed inset-0 z-[9999] bg-[#070A12] flex flex-col items-center justify-center">
+          <div className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mb-3"></div>
+          <span className="text-xs font-bold text-amber-400 tracking-widest uppercase">Membuka data…</span>
+        </div>
+      )}
+
       {/* 1. TOP HEADER BRANDING */}
       <header className="sticky top-0 z-30 bg-[#0A0F1D]/90 backdrop-blur-md border-b border-white/[0.08] px-4 py-3 sm:px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -266,6 +291,23 @@ export function TelegramStorePage({
       </div>
 
       {/* 3. SEARCH BAR */}
+
+      {/* QUICK ACTION MENU */}
+      <div className="max-w-4xl mx-auto px-4 pt-3 sm:px-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {quickMenu.map((m, i) => {
+            const Icon = ICON_BY_NAME[m.icon];
+            return (
+              <button key={i} type="button" onClick={m.action}
+                className="shrink-0 px-4 py-2 rounded-xl bg-[#0F1626] border border-white/[0.08] text-xs font-bold text-slate-300 flex items-center gap-1.5 hover:border-amber-500/40 hover:text-white transition-colors">
+                <Icon size={14} />
+                <span>{m.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <span className="text-[9px] text-slate-500 mt-1.5 block">Ketik /start di chat bot untuk membuka menu utama Telegram</span>
+      </div>
       <div className="max-w-4xl mx-auto px-4 pt-4 sm:px-6">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
