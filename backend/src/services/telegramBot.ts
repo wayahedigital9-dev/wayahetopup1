@@ -55,7 +55,7 @@ export class TelegramBotService {
       storeEnabled: true,
       storeMode: 'webhook',
       webhookUrl: process.env.TELEGRAM_WEBHOOK_URL || '',
-      webAppUrl: process.env.TELEGRAM_WEBAPP_URL || process.env.APP_URL || 'http://localhost:7844',
+      webAppUrl: process.env.TELEGRAM_WEBAPP_URL || process.env.APP_URL || 'https://wayahetopup.my.id',
       welcomeMessage: '',
       csUsername: process.env.TELEGRAM_CS_USERNAME || '',
       channelUrl: process.env.TELEGRAM_CHANNEL_URL || '',
@@ -386,7 +386,7 @@ export class TelegramBotService {
   }
 
   private getMainMenuKeyboard(): any[][] {
-    const webAppUrl = this.config.webAppUrl || 'http://localhost:7844';
+    const webAppUrl = this.config.webAppUrl || 'https://wayahetopup.my.id';
     const storeUrl = webAppUrl.includes('?') ? `${webAppUrl}&tg=1` : `${webAppUrl}?tg=1`;
 
     const keyboard: any[][] = [];
@@ -1028,7 +1028,7 @@ export class TelegramBotService {
       `Butuh bantuan pesanan, konfirmasi saldo, atau kemitraan?\n\n` +
       `• Telegram CS: <b>${csUser}</b>\n` +
       `• Jam Operasional: <b>24 Jam Nonstop</b>\n` +
-      `• Website Resmi: <code>${this.config.webAppUrl || 'http://localhost:7844'}</code>\n\n` +
+      `• Website Resmi: <code>${this.config.webAppUrl || 'https://wayahetopup.my.id'}</code>` +
       `Customer service kami siap membantu Anda dengan ramah dan cepat.`;
 
     const keyboard: any[][] = [];

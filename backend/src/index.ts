@@ -1711,7 +1711,7 @@ app.post('/api/telegram/test-message', requireAdmin, async (req: Request, res: R
       reply_markup: {
         inline_keyboard: [
           [{ text: '🛍️ Buka Menu Toko', callback_data: 'nav_home' }],
-          [{ text: '🌐 Buka WebApp Store', url: config.webAppUrl || 'http://localhost:7844' }],
+          [{ text: '🌐 Buka WebApp Store', url: config.webAppUrl || 'https://wayahetopup.my.id' }],
         ],
       },
     });
