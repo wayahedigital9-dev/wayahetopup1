@@ -385,24 +385,24 @@ export function PaymentDialog({
                 </p>
               </div>
             ) : (
-            <div className="p-3 bg-white rounded-2xl shadow-xl relative flex items-center justify-center min-w-[200px] min-h-[200px]">
+            <div className="p-4 bg-white rounded-2xl shadow-xl relative flex items-center justify-center min-w-[240px] min-h-[240px]">
               {loadingDeposit ? (
-                <div className="flex flex-col items-center gap-2 p-6 text-slate-500">
-                  <RefreshCw size={28} className="animate-spin text-amber-500" />
+                <div className="flex flex-col items-center gap-2 p-8 text-slate-500">
+                  <RefreshCw size={32} className="animate-spin text-amber-500" />
                   <span className="text-xs font-semibold">Memuat QRIS...</span>
                 </div>
               ) : activeQrImage ? (
                 <img
                   src={activeQrImage}
                   alt={`QRIS Pembayaran ${gatewayTitle}`}
-                  className="w-44 h-44 sm:w-52 sm:h-52 object-contain rounded-lg"
+                  className="w-64 h-64 sm:w-72 sm:h-72 object-contain rounded-lg"
                   onError={() => {
                     if (!localQrDataUrl) setQrImgError(true);
                   }}
                 />
               ) : (
-                <div className="w-44 h-44 sm:w-52 sm:h-52 flex flex-col items-center justify-center text-slate-400 gap-2">
-                  <RefreshCw size={24} className="animate-spin text-amber-500" />
+                <div className="w-64 h-64 sm:w-72 sm:h-72 flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <RefreshCw size={28} className="animate-spin text-amber-500" />
                   <span className="text-[11px] font-medium">Menyiapkan barcode...</span>
                 </div>
               )}
