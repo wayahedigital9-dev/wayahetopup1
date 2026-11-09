@@ -28,42 +28,42 @@ export function AuthCenterLoader({ type, message }: AuthCenterLoaderProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#100C08]/85 backdrop-blur-md animate-fadeIn">
-      <div className="bg-[#1C1612] border border-[#D4A359]/30 shadow-2xl shadow-black/80 rounded-3xl p-8 max-w-sm w-full mx-4 text-center relative overflow-hidden animate-modalIn">
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#06080D]/85 backdrop-blur-md animate-fadeIn">
+      <div className="bg-[#0E131F] border border-[#F59E0B]/30 shadow-2xl shadow-black/80 rounded-3xl p-8 max-w-sm w-full mx-4 text-center relative overflow-hidden animate-modalIn">
         {/* Glow ambient background */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#D4A359]/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#F59E0B]/15 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-600/15 rounded-full blur-2xl pointer-events-none" />
 
         {/* Center Spinner Ring & Icon */}
         <div className="relative mx-auto w-20 h-20 mb-6 flex items-center justify-center">
           {/* Animated pulsing outer ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#D4A359]/30 animate-spin" style={{ animationDuration: '6s' }} />
-          <div className="absolute inset-1 rounded-full border-2 border-t-[#D4A359] border-r-amber-500/80 border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: '1s' }} />
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#F59E0B]/30 animate-spin" style={{ animationDuration: '6s' }} />
+          <div className="absolute inset-1 rounded-full border-2 border-t-[#F59E0B] border-r-amber-500/80 border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: '1s' }} />
           
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2A1E14] to-[#14100C] border border-[#D4A359]/40 flex items-center justify-center shadow-lg shadow-black/50">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1A2233] to-[#080B12] border border-[#F59E0B]/40 flex items-center justify-center shadow-lg shadow-black/50">
             {isLogout ? (
-              <LogOut className="w-7 h-7 text-[#D4A359] animate-pulse" />
+              <LogOut className="w-7 h-7 text-[#F59E0B] animate-pulse" />
             ) : isAdmin ? (
-              <ShieldCheck className="w-7 h-7 text-[#D4A359] animate-bounce" />
+              <ShieldCheck className="w-7 h-7 text-[#F59E0B] animate-bounce" />
             ) : (
-              <Sparkles className="w-7 h-7 text-[#D4A359] animate-pulse" />
+              <Sparkles className="w-7 h-7 text-[#F59E0B] animate-pulse" />
             )}
           </div>
         </div>
 
         {/* Text */}
-        <h3 className="text-xl font-bold text-[#FAF4EB] tracking-wide mb-2 font-serif">
+        <h3 className="text-xl font-bold text-[#F8FAFC] tracking-wide mb-2 font-serif">
           {title}
         </h3>
-        <p className="text-xs text-[#D4A359]/80 leading-relaxed">
+        <p className="text-xs text-[#F59E0B]/80 leading-relaxed">
           {message || defaultSub}
         </p>
 
         {/* Mini progress pulse */}
         <div className="mt-6 flex items-center justify-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#D4A359] animate-ping" />
-          <span className="w-2 h-2 rounded-full bg-[#D4A359]/60 animate-ping" style={{ animationDelay: '200ms' }} />
-          <span className="w-2 h-2 rounded-full bg-[#D4A359]/30 animate-ping" style={{ animationDelay: '400ms' }} />
+          <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-[#F59E0B]/60 animate-ping" style={{ animationDelay: '200ms' }} />
+          <span className="w-2 h-2 rounded-full bg-[#F59E0B]/30 animate-ping" style={{ animationDelay: '400ms' }} />
         </div>
       </div>
     </div>

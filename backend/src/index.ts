@@ -17,7 +17,9 @@ import {
   createDigiflazzTransaction, 
   verifyDigiflazzWebhookSignature, 
   resolveDigiflazzCallbackUrl,
-  transformDigiflazzProduct
+  transformDigiflazzProduct,
+  findCachedDigiflazzItem,
+  isWithinCutOff
 } from './services/digiflazz.js';
 import { FulfillmentService } from './services/fulfillment.js';
 import { qiospayService } from './services/qiospay.js';
@@ -193,28 +195,66 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 
     const dynamicPriceFromReq = Number(req.body.sellingPrice || req.body.totalAmount || req.body.amount || 0);
 
-    if ((!product || product.isActive === false) && ['wifi', 'premium'].includes(String(req.body.category || product?.categoryId || '').toLowerCase())) {
-      return res.status(404).json({ success: false, message: 'Produk manual tidak tersedia di katalog admin.' });
+    const isApiProduct = Boolean(
+      product?.isDigiflazzSynced ||
+      product?.sellerName ||
+      product?.digiflazzCategory ||
+      product?.supplierSku ||
+      String(productId).startsWith('df-') ||
+      req.body.supplierSku ||
+      req.body.buyerSkuCode ||
+      product?.providerProductId ||
+      product?.smmServiceId
+    );
+
+    // Jika produk belum tersimpan di state tetapi merupakan SKU Digiflazz resmi, ambil dari cache Digiflazz
+    if (!product && (String(productId).startsWith('df-') || req.body.supplierSku || req.body.buyerSkuCode)) {
+      const getCachedItem = typeof findCachedDigiflazzItem === 'function' ? findCachedDigiflazzItem : null;
+      const cachedDf = getCachedItem ? (getCachedItem(productId) || (req.body.supplierSku ? getCachedItem(req.body.supplierSku) : null)) : null;
+      if (cachedDf && typeof transformDigiflazzProduct === 'function') {
+        product = transformDigiflazzProduct(cachedDf);
+      }
     }
+
+    // ── ATURAN KETAT STOK API KEY: Produk API harus selalu mengikuti status & stok live API ──
+    if (isApiProduct) {
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Produk API tidak ditemukan di katalog resmi provider.' });
+      }
+      if (product.isActive === false) {
+        const reason = product.statusNote || 'Produk sedang tidak aktif / cut-off dari provider API';
+        return res.status(400).json({ success: false, message: `Transaksi ditolak: ${reason}. Silakan pilih nominal lain.` });
+      }
+      if (product.unlimitedStock === false && product.stock !== undefined && Number(product.stock) <= 0) {
+        return res.status(400).json({ success: false, message: 'Stok produk dari supplier API saat ini sedang kosong (Stok: 0). Silakan pilih nominal lain.' });
+      }
+      if (typeof isWithinCutOff === 'function' && isWithinCutOff(product.startCutOff, product.endCutOff)) {
+        return res.status(400).json({ success: false, message: `Produk sedang dalam jam cut-off/pemeliharaan server provider (${product.startCutOff || ''} - ${product.endCutOff || ''} WIB). Silakan coba lagi nanti.` });
+      }
+    } else {
+      if ((!product || product.isActive === false) && ['wifi', 'premium'].includes(String(req.body.category || product?.categoryId || '').toLowerCase())) {
+        return res.status(404).json({ success: false, message: 'Produk manual tidak tersedia di katalog admin.' });
+      }
+
+      if (!product || product.isActive === false) {
+        product = {
+          id: productId,
+          name: req.body.productName || 'Produk Digital Wayahe',
+          sellingPrice: dynamicPriceFromReq > 0 ? dynamicPriceFromReq : 10000,
+          categoryId: req.body.category || 'PULSA',
+          provider: req.body.provider || 'General',
+          deliveryMethod: req.body.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
+        };
+      }
+    }
+
     let selectedVariantId: string | undefined;
     let selectedVariantName: string | undefined;
     const manualCategory = product && ['wifi', 'premium'].includes(String(product.categoryId).toLowerCase()) && !product.isDigiflazzSynced && !product.sellerName && !product.providerProductId;
     if (manualCategory) {
       try { const selected = resolveManualCheckout(product, variantId); product = selected.product; selectedVariantId = selected.variantId; selectedVariantName = selected.variantName; }
       catch (error: any) { return res.status(error.status || 400).json({ success: false, message: error.message }); }
-    }
-
-    if (!product || product.isActive === false) {
-      // Gunakan data produk dinamis dari frontend (misal WiFi voucher, Digiflazz, atau akun premium)
-      product = {
-        id: productId,
-        name: req.body.productName || 'Produk Digital Wayahe',
-        sellingPrice: dynamicPriceFromReq > 0 ? dynamicPriceFromReq : 10000,
-        categoryId: req.body.category || 'PULSA',
-        provider: req.body.provider || 'General',
-        deliveryMethod: req.body.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
-      };
-    } else if (!manualCategory && dynamicPriceFromReq > 0 && (!product.sellingPrice || product.sellingPrice === 10000)) {
+    } else if (dynamicPriceFromReq > 0 && (!product.sellingPrice || product.sellingPrice === 10000)) {
       product.sellingPrice = dynamicPriceFromReq;
     }
 
@@ -649,11 +689,8 @@ app.post('/api/orders/bulk-delete', requireAdmin, async (req: Request, res: Resp
 // Menggunakan API Key yang aman di server backend .env (tidak pernah dikirim ke frontend)
 app.all('/api/digiflazz/balance', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const qUser = (req.query.username as string) || (req.body?.username as string);
-    const qKey = (req.query.apiKey as string) || (req.body?.apiKey as string);
-
-    const username = (qUser || DIGIFLAZZ_CONFIG.USERNAME || '').trim();
-    const apiKey = (qKey || DIGIFLAZZ_CONFIG.API_KEY || '').trim();
+    const username = (DIGIFLAZZ_CONFIG.USERNAME || '').trim();
+    const apiKey = (DIGIFLAZZ_CONFIG.API_KEY || '').trim();
 
     if (!username || !apiKey) {
       return res.json({
@@ -891,6 +928,7 @@ app.post('/api/digiflazz/update-ip-config', requireAdmin, async (req: Request, r
       return res.status(503).json({ success: false, message: 'Database tidak tersedia. Konfigurasi jaringan belum disimpan.' });
     }
     await hydrateDigiflazzRuntime();
+    syncDigiflazzCatalog().catch((e: any) => console.log('Settings update Digiflazz sync note:', e.message));
     return res.json({ success: true, message: 'Konfigurasi jaringan Digiflazz tersimpan di database. Daftarkan IP whitelist secara terpisah di dashboard Digiflazz.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
@@ -1640,14 +1678,29 @@ app.post('/api/payment/pakasir/create', async (req: Request, res: Response) => {
       } catch (_) {}
     }
 
+    if (!product && (String(productId).startsWith('df-') || req.body.supplierSku || req.body.buyerSkuCode)) {
+      const getCachedItem = typeof findCachedDigiflazzItem === 'function' ? findCachedDigiflazzItem : null;
+      const cachedDf = getCachedItem ? (getCachedItem(productId) || (req.body.supplierSku ? getCachedItem(req.body.supplierSku) : null)) : null;
+      if (cachedDf && typeof transformDigiflazzProduct === 'function') {
+        product = transformDigiflazzProduct(cachedDf);
+      }
+    }
+
     if (!product) {
-      product = {
-        id: productId,
-        name: 'Produk Digital Wayahe',
-        sellingPrice: Number(req.body.amount) || 10000,
-        categoryId: 'PULSA',
-        provider: 'General',
-      };
+      return res.status(404).json({ success: false, message: 'Produk yang dipilih tidak ditemukan di katalog.' });
+    }
+
+    if (product.isActive === false) {
+      const msg = product.statusNote ? `Produk tidak tersedia: ${product.statusNote}.` : 'Produk sedang tidak aktif atau stok kosong dari provider API.';
+      return res.status(400).json({ success: false, message: msg });
+    }
+
+    if (product.unlimitedStock === false && product.stock !== undefined && Number(product.stock) <= 0) {
+      return res.status(400).json({ success: false, message: 'Stok produk dari supplier API saat ini sedang kosong (Stok: 0).' });
+    }
+
+    if (typeof isWithinCutOff === 'function' && isWithinCutOff(product.startCutOff, product.endCutOff)) {
+      return res.status(400).json({ success: false, message: `Produk sedang dalam jam cut-off/pemeliharaan server (${product.startCutOff || ''} - ${product.endCutOff || ''} WIB).` });
     }
 
     // Hitung diskon promo jika ada
@@ -2350,6 +2403,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     const syncOk = await mongoDbService.syncEntity('settings', settings);
     if (!syncOk) return res.status(503).json({ success: false, mongoPersisted: false, message: 'Database tidak tersedia. Pengaturan belum disimpan.' });
     await hydrateDigiflazzRuntime();
+    syncDigiflazzCatalog().catch((e: any) => console.log('Settings update Digiflazz sync note:', e.message));
     // SUPABASE DISABLED — tidak lagi simpan SUPABASE_* ke .env (MongoDB aktif)
     let envUpdated = false;
     try {

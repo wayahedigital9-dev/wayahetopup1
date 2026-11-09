@@ -282,6 +282,35 @@ export class FulfillmentService {
       console.log(`[DIGIFLAZZ DB UPDATE]`, {
         ref_id: refId, old_status: oldStatus, new_status: 'FAILED',
       });
+
+      // Jika supplier melaporkan stok habis (RC 43), seller cut-off (RC 42), atau gangguan (RC 40),
+      // update langsung status produk di database agar tidak bisa dipesan lagi.
+      if (['40', '42', '43'].includes(String(rc || '').trim())) {
+        try {
+          const reasonNote = rc === '43' ? 'Stok Supplier Kosong (API)' : rc === '42' ? 'Seller Sedang Cut-off' : 'Server Sedang Gangguan';
+          const skuToDisable = buyerSku;
+          const state = await mongoDbService.getAllState();
+          const pList = Array.isArray(state?.products) ? state.products : [];
+          const targetP = pList.find((p: any) => p.sku === skuToDisable || p.supplierSku === skuToDisable || p.id === order.productId);
+          if (targetP) {
+            targetP.isActive = false;
+            targetP.sellerProductStatus = false;
+            if (rc === '43') {
+              targetP.stock = 0;
+              targetP.unlimitedStock = false;
+            }
+            targetP.statusNote = reasonNote;
+            await mongoDbService.syncEntity('products', pList);
+            try {
+              await this.prisma.product.update({
+                where: { id: targetP.id },
+                data: { isActive: false, stock: rc === '43' ? 0 : targetP.stock },
+              });
+            } catch (_) {}
+            console.log(`⚠️ [AUTO STOCK INVALIDATION] SKU ${skuToDisable} dinonaktifkan otomatis: ${reasonNote}`);
+          }
+        } catch (_) {}
+      }
     }
   }
 

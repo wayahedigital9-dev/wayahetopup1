@@ -414,6 +414,55 @@ export interface DigiflazzPriceListItem {
   desc?: string;
 }
 
+export function isWithinCutOff(startCutOff?: string | null, endCutOff?: string | null): boolean {
+  if (!startCutOff || !endCutOff) return false;
+  const sTrim = String(startCutOff).trim();
+  const eTrim = String(endCutOff).trim();
+  if ((sTrim === '00:00:00' || sTrim === '00:00' || sTrim === '0:00') && (eTrim === '00:00:00' || eTrim === '00:00' || eTrim === '0:00')) {
+    return false;
+  }
+
+  // Convert current time to WIB (UTC+7)
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const wibDate = new Date(utc + (3600000 * 7));
+  const currentMinutes = wibDate.getHours() * 60 + wibDate.getMinutes();
+
+  const [sH, sM] = sTrim.split(':').map(Number);
+  const [eH, eM] = eTrim.split(':').map(Number);
+  const startMinutes = (sH || 0) * 60 + (sM || 0);
+  const endMinutes = (eH || 0) * 60 + (eM || 0);
+
+  if (startMinutes === endMinutes) return false;
+
+  if (startMinutes < endMinutes) {
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  } else {
+    // Spans across midnight (e.g. 23:45 to 00:15)
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  }
+}
+
+export function findCachedDigiflazzItem(skuOrId: string): DigiflazzPriceListItem | null {
+  try {
+    const cacheFile = path.join(process.cwd(), 'data', 'digiflazz-pricelist-cache.json');
+    if (!fs.existsSync(cacheFile)) return null;
+    const raw = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+    if (!Array.isArray(raw)) return null;
+
+    const clean = String(skuOrId || '').trim().toLowerCase();
+    const withoutPrefix = clean.replace(/^df-/, '');
+
+    return raw.find((item: DigiflazzPriceListItem) => {
+      const itemSku = String(item.buyer_sku_code || '').trim().toLowerCase();
+      const itemId = `df-${itemSku.replace(/[^a-z0-9_-]/g, '-')}`;
+      return itemSku === clean || itemSku === withoutPrefix || itemId === clean;
+    }) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 export function transformDigiflazzProduct(raw: DigiflazzPriceListItem, existingCustomPrice?: number): any {
   const catLower = (raw.category || '').toLowerCase();
   let categoryId = 'kuota';
@@ -444,6 +493,25 @@ export function transformDigiflazzProduct(raw: DigiflazzPriceListItem, existingC
   const cleanSku = String(raw.buyer_sku_code || '').trim();
   const id = `df-${cleanSku.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
 
+  const isUnlimited = Boolean(raw.unlimited_stock);
+  const rawStock = Number(raw.stock || 0);
+  const hasStock = isUnlimited || rawStock > 0;
+  const isSupplierAvailable = Boolean(raw.buyer_product_status && raw.seller_product_status);
+  const inCutOff = isWithinCutOff(raw.start_cut_off, raw.end_cut_off);
+  const isActive = Boolean(isSupplierAvailable && hasStock && !inCutOff);
+  const stock = isUnlimited ? 9999 : Math.max(0, rawStock);
+
+  let statusNote = 'Tersedia';
+  if (!raw.buyer_product_status) {
+    statusNote = 'Nonaktif oleh Digiflazz';
+  } else if (!raw.seller_product_status) {
+    statusNote = 'Gangguan / Cut-off Seller';
+  } else if (!isUnlimited && rawStock <= 0) {
+    statusNote = 'Stok Supplier Kosong (0)';
+  } else if (inCutOff) {
+    statusNote = `Cut-off Server (${raw.start_cut_off} - ${raw.end_cut_off} WIB)`;
+  }
+
   return {
     id,
     name: raw.product_name,
@@ -460,8 +528,14 @@ export function transformDigiflazzProduct(raw: DigiflazzPriceListItem, existingC
     description: raw.desc || `${raw.product_name} - ${raw.brand} ${raw.category}`,
     quotaDetails: raw.desc || `${raw.brand} ${raw.category}`,
     deliveryMethod: 'AUTOMATIC',
-    isActive: Boolean(raw.buyer_product_status && raw.seller_product_status),
-    stock: raw.unlimited_stock ? 9999 : (raw.stock || 0),
+    isActive,
+    stock,
+    unlimitedStock: isUnlimited,
+    buyerProductStatus: Boolean(raw.buyer_product_status),
+    sellerProductStatus: Boolean(raw.seller_product_status),
+    startCutOff: raw.start_cut_off || null,
+    endCutOff: raw.end_cut_off || null,
+    statusNote,
     isDigiflazzSynced: true,
     lastSyncedAt: new Date().toISOString(),
   };

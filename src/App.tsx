@@ -330,7 +330,7 @@ export default function App() {
   const { isDark } = useTheme();
 
   return (
-    <div className={`min-h-screen ${activeTab === 'home' ? (isDark ? 'bg-[#101211] text-[#F5F7F2]' : 'bg-[#F8FAFC] text-[#0F172A]') : 'bg-[#181411] text-[#FAF4EB]'} flex flex-col font-sans antialiased selection:bg-[#FACC15] selection:text-[#0F172A] pb-24 lg:pb-0 relative transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#0B0F17] text-[#F8FAFC]' : 'bg-[#F8FAFC] text-[#0F172A]'} flex flex-col font-sans antialiased selection:bg-[#F59E0B] selection:text-[#0F172A] pb-24 lg:pb-0 relative transition-colors duration-300`}>
       <TopProgressBar />
       {authLoader && <AuthCenterLoader type={authLoader.type} message={authLoader.message} />}
 

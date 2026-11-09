@@ -11,7 +11,8 @@ import {
   Mail, 
   Sparkles,
   Zap,
-  Info
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { Product, Order, PromoCode } from '../types';
 import { formatRupiah } from '../utils/operator';
@@ -158,6 +159,10 @@ export function QuickBuyModal({
 
   if (!isOpen || !product) return null;
 
+  const isAvailable = product.isActive !== false &&
+    product.sellerProductStatus !== false &&
+    !(product.unlimitedStock === false && product.stock !== undefined && Number(product.stock) <= 0);
+
   const activeVariant = product.hasVariants && product.variants && product.variants.length > 0
     ? (product.variants.find(v => v.id === selectedVariantId) || product.variants[0])
     : null;
@@ -174,6 +179,13 @@ export function QuickBuyModal({
   const handlePayNow = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (!isAvailable) {
+      const msg = product.statusNote || 'Stok produk ini sedang kosong atau server supplier sedang gangguan/cut-off.';
+      setErrorMessage(msg);
+      onShowToast('Stok Tidak Tersedia', msg, 'warning');
+      return;
+    }
 
     let finalDest = destination.trim();
 
@@ -255,46 +267,48 @@ export function QuickBuyModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[9990] overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-[9990] bg-black/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div 
         id="quick-buy-modal"
-        className="bg-[#1C1612] rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-[#3E342B] text-[#FAF4EB]"
+        className="bg-[#0E131F] rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-[#1E293B] text-[#F8FAFC] my-auto"
         role="dialog"
         aria-labelledby="quick-buy-title"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Modal */}
-        <div className="bg-gradient-to-r from-[#D4A359]/20 via-[#251E18] to-[#1C1612] p-4 sm:p-5 border-b border-[#3E342B] flex items-center justify-between">
+        <div className="shrink-0 bg-gradient-to-r from-[#F59E0B]/20 via-[#111827] to-[#0E131F] p-4 sm:p-5 border-b border-[#1E293B] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#D4A359]/20 border border-[#D4A359]/40 flex items-center justify-center text-[#D4A359]">
+            <div className="w-10 h-10 rounded-2xl bg-[#F59E0B]/20 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
               <QrCode size={20} />
             </div>
             <div>
-              <h2 id="quick-buy-title" className="font-extrabold text-base tracking-tight text-[#FAF4EB]">
+              <h2 id="quick-buy-title" className="font-extrabold text-sm sm:text-base tracking-tight text-[#F8FAFC]">
                 Beli & Bayar Instan QRIS
               </h2>
-              <p className="text-[11px] text-[#A89F91]">
+              <p className="text-[11px] text-[#94A3B8]">
                 Scan QRIS langsung aktif detik itu juga
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#A89F91] hover:text-[#FAF4EB] p-2 rounded-xl hover:bg-[#2B231D] transition-colors cursor-pointer"
+            className="text-[#94A3B8] hover:text-[#F8FAFC] p-2 rounded-xl hover:bg-[#1E293B] transition-colors cursor-pointer"
             aria-label="Tutup popup"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handlePayNow} className="p-5 space-y-4">
-          {/* 1. Ringkasan Produk Terpilih */}
-          <div className="bg-[#241D17] rounded-2xl p-3.5 border border-[#3E342B]/80 flex items-center justify-between gap-3">
+        {/* Form with sticky footer */}
+        <form onSubmit={handlePayNow} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4">
+            {/* 1. Ringkasan Produk Terpilih */}
+          <div className="bg-[#131927] rounded-2xl p-3.5 border border-[#1E293B]/80 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="rounded-xl bg-[#181411] border border-[#3E342B] shrink-0 w-12 h-12 flex items-center justify-center overflow-hidden">
+              <div className="rounded-xl bg-[#0B0F17] border border-[#1E293B] shrink-0 w-12 h-12 flex items-center justify-center overflow-hidden">
                 <ProductLogo
                   provider={product.provider}
                   name={product.name}
@@ -305,14 +319,14 @@ export function QuickBuyModal({
                 />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-bold text-[#D4A359] uppercase tracking-wider block">
+                <span className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider block">
                   {product.provider}
                 </span>
-                <h3 className="font-bold text-sm text-[#FAF4EB] truncate">
+                <h3 className="font-bold text-sm text-[#F8FAFC] truncate">
                   {product.name}
                 </h3>
                 {product.duration && (
-                  <span className="text-[10px] text-[#A89F91] flex items-center gap-1">
+                  <span className="text-[10px] text-[#94A3B8] flex items-center gap-1">
                     <Clock size={10} />
                     {product.duration}
                   </span>
@@ -321,26 +335,39 @@ export function QuickBuyModal({
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[10px] text-[#A89F91] block">
+              <span className="text-[10px] text-[#94A3B8] block">
                 {product.categoryId === 'smm' ? 'Estimasi Total' : 'Harga'}
               </span>
-              <span className="text-sm font-extrabold text-[#D4A359]">
+              <span className="text-sm font-extrabold text-[#F59E0B]">
                 {formatRupiah(basePrice)}
               </span>
               {product.categoryId === 'smm' && (
-                <span className="text-[9px] text-[#A89F91] block">
+                <span className="text-[9px] text-[#94A3B8] block">
                   ({formatRupiah(effectiveSellingRate)} / 1.000)
                 </span>
               )}
             </div>
           </div>
 
+          {/* Warning Banner jika produk API sedang offline / stok habis */}
+          {!isAvailable && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
+              <AlertCircle size={18} className="shrink-0 text-rose-400" />
+              <div>
+                <span className="font-bold block">Stok Tidak Tersedia (Supplier API)</span>
+                <span className="text-[11px] text-rose-200/90 leading-tight block">
+                  {product.statusNote || 'Produk sedang tidak aktif atau stok kosong dari server supplier.'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Pilihan Varian / Paket Lisensi Akun Premium (Bisa disinkronkan dari admin dashboard) */}
           {product.hasVariants && product.variants && product.variants.length > 0 && (
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] flex items-center justify-between">
                 <span>Pilih Varian / Masa Aktif *</span>
-                <span className="text-[10px] text-[#D4A359]">{product.variants.length} Opsi Tersedia</span>
+                <span className="text-[10px] text-[#F59E0B]">{product.variants.length} Opsi Tersedia</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {product.variants.map((v) => {
@@ -352,21 +379,21 @@ export function QuickBuyModal({
                       onClick={() => setSelectedVariantId(v.id)}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                         isSel
-                          ? 'border-[#D4A359] bg-[#D4A359]/15 text-[#FAF4EB] shadow-xs ring-1 ring-[#D4A359]/30'
-                          : 'border-[#3E342B] bg-[#181411] text-[#A89F91] hover:border-[#D4A359]/50 hover:text-[#FAF4EB]'
+                          ? 'border-[#F59E0B] bg-[#F59E0B]/15 text-[#F8FAFC] shadow-xs ring-1 ring-[#F59E0B]/30'
+                          : 'border-[#1E293B] bg-[#0B0F17] text-[#94A3B8] hover:border-[#F59E0B]/50 hover:text-[#F8FAFC]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1 w-full">
                         <span className="text-xs font-bold truncate">{v.name}</span>
                         {v.duration && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/50 text-[#D4A359] font-mono shrink-0">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/50 text-[#F59E0B] font-mono shrink-0">
                             {v.duration}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center justify-between mt-1 pt-1 border-t border-[#3E342B]/40">
-                        <span className="text-[10px] text-[#A89F91]">Harga</span>
-                        <span className="text-xs font-extrabold text-[#D4A359]">{formatRupiah(v.sellingPrice)}</span>
+                      <div className="flex items-center justify-between mt-1 pt-1 border-t border-[#1E293B]/40">
+                        <span className="text-[10px] text-[#94A3B8]">Harga</span>
+                        <span className="text-xs font-extrabold text-[#F59E0B]">{formatRupiah(v.sellingPrice)}</span>
                       </div>
                     </button>
                   );
@@ -378,9 +405,9 @@ export function QuickBuyModal({
           {/* 2. Input Identitas / Nomor Tujuan Sesuai Kategori Produk */}
           {gameMeta.isMLBB ? (
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] flex items-center justify-between">
                 <span>ID Akun Mobile Legends *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Proses Otomatis</span>
                 </span>
@@ -401,7 +428,7 @@ export function QuickBuyModal({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="User ID (cth: 12345678)"
-                    className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono transition-all"
                   />
                 </div>
                 <div>
@@ -417,21 +444,21 @@ export function QuickBuyModal({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="(Zone ID)"
-                    className="w-full px-3 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono text-center transition-all"
+                    className="w-full px-3 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono text-center transition-all"
                   />
                 </div>
               </div>
 
-              <p className="text-[11px] text-[#A89F91] flex items-center gap-1.5">
-                <Info size={12} className="text-[#D4A359] shrink-0" />
+              <p className="text-[11px] text-[#94A3B8] flex items-center gap-1.5">
+                <Info size={12} className="text-[#F59E0B] shrink-0" />
                 <span>Contoh: User ID <strong>12345678</strong> dan Zone ID <strong>(1234)</strong> di profil game MLBB Anda.</span>
               </p>
             </div>
           ) : gameMeta.isFreeFire ? (
             <div className="space-y-1.5">
-              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] flex items-center justify-between">
+              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] flex items-center justify-between">
                 <span>Player ID Free Fire *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Proses Otomatis</span>
                 </span>
@@ -448,18 +475,18 @@ export function QuickBuyModal({
                   if (errorMessage) setErrorMessage('');
                 }}
                 placeholder="Contoh Player ID: 1234567890"
-                className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono transition-all"
               />
-              <p className="text-[11px] text-[#A89F91] flex items-center gap-1.5">
-                <Info size={12} className="text-[#D4A359] shrink-0" />
+              <p className="text-[11px] text-[#94A3B8] flex items-center gap-1.5">
+                <Info size={12} className="text-[#F59E0B] shrink-0" />
                 <span>Player ID dapat dilihat di menu Profil game Free Fire.</span>
               </p>
             </div>
           ) : gameMeta.isGenshin ? (
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] flex items-center justify-between">
                 <span>UID & Server Genshin Impact *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Proses Otomatis</span>
                 </span>
@@ -479,14 +506,14 @@ export function QuickBuyModal({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="UID Akun (cth: 800123456)"
-                    className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono"
+                    className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono"
                   />
                 </div>
                 <div>
                   <select
                     value={genshinServer}
                     onChange={(e) => setGenshinServer(e.target.value)}
-                    className="w-full px-3 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] text-xs font-bold text-[#FAF4EB]"
+                    className="w-full px-3 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] text-xs font-bold text-[#F8FAFC]"
                   >
                     <option value="os_asia">Asia</option>
                     <option value="os_usa">America</option>
@@ -498,9 +525,9 @@ export function QuickBuyModal({
             </div>
           ) : gameMeta.isGame ? (
             <div className="space-y-1.5">
-              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] flex items-center justify-between">
+              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] flex items-center justify-between">
                 <span>User ID / ID Akun Game *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Proses Otomatis</span>
                 </span>
@@ -516,14 +543,14 @@ export function QuickBuyModal({
                   if (errorMessage) setErrorMessage('');
                 }}
                 placeholder={gameMeta.isValorant ? 'Riot ID & Tagline (cth: User#TAG)' : 'Masukkan User ID Akun Game'}
-                className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono transition-all"
               />
             </div>
           ) : product.categoryId === 'pulsa' || product.categoryId === 'kuota' ? (
             <div>
-              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5 flex items-center justify-between">
+              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5 flex items-center justify-between">
                 <span>Nomor HP Tujuan Isi Ulang *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Langsung Terkirim</span>
                 </span>
@@ -540,19 +567,19 @@ export function QuickBuyModal({
                     if (errorMessage) setErrorMessage('');
                   }}
                   placeholder="Contoh: 081234567890"
-                  className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 transition-all font-mono"
+                  className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 transition-all font-mono"
                 />
               </div>
-              <p className="text-[10px] text-[#A89F91] mt-1">
+              <p className="text-[10px] text-[#94A3B8] mt-1">
                 Pastikan nomor handphone aktif dan benar.
               </p>
             </div>
           ) : product.categoryId === 'smm' ? (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5 flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5 flex items-center justify-between">
                   <span>Username / Link Target Akun *</span>
-                  <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                  <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                     <ShieldCheck size={11} />
                     <span>Layanan Provider SMM</span>
                   </span>
@@ -567,14 +594,14 @@ export function QuickBuyModal({
                     if (errorMessage) setErrorMessage('');
                   }}
                   placeholder="Contoh: https://instagram.com/username atau @username"
-                  className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 transition-all font-mono"
+                  className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 transition-all font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5 flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5 flex items-center justify-between">
                   <span>Jumlah Pesanan (Unit) *</span>
-                  <span className="text-[10px] text-[#D4A359]">
+                  <span className="text-[10px] text-[#F59E0B]">
                     Min: {(product.smmMin || 100).toLocaleString('id-ID')} | Max: {(product.smmMax || 50000).toLocaleString('id-ID')}
                   </span>
                 </label>
@@ -592,20 +619,20 @@ export function QuickBuyModal({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder={`Min. ${product.smmMin || 100}`}
-                    className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] font-mono"
+                    className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] font-mono"
                   />
-                  <span className="absolute right-3.5 top-3.5 text-xs text-[#A89F91] font-semibold">
+                  <span className="absolute right-3.5 top-3.5 text-xs text-[#94A3B8] font-semibold">
                     unit
                   </span>
                 </div>
-                <p className="text-[10px] text-[#A89F91] mt-1">
-                  Tarif: {formatRupiah(effectiveSellingRate)} / 1.000 unit. Subtotal: <strong className="text-[#D4A359]">{formatRupiah(basePrice)}</strong>
+                <p className="text-[10px] text-[#94A3B8] mt-1">
+                  Tarif: {formatRupiah(effectiveSellingRate)} / 1.000 unit. Subtotal: <strong className="text-[#F59E0B]">{formatRupiah(basePrice)}</strong>
                 </p>
               </div>
 
               {product.name.toLowerCase().includes('comment') && (
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5">
                     Komentar Custom (1 baris per komentar)
                   </label>
                   <textarea
@@ -613,16 +640,16 @@ export function QuickBuyModal({
                     value={smmComments}
                     onChange={(e) => setSmmComments(e.target.value)}
                     placeholder="Tuliskan komentar di sini (pisahkan per baris)..."
-                    className="w-full px-3 py-2 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] text-xs text-[#FAF4EB] placeholder-[#A89F91]/40 font-mono"
+                    className="w-full px-3 py-2 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] text-xs text-[#F8FAFC] placeholder-[#94A3B8]/40 font-mono"
                   />
                 </div>
               )}
             </div>
           ) : product.categoryId === 'premium' ? (
             <div>
-              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5 flex items-center justify-between">
+              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5 flex items-center justify-between">
                 <span>Email / No. WhatsApp Pembeli *</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Akses Login Resmi</span>
                 </span>
@@ -639,18 +666,18 @@ export function QuickBuyModal({
                     if (errorMessage) setErrorMessage('');
                   }}
                   placeholder="Contoh: user@gmail.com atau 08123456789"
-                  className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 transition-all font-mono"
+                  className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 transition-all font-mono"
                 />
               </div>
-              <p className="text-[10px] text-[#A89F91] mt-1">
+              <p className="text-[10px] text-[#94A3B8] mt-1">
                 Data login (Email & Password) otomatis ditampilkan di layar invoice segera setelah pembayaran selesai.
               </p>
             </div>
           ) : (
             <div>
-              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#D5CEBF] mb-1.5 flex items-center justify-between">
+              <label htmlFor="quick-destination-input" className="block text-xs font-bold uppercase tracking-wider text-[#CBD5E1] mb-1.5 flex items-center justify-between">
                 <span>{product.categoryId === 'wifi' ? 'Nama Pengguna / Catatan Penerima' : 'Nomor / Akun Tujuan *'}</span>
-                <span className="text-[10px] text-[#84A951] font-normal flex items-center gap-1">
+                <span className="text-[10px] text-[#10B981] font-normal flex items-center gap-1">
                   <ShieldCheck size={11} />
                   <span>Otomatis Masuk</span>
                 </span>
@@ -667,24 +694,24 @@ export function QuickBuyModal({
                     if (errorMessage) setErrorMessage('');
                   }}
                   placeholder={product.categoryId === 'wifi' ? 'Nama Anda / Catatan' : 'Contoh: No. Meter PLN / ID Pelanggan'}
-                  className="w-full px-4 py-3 rounded-xl bg-[#14100D] border-2 border-[#3E342B] focus:border-[#D4A359] focus:ring-2 focus:ring-[#D4A359]/20 text-sm font-bold text-[#FAF4EB] placeholder-[#A89F91]/40 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-[#080B12] border-2 border-[#1E293B] focus:border-[#F59E0B] focus:ring-2 focus:ring-[#F59E0B]/20 text-sm font-bold text-[#F8FAFC] placeholder-[#94A3B8]/40 transition-all"
                 />
               </div>
-              <p className="text-[10px] text-[#A89F91] mt-1">
+              <p className="text-[10px] text-[#94A3B8] mt-1">
                 Kode voucher dan bukti pembayaran akan langsung ditampilkan di layar setelah pembayaran.
               </p>
             </div>
           )}
 
           {/* 3. Promo Code Banner & Redeem Voucher */}
-          <div className="bg-[#241D17] rounded-xl p-3 border border-[#3E342B] space-y-2 text-xs">
+          <div className="bg-[#131927] rounded-xl p-3 border border-[#1E293B] space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Tag size={14} className="text-[#D4A359]" />
-                <span className="font-semibold text-xs text-[#FAF4EB]">
+                <Tag size={14} className="text-[#F59E0B]" />
+                <span className="font-semibold text-xs text-[#F8FAFC]">
                   {appliedPromo ? (
                     <>
-                      Promo: <span className="text-[#D4A359]">{appliedPromo.code}</span> (-{formatRupiah(discountAmount)})
+                      Promo: <span className="text-[#F59E0B]">{appliedPromo.code}</span> (-{formatRupiah(discountAmount)})
                     </>
                   ) : (
                     'Punya Kode Promo / Voucher?'
@@ -719,12 +746,12 @@ export function QuickBuyModal({
                       handleApplyPromo();
                     }
                   }}
-                  className="flex-1 bg-[#1A1410] border border-[#3E342B] rounded-lg px-2.5 py-1.5 text-xs text-white uppercase focus:outline-none focus:border-[#D4A359]"
+                  className="flex-1 bg-[#0B0F17] border border-[#1E293B] rounded-lg px-2.5 py-1.5 text-xs text-white uppercase focus:outline-none focus:border-[#F59E0B]"
                 />
                 <button
                   type="button"
                   onClick={() => handleApplyPromo()}
-                  className="px-3 py-1.5 bg-[#D4A359] text-[#1A1410] font-bold text-xs rounded-lg hover:bg-[#c39248] transition-colors"
+                  className="px-3 py-1.5 bg-[#F59E0B] text-[#0B0F17] font-bold text-xs rounded-lg hover:bg-[#D97706] transition-colors"
                 >
                   Terapkan
                 </button>
@@ -742,48 +769,55 @@ export function QuickBuyModal({
               {errorMessage}
             </div>
           )}
+          </div>
 
-          {/* 4. Total & Tombol Bayar QRIS */}
-          <div className="pt-2 border-t border-[#3E342B] space-y-3">
+          {/* 4. Sticky Total & Tombol Bayar QRIS */}
+          <div className="shrink-0 p-4 sm:p-5 border-t border-[#1E293B] bg-[#0A0D14]/95 backdrop-blur-md space-y-2.5">
             <div className="flex items-baseline justify-between">
               <div>
-                <span className="text-[10px] text-[#A89F91] uppercase tracking-wider block">Total Tagihan</span>
-                <span className="text-xs text-[#84A951] font-semibold">Bebas Biaya Admin</span>
+                <span className="text-[10px] text-[#94A3B8] uppercase tracking-wider block">Total Tagihan</span>
+                <span className="text-xs text-[#10B981] font-semibold">Bebas Biaya Admin</span>
               </div>
-              <span className="text-2xl font-black text-[#D4A359] font-mono">
+              <span className="text-xl sm:text-2xl font-black text-[#F59E0B] font-mono">
                 {formatRupiah(grandTotal)}
               </span>
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !isAvailable}
               id="quick-pay-submit-btn"
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-[#D4A359] via-[#E2B774] to-[#C08F47] hover:brightness-110 active:scale-[0.99] text-[#181411] font-black rounded-2xl text-sm transition-all shadow-lg shadow-[#D4A359]/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className={`w-full py-3 sm:py-3.5 px-4 font-black rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+                isAvailable
+                  ? 'bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#D97706] hover:brightness-110 active:scale-[0.99] text-[#0B0F17] shadow-lg shadow-[#F59E0B]/25 cursor-pointer disabled:opacity-50'
+                  : 'bg-slate-800 text-slate-400 border border-white/10 cursor-not-allowed opacity-60'
+              }`}
             >
               {isLoading ? (
                 <span>Menyiapkan QRIS...</span>
+              ) : !isAvailable ? (
+                <span>Stok Habis (Supplier API)</span>
               ) : (
                 <>
-                  <Zap size={18} className="fill-[#181411]" />
+                  <Zap size={18} className="fill-[#0B0F17]" />
                   <span>Bayar Sekarang via QRIS</span>
                 </>
               )}
             </button>
 
-            <div className="flex items-center justify-between text-[11px] pt-1 text-[#A89F91]">
+            <div className="flex items-center justify-between text-[11px] pt-0.5 text-[#94A3B8]">
               <button
                 type="button"
                 onClick={() => {
                   onClose();
                   onOpenFullCheckout(product, destination);
                 }}
-                className="hover:text-[#D4A359] underline cursor-pointer transition-colors"
+                className="hover:text-[#F59E0B] underline cursor-pointer transition-colors"
               >
                 Halaman Checkout Lengkap &rarr;
               </button>
 
-              <div className="flex items-center gap-1 text-[#84A951]">
+              <div className="flex items-center gap-1 text-[#10B981]">
                 <ShieldCheck size={13} />
                 <span>QRIS Otomatis</span>
               </div>

@@ -118,6 +118,15 @@ export interface Product {
   lastSyncAt?: string;
   needsPriceReview?: boolean; // Jika biaya seller naik melampaui harga jual
   incompleteReason?: string; // Alasan jika produk belum memenuhi syarat jual
+
+  // Provider API Realtime Stock & Status Fields
+  isDigiflazzSynced?: boolean;
+  unlimitedStock?: boolean;
+  buyerProductStatus?: boolean;
+  sellerProductStatus?: boolean;
+  startCutOff?: string | null;
+  endCutOff?: string | null;
+  statusNote?: string;
 }
 
 export interface OrderItem {

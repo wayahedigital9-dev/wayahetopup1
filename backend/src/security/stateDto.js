@@ -15,7 +15,7 @@ function list(value, mapper) {
 }
 
 function publicProduct(product) {
-  const out = pickScalars(product, 'id categoryId provider name sku supplierSku providerProductId providerCode sellerName digiflazzCategory digiflazzType nominal description sellingPrice discountPrice quotaDetails duration speed networkLocation deliveryMethod isActive isDeleted stock badge iconUrl hasVariants selectedVariantId selectedVariantName isManualCustom isCustomPrice smmServiceId ratePer1000 smmMin smmMax smmRefill smmCategory needsPriceReview');
+  const out = pickScalars(product, 'id categoryId provider name sku supplierSku providerProductId providerCode sellerName digiflazzCategory digiflazzType nominal description sellingPrice discountPrice quotaDetails duration speed networkLocation deliveryMethod isActive isDeleted stock badge iconUrl hasVariants selectedVariantId selectedVariantName isManualCustom isCustomPrice smmServiceId ratePer1000 smmMin smmMax smmRefill smmCategory needsPriceReview isDigiflazzSynced unlimitedStock buyerProductStatus sellerProductStatus startCutOff endCutOff statusNote');
   if (Array.isArray(product.terms)) out.terms = product.terms.filter(v => typeof v === 'string');
   if (Array.isArray(product.variants)) out.variants = list(product.variants, variant =>
     pickScalars(variant, 'id name duration speed sellingPrice discountPrice stock sku badge description providerVariantId isActive isDeleted'));

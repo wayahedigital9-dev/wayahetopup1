@@ -20,6 +20,7 @@ import { formatRupiah } from '../utils/operator';
 import { apiAdapter } from '../services/apiAdapter';
 import { storage } from '../services/storage';
 import { ProductLogo } from '../components/ProductLogo';
+import { getPremiumProductStock } from '../utils/premiumStock';
 
 interface CheckoutPageProps {
   product: Product;
@@ -231,6 +232,14 @@ export function CheckoutPage({
       return;
     }
 
+    if (product.categoryId === 'premium') {
+      const stockInfo = getPremiumProductStock(product);
+      if (!stockInfo.isAvailable) {
+        onShowToast('Stok Tidak Tersedia', `Maaf, produk ${product.name} saat ini ${stockInfo.badgeLabel}.`, 'error');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -310,6 +319,20 @@ export function CheckoutPage({
                   <div className="flex items-center gap-1 text-xs text-slate-600 mt-2">
                     <Clock size={13} className="text-slate-400" />
                     <span>Durasi: {product.duration}</span>
+                  </div>
+                )}
+                {product.categoryId === 'premium' && (
+                  <div className="mt-2">
+                    {(() => {
+                      const stockInfo = getPremiumProductStock(product);
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${stockInfo.badgeStyle.bg} ${stockInfo.badgeStyle.text} ${stockInfo.badgeStyle.border}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${stockInfo.badgeStyle.dot} ${stockInfo.isAvailable ? 'animate-pulse' : ''}`} />
+                          {stockInfo.badgeLabel}
+                          <span className="text-[9px] opacity-75">({stockInfo.isApi ? 'API' : 'Admin'})</span>
+                        </span>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

@@ -78,8 +78,8 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
   if (iconUrl && !isUnsplash && !imageError) {
     return (
       <div
-        className={`relative flex items-center justify-center overflow-hidden shrink-0 bg-[#1D1814] ${
-          showBadgeBorder ? 'border border-[#3E352B] shadow-xs' : ''
+        className={`relative flex items-center justify-center overflow-hidden shrink-0 bg-[#0E131F] ${
+          showBadgeBorder ? 'border border-[#1E293B] shadow-xs' : ''
         } ${containerClasses}`}
       >
         <img
@@ -160,7 +160,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
     if (pNorm.includes('tri') || pNorm.includes('three') || nNorm.includes('tri') || nNorm.includes('alwayson')) {
       return (
         <div className="w-full h-full bg-[#111111] flex items-center justify-center text-white relative overflow-hidden font-black border border-slate-700 select-none">
-          <span className="text-lg sm:text-xl font-black text-[#FAF4EB] tracking-tighter">3</span>
+          <span className="text-lg sm:text-xl font-black text-[#F8FAFC] tracking-tighter">3</span>
         </div>
       );
     }
@@ -314,7 +314,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
     // MICROSOFT 365 / OFFICE
     if (pNorm.includes('microsoft') || nNorm.includes('office') || nNorm.includes('365')) {
       return (
-        <div className="w-full h-full bg-[#1E1E1E] border border-[#3E352B] flex items-center justify-center select-none">
+        <div className="w-full h-full bg-[#1E1E1E] border border-[#1E293B] flex items-center justify-center select-none">
           <div className="grid grid-cols-2 gap-1 w-5 h-5">
             <div className="bg-[#F25022] rounded-[1px]" />
             <div className="bg-[#7FBA00] rounded-[1px]" />
@@ -479,13 +479,13 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
     // MOBILE LEGENDS (MLBB)
     if (pNorm.includes('mobile legends') || pNorm.includes('mlbb') || nNorm.includes('mobile legends') || nNorm.includes('mlbb')) {
       return (
-        <div className="w-full h-full bg-gradient-to-b from-[#1C2C4C] via-[#0E1626] to-[#080D18] border border-[#D4A359]/60 flex flex-col items-center justify-center text-[#D4A359] relative overflow-hidden select-none">
+        <div className="w-full h-full bg-gradient-to-b from-[#1C2C4C] via-[#0E1626] to-[#080D18] border border-[#F59E0B]/60 flex flex-col items-center justify-center text-[#F59E0B] relative overflow-hidden select-none">
           <svg viewBox="0 0 24 24" className="w-[65%] h-[65%]" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2L4 7v6c0 5 8 9 8 9s8-4 8-9V7l-8-5z" fill="#D4A359" fillOpacity="0.2" />
-            <path d="M12 2v18" stroke="#FAF4EB" strokeWidth="1.5" />
-            <path d="M8 8l8 8M16 8l-8 8" stroke="#D4A359" strokeWidth="1.5" />
+            <path d="M12 2L4 7v6c0 5 8 9 8 9s8-4 8-9V7l-8-5z" fill="#F59E0B" fillOpacity="0.2" />
+            <path d="M12 2v18" stroke="#F8FAFC" strokeWidth="1.5" />
+            <path d="M8 8l8 8M16 8l-8 8" stroke="#F59E0B" strokeWidth="1.5" />
           </svg>
-          <span className="text-[7px] font-black text-[#D4A359] tracking-tighter leading-none mt-0.5">MLBB</span>
+          <span className="text-[7px] font-black text-[#F59E0B] tracking-tighter leading-none mt-0.5">MLBB</span>
         </div>
       );
     }
@@ -507,7 +507,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
           <div className="w-4 h-3 rounded-t-md bg-[#F39C12] flex items-center justify-center">
             <div className="w-2.5 h-1 bg-[#1A1A1A] rounded-xs" />
           </div>
-          <span className="text-[7px] font-extrabold text-[#FAF4EB] tracking-tighter uppercase mt-0.5">PUBG</span>
+          <span className="text-[7px] font-extrabold text-[#F8FAFC] tracking-tighter uppercase mt-0.5">PUBG</span>
         </div>
       );
     }
@@ -535,7 +535,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
     // STEAM WALLET
     if (pNorm.includes('steam') || nNorm.includes('steam')) {
       return (
-        <div className="w-full h-full bg-gradient-to-b from-[#171A21] to-[#1B2838] flex items-center justify-center text-white relative overflow-hidden border border-[#3E352B] select-none">
+        <div className="w-full h-full bg-gradient-to-b from-[#171A21] to-[#1B2838] flex items-center justify-center text-white relative overflow-hidden border border-[#1E293B] select-none">
           <svg viewBox="0 0 24 24" className="w-[68%] h-[68%]" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.24-.099.576-.237.954-.396l-2.73-3.957a3.003 3.003 0 0 1-.431-1.534c0-1.657 1.343-3 3-3 .171 0 .338.016.501.045l3.298-4.78a5.006 5.006 0 1 1 7.201 5.435l-4.78 3.298c.029.163.045.33.045.501 0 1.657-1.343 3-3 3-.387 0-.75-.075-1.085-.209L7.02 23.824C8.61 23.94 10.285 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
           </svg>
@@ -564,7 +564,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
         ? 'from-[#0D9488] to-[#115E59]' 
         : isWarga 
         ? 'from-[#4F46E5] to-[#3730A3]' 
-        : 'from-[#D4A359] to-[#9E6F27]';
+        : 'from-[#F59E0B] to-[#9E6F27]';
 
       return (
         <div className={`w-full h-full bg-gradient-to-br ${bgGrad} flex flex-col items-center justify-center text-white relative overflow-hidden select-none`}>
@@ -595,7 +595,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
 
     if (category === 'game') {
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#D4A359] to-[#684C12] flex items-center justify-center text-[#181411] select-none">
+        <div className="w-full h-full bg-gradient-to-br from-[#F59E0B] to-[#684C12] flex items-center justify-center text-[#0B0F17] select-none">
           <Gamepad2 size={16} />
         </div>
       );
@@ -605,18 +605,18 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
     if (category === 'premium') {
       const initial = (provider || name || 'P').charAt(0).toUpperCase();
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#251E18] via-[#1D1814] to-[#14100D] border border-[#D4A359]/30 flex items-center justify-center text-[#D4A359] relative overflow-hidden select-none">
-          <span className="text-base sm:text-lg font-black tracking-wider text-[#D4A359]">
+        <div className="w-full h-full bg-gradient-to-br from-[#111827] via-[#0E131F] to-[#080B12] border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] relative overflow-hidden select-none">
+          <span className="text-base sm:text-lg font-black tracking-wider text-[#F59E0B]">
             {initial}
           </span>
-          <Sparkles size={10} className="text-[#D4A359]/70 absolute top-1.5 right-1.5" />
+          <Sparkles size={10} className="text-[#F59E0B]/70 absolute top-1.5 right-1.5" />
         </div>
       );
     }
 
     // Default Fallback
     return (
-      <div className="w-full h-full bg-[#201A15] text-[#D4A359] flex items-center justify-center font-bold select-none">
+      <div className="w-full h-full bg-[#111827] text-[#F59E0B] flex items-center justify-center font-bold select-none">
         <Zap size={16} />
       </div>
     );
@@ -625,7 +625,7 @@ export const ProductLogo: React.FC<ProductLogoProps> = ({
   return (
     <div
       className={`relative flex items-center justify-center overflow-hidden shrink-0 ${
-        showBadgeBorder ? 'border border-[#3E352B]/80 shadow-xs' : ''
+        showBadgeBorder ? 'border border-[#1E293B]/80 shadow-xs' : ''
       } ${containerClasses}`}
     >
       {renderProviderSvg()}

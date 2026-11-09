@@ -17,9 +17,9 @@
   }
   
   /* Input pada kontainer bertema terang / putih */
-  input:not([class*="text-"]):not([class*="bg-[#14110E]"]):not([class*="bg-[#14100D]"]):not([class*="bg-[#181411]"]):not([class*="bg-slate-900"]):not([class*="bg-slate-950"]),
-  textarea:not([class*="text-"]):not([class*="bg-[#14110E]"]):not([class*="bg-[#181411]"]):not([class*="bg-slate-900"]),
-  select:not([class*="text-"]):not([class*="bg-[#14110E]"]):not([class*="bg-[#181411]"]):not([class*="bg-slate-900"]) {
+  input:not([class*="text-"]):not([class*="bg-[#080B12]"]):not([class*="bg-[#080B12]"]):not([class*="bg-[#0B0F17]"]):not([class*="bg-slate-900"]):not([class*="bg-slate-950"]),
+  textarea:not([class*="text-"]):not([class*="bg-[#080B12]"]):not([class*="bg-[#0B0F17]"]):not([class*="bg-slate-900"]),
+  select:not([class*="text-"]):not([class*="bg-[#080B12]"]):not([class*="bg-[#0B0F17]"]):not([class*="bg-slate-900"]) {
     color: #000000 !important;
   }
 
@@ -152,10 +152,10 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(212, 163, 89, 0.25);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
   }
   50% {
-    box-shadow: 0 0 25px rgba(212, 163, 89, 0.55);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.55);
   }
 }
 
@@ -208,15 +208,15 @@
 }
 
 .top-progress-bar {
-  background: linear-gradient(90deg, #D4A359, #38BDF8, #10B981);
-  box-shadow: 0 0 10px rgba(212, 163, 89, 0.7);
+  background: linear-gradient(90deg, #F59E0B, #38BDF8, #10B981);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
 }
 
 .smooth-transition {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Obsidian Cyberpunk Luxury Styles */
+/* Obsidian Cyberpunk Luxury & Modern Fintech Design Tokens */
 .font-syne {
   font-family: 'Syne', sans-serif;
 }
@@ -229,12 +229,65 @@
   font-family: 'Inter', sans-serif;
 }
 
-.shadow-cyber-cyan {
-  box-shadow: 0 0 24px rgba(0, 245, 212, 0.3);
+.font-space {
+  font-family: 'Space Grotesk', sans-serif;
 }
 
-.shadow-cyber-cyan-sm {
-  box-shadow: 0 0 12px rgba(0, 245, 212, 0.2);
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Premium Glassmorphic Surfaces */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-surface {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.premium-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+}
+
+.shadow-premium-sm {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-premium-md {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-premium-lg {
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark .shadow-premium-md {
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.shadow-amber-glow {
+  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.25);
+}
+
+.shadow-emerald-glow {
+  box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.25);
+}
+
+.shadow-amber-glow {
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.3);
+}
+
+.shadow-amber-glow {
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
 }
 
 .shadow-cyber-violet {
@@ -246,29 +299,20 @@
 }
 
 .glow-card-cyan {
-  border-color: #00F5D4;
-  box-shadow: 0 0 20px rgba(0, 245, 212, 0.25), inset 0 0 12px rgba(0, 245, 212, 0.08);
-}
-
-/* Wayahe Digital Gaming Ecosystem Design System Tokens */
-.font-space {
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-.font-jakarta {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  border-color: #F59E0B;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25), inset 0 0 12px rgba(245, 158, 11, 0.08);
 }
 
 .shadow-lime-glow {
-  box-shadow: 0 0 16px -2px rgba(199, 255, 77, 0.22);
+  box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.22);
 }
 
 .shadow-lime-glow-lg {
-  box-shadow: 0 4px 24px rgba(199, 255, 77, 0.3);
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.3);
 }
 
 .glow-card-lime {
   border-color: #C7FF4D;
-  box-shadow: 0 0 16px -2px rgba(199, 255, 77, 0.22);
+  box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.22);
 }
 

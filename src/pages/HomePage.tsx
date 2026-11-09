@@ -32,7 +32,8 @@ import {
   LogIn,
   UserPlus,
   Wrench,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 import { Product, Order, PromoBanner, User, HeroPromoSlide } from '../types';
 import { formatRupiah, detectOperator } from '../utils/operator';
@@ -40,6 +41,7 @@ import { ProductLogo } from '../components/ProductLogo';
 import { storage, INITIAL_BANNERS, INITIAL_PREMIUM_PRODUCTS, INITIAL_AI_TOKEN_PRODUCTS, INITIAL_HERO_SLIDES } from '../services/storage';
 import { GameTopUpModal, SelectedGameInfo } from '../components/GameTopUpModal';
 import { useTheme } from '../context/ThemeContext';
+import { getPremiumProductStock } from '../utils/premiumStock';
 
 interface HomePageProps {
   products: Product[];
@@ -63,16 +65,13 @@ const OPERATOR_PREFIXES: Record<string, string> = {
 
 export const PREMIUM_CATEGORY_PILLS = [
   'Semua',
-  'Editing',
-  'Aplikasi Premium',
   'Streaming',
   'Musik',
+  'Design & Editing',
+  'Aplikasi & Tools',
+  'AI & Bot',
+  'VPN & Security',
   'Lainnya',
-  'editing',
-  'VPN',
-  'AI & Tools',
-  'AI',
-  'Akun Premium',
 ];
 
 export const matchesPremiumCategory = (product: Product, selectedCat: string): boolean => {
@@ -89,10 +88,11 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
   // 1. Direct match with category name
   if (prodCat === target) return true;
 
-  // 2. Editing / editing
-  if (target === 'editing') {
+  // 2. Design & Editing / Editing / Design
+  if (target === 'design & editing' || target === 'editing' || target === 'design') {
     return (
       prodCat.includes('editing') ||
+      prodCat.includes('design') ||
       fullText.includes('canva') ||
       fullText.includes('capcut') ||
       fullText.includes('lightroom') ||
@@ -101,15 +101,18 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
       fullText.includes('vsco') ||
       fullText.includes('remini') ||
       fullText.includes('filmora') ||
-      fullText.includes('corel')
+      fullText.includes('corel') ||
+      fullText.includes('figma') ||
+      fullText.includes('adobe')
     );
   }
 
-  // 3. Aplikasi Premium / Akun Premium
-  if (target === 'aplikasi premium' || target === 'akun premium') {
+  // 3. Aplikasi & Tools / Aplikasi Premium / Akun Premium
+  if (target === 'aplikasi & tools' || target === 'aplikasi premium' || target === 'akun premium' || target === 'tools') {
     return (
       prodCat.includes('aplikasi') ||
       prodCat.includes('akun') ||
+      prodCat.includes('tools') ||
       fullText.includes('office') ||
       fullText.includes('365') ||
       fullText.includes('google one') ||
@@ -117,7 +120,6 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
       fullText.includes('drive') ||
       fullText.includes('windows') ||
       fullText.includes('microsoft') ||
-      fullText.includes('canva') ||
       fullText.includes('grammarly') ||
       fullText.includes('duolingo')
     );
@@ -142,8 +144,8 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
     );
   }
 
-  // 5. Musik
-  if (target === 'musik') {
+  // 5. Musik / Music
+  if (target === 'musik' || target === 'music') {
     return (
       prodCat.includes('musik') ||
       prodCat.includes('music') ||
@@ -157,10 +159,11 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
     );
   }
 
-  // 6. VPN
-  if (target === 'vpn') {
+  // 6. VPN & Security / VPN
+  if (target === 'vpn & security' || target === 'vpn') {
     return (
       prodCat.includes('vpn') ||
+      prodCat.includes('security') ||
       fullText.includes('vpn') ||
       fullText.includes('nord') ||
       fullText.includes('expressvpn') ||
@@ -169,10 +172,11 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
     );
   }
 
-  // 7. AI & Tools / AI
-  if (target === 'ai & tools' || target === 'ai') {
+  // 7. AI & Bot / AI & Tools / AI
+  if (target === 'ai & bot' || target === 'ai & tools' || target === 'ai') {
     return (
       prodCat.includes('ai') ||
+      prodCat.includes('bot') ||
       prodCat.includes('tool') ||
       product.id.startsWith('ai-') ||
       fullText.includes('chatgpt') ||
@@ -194,6 +198,7 @@ export const matchesPremiumCategory = (product: Product, selectedCat: string): b
     const isKnownMajor =
       prodCat.includes('streaming') ||
       prodCat.includes('editing') ||
+      prodCat.includes('design') ||
       prodCat.includes('musik') ||
       prodCat.includes('music') ||
       prodCat.includes('vpn') ||
@@ -252,6 +257,20 @@ export function HomePage({
     };
     window.addEventListener('storage_synced', handleSync);
     return () => window.removeEventListener('storage_synced', handleSync);
+  }, []);
+
+  useEffect(() => {
+    const handleSearch = (e: any) => {
+      if (e.detail) {
+        setCatalogSearch(e.detail);
+        setTimeout(() => {
+          const el = document.getElementById('semua-katalog');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+    window.addEventListener('app:search', handleSearch);
+    return () => window.removeEventListener('app:search', handleSearch);
   }, []);
 
   const promoSlides = useMemo(() => {
@@ -391,18 +410,35 @@ export function HomePage({
 
   // Compute available categories dynamically (primary pills + dynamic categories from synced products)
   const availablePremiumCategories = useMemo(() => {
-    const existingLower = new Set(PREMIUM_CATEGORY_PILLS.map(c => c.toLowerCase()));
+    const existingPills = [...PREMIUM_CATEGORY_PILLS];
+    const existingLower = new Set(existingPills.map(c => c.toLowerCase()));
+
+    const aliasMap: Record<string, string> = {
+      'editing': 'Design & Editing',
+      'design': 'Design & Editing',
+      'music': 'Musik',
+      'ai': 'AI & Bot',
+      'ai & tools': 'AI & Bot',
+      'aplikasi premium': 'Aplikasi & Tools',
+      'akun premium': 'Aplikasi & Tools',
+      'vpn': 'VPN & Security'
+    };
+
     const dynamicCats: string[] = [];
 
     premiumProductsList.forEach(p => {
       const rawCat = p.digiflazzCategory || (p as any).category;
-      if (rawCat && typeof rawCat === 'string' && !existingLower.has(rawCat.toLowerCase())) {
-        existingLower.add(rawCat.toLowerCase());
+      if (rawCat && typeof rawCat === 'string') {
+        const lower = rawCat.toLowerCase().trim();
+        if (aliasMap[lower] || existingLower.has(lower)) {
+          return;
+        }
+        existingLower.add(lower);
         dynamicCats.push(rawCat);
       }
     });
 
-    return [...PREMIUM_CATEGORY_PILLS, ...dynamicCats];
+    return [...existingPills, ...dynamicCats];
   }, [premiumProductsList]);
 
   // Filtered premium products according to selected category pill
@@ -518,7 +554,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 1.500',
       badge: 'DISKON -35%',
-      badgeColor: 'bg-rose-50 text-rose-600 border-rose-200',
+      badgeColor: 'bg-gradient-to-r from-rose-500 to-red-600 text-white',
       tag: '1 Detik',
       image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -531,7 +567,7 @@ export function HomePage({
       rating: '4.8',
       startingPrice: 'Mulai Rp 1.000',
       badge: 'DISKON -15%',
-      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      badgeColor: 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black',
       tag: '1 Detik',
       image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -544,7 +580,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 14.500',
       badge: 'RESMI',
-      badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+      badgeColor: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white',
       tag: 'Instant',
       image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -557,7 +593,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 13.000',
       badge: 'KILAT',
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      badgeColor: 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white',
       tag: 'Auto',
       image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
       category: 'pc',
@@ -570,7 +606,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 16.500',
       badge: 'POPULER',
-      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      badgeColor: 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white',
       tag: 'Bonus Coin',
       image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80',
       category: 'pc',
@@ -583,7 +619,7 @@ export function HomePage({
       rating: '4.8',
       startingPrice: 'Mulai Rp 1.200',
       badge: 'NEW',
-      badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      badgeColor: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white',
       tag: '1 Detik',
       image: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -596,7 +632,7 @@ export function HomePage({
       rating: '4.8',
       startingPrice: 'Mulai Rp 14.700',
       badge: 'PROMO',
-      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      badgeColor: 'bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black',
       tag: 'Auto Send',
       image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -609,7 +645,7 @@ export function HomePage({
       rating: '4.7',
       startingPrice: 'Mulai Rp 11.500',
       badge: 'NOSTALGIA',
-      badgeColor: 'bg-slate-100 text-slate-800 border-slate-300',
+      badgeColor: 'bg-gradient-to-r from-slate-700 to-slate-900 text-white',
       tag: 'Voucher',
       image: 'https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?auto=format&fit=crop&w=600&q=80',
       category: 'pc',
@@ -622,7 +658,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 15.000',
       badge: 'TOP TIER',
-      badgeColor: 'bg-lime-50 text-lime-800 border-lime-300',
+      badgeColor: 'bg-gradient-to-r from-emerald-600 to-green-700 text-white',
       tag: 'CP Kilat',
       image: 'https://images.unsplash.com/photo-1542751110-97427bbecf20?auto=format&fit=crop&w=600&q=80',
       category: 'mobile',
@@ -635,7 +671,7 @@ export function HomePage({
       rating: '4.9',
       startingPrice: 'Mulai Rp 12.200',
       badge: 'TERLARIS',
-      badgeColor: 'bg-red-50 text-red-700 border-red-200',
+      badgeColor: 'bg-gradient-to-r from-rose-600 to-pink-600 text-white',
       tag: 'Instant Fast',
       image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
       category: 'pc',
@@ -748,53 +784,53 @@ export function HomePage({
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#101211] text-[#F5F7F2] selection:bg-[#C7FF4D] selection:text-[#101211]' : 'bg-[#F8FAFC] text-[#0F172A] selection:bg-[#FACC15] selection:text-[#0F172A]'} font-jakarta relative overflow-x-hidden pb-16 transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#0B0F17] text-slate-100 selection:bg-amber-500 selection:text-slate-950' : 'bg-[#F8FAFC] text-[#0F172A] selection:bg-amber-400 selection:text-slate-950'} font-jakarta relative overflow-x-hidden pb-16 transition-colors duration-300`}>
       
-      {/* Ambient Optical Highlights for Depth */}
+      {/* Ambient Optical Highlights for Subtle Depth */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         {isDark ? (
           <>
-            <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(199,255,77,0.06)_0%,transparent_70%)] blur-3xl"></div>
-            <div className="absolute top-[35%] right-[-10%] w-[550px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.05)_0%,transparent_70%)] blur-3xl"></div>
-            <div className="absolute top-[65%] left-[-10%] w-[600px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.04)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.05)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[35%] right-[-10%] w-[550px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.04)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[65%] left-[-10%] w-[600px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)] blur-3xl"></div>
           </>
         ) : (
           <>
-            <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(250,204,21,0.06)_0%,transparent_70%)] blur-3xl"></div>
-            <div className="absolute top-[35%] right-[-10%] w-[550px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.06)_0%,transparent_70%)] blur-3xl"></div>
-            <div className="absolute top-[65%] left-[-10%] w-[600px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.05)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.05)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[35%] right-[-10%] w-[550px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.04)_0%,transparent_70%)] blur-3xl"></div>
+            <div className="absolute top-[65%] left-[-10%] w-[600px] h-[450px] bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)] blur-3xl"></div>
           </>
         )}
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-7 relative z-10">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-6 relative z-10">
 
         {/* 1. HERO SLIDING PROMO PRODUCTS BANNER */}
         {(() => {
           const activeSlide = promoSlides[currentSlideIndex] || promoSlides[0];
           return (
             <section 
-              className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-9 overflow-hidden border border-slate-800 shadow-xl bg-gradient-to-br from-[#0B132B] via-[#1C2541] to-[#0A1128] text-white group transition-all duration-500"
+              className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-9 overflow-hidden border border-white/[0.08] shadow-premium-lg bg-gradient-to-br from-[#0B0F19] via-[#111827] to-[#0A0D15] text-white group transition-all duration-500"
               onMouseEnter={() => setIsBannerHovered(true)}
               onMouseLeave={() => setIsBannerHovered(false)}
             >
               {/* Subtle Ambient Rim Glows */}
-              <div className="absolute -top-24 -right-24 w-88 h-88 bg-amber-400/10 blur-3xl pointer-events-none rounded-full" />
-              <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-sky-400/10 blur-3xl pointer-events-none rounded-full" />
+              <div className="absolute -top-24 -right-24 w-88 h-88 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
+              <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-sky-500/10 blur-3xl pointer-events-none rounded-full" />
 
               {/* Carousel Slide Controls (Top Right) */}
               <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20 flex items-center gap-1.5">
                 <button
                   onClick={handlePrevSlide}
                   aria-label="Promo Sebelumnya"
-                  className="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-[#FACC15] text-white hover:text-slate-900 border border-slate-700 flex items-center justify-center transition-all cursor-pointer shadow-md backdrop-blur-md"
+                  className="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-premium-sm backdrop-blur-md"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={handleNextSlide}
                   aria-label="Promo Selanjutnya"
-                  className="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-[#FACC15] text-white hover:text-slate-900 border border-slate-700 flex items-center justify-center transition-all cursor-pointer shadow-md backdrop-blur-md"
+                  className="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-premium-sm backdrop-blur-md"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -805,15 +841,15 @@ export function HomePage({
                 <div className="space-y-4 max-w-2xl">
                   {/* Promo Badge */}
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold font-space uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold font-space uppercase tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                       {activeSlide.badge}
                     </span>
                   </div>
 
                   {/* Headline */}
                   <div>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold font-space text-white tracking-tight leading-tight drop-shadow-sm min-h-[58px] sm:min-h-[72px] flex items-center">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[38px] font-bold font-space text-white tracking-tight leading-tight min-h-[58px] sm:min-h-[72px] flex items-center">
                       {activeSlide.title}
                     </h1>
                     <p className="text-xs sm:text-sm md:text-base text-slate-300 mt-2 font-jakarta leading-relaxed max-w-xl min-h-[44px]">
@@ -826,7 +862,7 @@ export function HomePage({
                     {activeSlide.tags.map((tag, idx) => (
                       <span 
                         key={idx}
-                        className="px-2.5 py-1 rounded-lg bg-slate-900/70 border border-slate-700/80 text-slate-200 text-[11px] font-semibold font-jakarta"
+                        className="px-2.5 py-1 rounded-lg bg-slate-900/60 border border-white/[0.08] text-slate-300 text-[11px] font-semibold font-jakarta"
                       >
                         {tag}
                       </span>
@@ -837,15 +873,15 @@ export function HomePage({
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     <button
                       onClick={activeSlide.ctaAction}
-                      className="px-6 py-3 rounded-xl bg-[#FACC15] hover:bg-[#EAB308] active:bg-amber-500 text-[#0B132B] font-space font-bold text-xs sm:text-sm tracking-wide shadow-md transition-all transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-space font-bold text-xs sm:text-sm tracking-wide shadow-premium-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer flex items-center gap-2"
                     >
-                      <Zap size={16} className="fill-[#0B132B]" />
+                      <Zap size={16} className="fill-current" />
                       <span>{activeSlide.ctaText}</span>
                     </button>
 
                     <button
                       onClick={activeSlide.secondaryCtaAction}
-                      className="px-5 py-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white border border-slate-700 font-space font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 font-space font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <span>{activeSlide.secondaryCtaText}</span>
                       <ChevronRight size={14} />
@@ -853,16 +889,16 @@ export function HomePage({
                   </div>
                 </div>
 
-                {/* Right Promo Product Showcase Card (Replaces old static Live Event box) */}
-                <div className="w-full lg:w-84 shrink-0 p-4 sm:p-5 rounded-2xl bg-[#0F172A]/90 border border-slate-700/80 backdrop-blur-md shadow-2xl flex flex-col justify-between space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+                {/* Right Promo Product Showcase Card */}
+                <div className="w-full lg:w-84 shrink-0 p-4 sm:p-5 rounded-2xl bg-slate-900/75 border border-white/[0.08] backdrop-blur-xl shadow-premium-lg flex flex-col justify-between space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
                     <div className="flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-[#FACC15]" />
+                      <Sparkles size={14} className="text-amber-400" />
                       <span className="text-[11px] font-space font-bold uppercase text-slate-200 tracking-wider">
                         {activeSlide.cardTitle}
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FACC15]/20 text-[#FACC15] border border-[#FACC15]/30">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                       {activeSlide.cardSubtitle}
                     </span>
                   </div>
@@ -872,7 +908,7 @@ export function HomePage({
                     {activeSlide.cardItems.map((item, idx) => (
                       <div 
                         key={idx}
-                        className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 flex items-center justify-between transition-colors"
+                        className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800/90 border border-white/[0.06] flex items-center justify-between transition-colors"
                       >
                         <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold text-white truncate font-jakarta">
@@ -883,7 +919,7 @@ export function HomePage({
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-xs font-bold text-[#FACC15] font-space block">
+                          <span className="text-xs font-bold text-amber-400 font-space block">
                             {item.price}
                           </span>
                           <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -895,13 +931,13 @@ export function HomePage({
                   </div>
 
                   {/* Server & Processing Status */}
-                  <div className="pt-1 flex items-center justify-between text-[11px] text-slate-300 border-t border-slate-700/80">
+                  <div className="pt-1 flex items-center justify-between text-[11px] text-slate-300 border-t border-white/[0.08]">
                     <span className="flex items-center gap-1.5 text-slate-400 text-[10px]">
                       {activeSlide.serverStatus}
                     </span>
                     <button
                       onClick={activeSlide.ctaAction}
-                      className="text-[11px] font-space font-bold text-[#FACC15] hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-[11px] font-space font-bold text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-1"
                     >
                       <span>Beli Sekarang</span>
                       <ChevronRight size={12} />
@@ -919,8 +955,8 @@ export function HomePage({
                     aria-label={`Pilih Slide ${idx + 1}`}
                     className={`transition-all duration-300 cursor-pointer ${
                       currentSlideIndex === idx
-                        ? 'w-7 h-2 rounded-full bg-[#FACC15] shadow-xs'
-                        : 'w-2 h-2 rounded-full bg-slate-600/70 hover:bg-slate-400'
+                        ? 'w-7 h-1.5 rounded-full bg-amber-400 shadow-amber-glow'
+                        : 'w-1.5 h-1.5 rounded-full bg-slate-600/70 hover:bg-slate-400'
                     }`}
                   />
                 ))}
@@ -932,12 +968,12 @@ export function HomePage({
         {/* 1.1 MEMBER ACCESS & STATUS BAR */}
         <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
           isDark
-            ? 'bg-gradient-to-r from-[#1B1F1C] via-[#1E251F] to-[#141815] border-[#2E3A31]'
-            : 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/50 border-amber-200/80 shadow-xs'
+            ? 'bg-[#0E131F]/90 border-white/[0.08] shadow-premium-md'
+            : 'bg-white border-slate-200/90 shadow-premium-sm'
         } flex flex-col sm:flex-row sm:items-center justify-between gap-3.5`}>
           {currentUser ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 border border-amber-400/30 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center justify-center shrink-0">
                 <Crown size={20} />
               </div>
               <div>
@@ -945,26 +981,26 @@ export function HomePage({
                   <span className={`text-xs sm:text-sm font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     Halo, {currentUser.name}
                   </span>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 border border-amber-400/30 uppercase">
-                    {currentUser.memberTier || 'VIP_GOLD'}
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 uppercase">
+                    {currentUser.memberTier || 'VIP'}
                   </span>
                 </div>
                 <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta mt-0.5`}>
-                  Sisa Saldo: <b className="text-emerald-400 font-space">{formatRupiah(currentUser.balance || 0)}</b> • Poin Hadiah: <b className="text-amber-400">{currentUser.rewardPoints || 0} Pts</b>
+                  Sisa Saldo: <b className="text-emerald-500 font-space">{formatRupiah(currentUser.balance || 0)}</b> • Poin: <b className="text-amber-500">{currentUser.rewardPoints || 0} Pts</b>
                 </p>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-500 border border-amber-400/30 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center justify-center shrink-0">
                 <Crown size={20} />
               </div>
               <div>
                 <p className={`text-xs sm:text-sm font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  Masuk Akun Member WayaheDigital
+                  Akun Member VIP WayaheDigital
                 </p>
                 <p className={`text-[11px] sm:text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta mt-0.5`}>
-                  Daftar atau masuk akun sekarang untuk pantau saldo dompet, riwayat pesanan & dapatkan kupon diskon member.
+                  Daftar akun sekarang untuk harga lebih murah, saldo dompet, dan riwayat pesanan otomatis.
                 </p>
               </div>
             </div>
@@ -974,7 +1010,7 @@ export function HomePage({
             {currentUser ? (
               <button
                 onClick={() => onNavigate('akun')}
-                className="px-4 py-2 rounded-xl bg-[#FACC15] hover:bg-[#EAB308] text-slate-900 font-space font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-space font-bold text-xs transition-all shadow-premium-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Buka Dashboard Member</span>
                 <ChevronRight size={14} />
@@ -983,14 +1019,14 @@ export function HomePage({
               <>
                 <button
                   onClick={() => onNavigate('akun')}
-                  className="px-4 py-2 rounded-xl bg-[#FACC15] hover:bg-[#EAB308] text-slate-900 font-space font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-space font-bold text-xs transition-all shadow-premium-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <LogIn size={13} />
                   <span>Masuk Akun</span>
                 </button>
                 <button
                   onClick={() => onNavigate('daftar')}
-                  className={`px-3.5 py-2 rounded-xl ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'} border font-space font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer`}
+                  className={`px-3.5 py-2 rounded-xl ${isDark ? 'bg-slate-900 hover:bg-slate-800 text-white border-white/[0.08]' : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'} border font-space font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer`}
                 >
                   <UserPlus size={13} />
                   <span>Daftar Member</span>
@@ -1001,8 +1037,8 @@ export function HomePage({
         </div>
 
         {/* 2. REALTIME LIVE TRANSACTION TICKER STRIP */}
-        <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] text-[#F5F7F2]' : 'bg-white border-slate-200 text-slate-700'} border text-xs shadow-xs overflow-hidden transition-colors`}>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+        <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl ${isDark ? 'bg-[#0E131F]/80 border-white/[0.08] text-slate-300' : 'bg-white border-slate-200 text-slate-700'} border text-xs shadow-premium-sm overflow-hidden transition-colors`}>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <div className="truncate font-jakarta">
             {LIVE_TICKERS[tickerIndex]}
           </div>
@@ -1010,26 +1046,26 @@ export function HomePage({
 
         {/* 3. KATEGORI LAYANAN DIGITAL (10 SQUIRCLE TILES MATRIX) */}
         <section id="katalog-layanan" className="space-y-3.5 scroll-mt-20">
-          <div className={`flex items-center justify-between border-l-2 ${isDark ? 'border-[#C7FF4D]' : 'border-amber-500'} pl-3`}>
+          <div className="flex items-center justify-between border-l-2 border-amber-500 pl-3">
             <div>
-              <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+              <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                 Kategori Layanan Digital
               </h2>
-              <p className={`text-[11px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>Pilihan kategori transaksi favorit 24 jam nonstop</p>
+              <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pilihan kategori transaksi favorit 24 jam nonstop</p>
             </div>
             <button
               onClick={() => {
                 const el = document.getElementById('katalog-game-unggulan');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className={`text-xs ${isDark ? 'text-[#C7FF4D] hover:underline' : 'text-amber-600 hover:text-amber-700'} font-space font-bold flex items-center gap-1 cursor-pointer`}
+              className="text-xs text-amber-500 hover:text-amber-400 font-space font-bold flex items-center gap-1 cursor-pointer transition-colors"
             >
               <span>Semua Layanan</span>
               <ChevronRight size={13} />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3">
             {[
               {
                 id: 'cat-game',
@@ -1052,8 +1088,8 @@ export function HomePage({
                     onShowToast('Top Up Game', 'Maintenance akan segera kembali', 'warning');
                     return;
                   }
-                  const el = document.getElementById('katalog-game-unggulan');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  // Langsung buka modal popup top up game tanpa perlu scroll ke bawah
+                  setSelectedGameModal(featuredGamesCatalog[0] as any);
                 }
               },
               {
@@ -1229,19 +1265,19 @@ export function HomePage({
                 <button
                   key={cat.id}
                   onClick={cat.action}
-                  className={`group relative p-3 sm:p-3.5 rounded-2xl text-left transition-all duration-300 cursor-pointer overflow-hidden flex items-center gap-3 border ${
+                  className={`group relative p-2.5 sm:p-3 rounded-2xl text-left transition-all duration-300 cursor-pointer overflow-hidden flex items-center gap-2.5 sm:gap-3 border min-h-[72px] sm:min-h-[76px] ${
                     isMaintenance
                       ? isDark
                         ? 'bg-amber-950/20 border-amber-600/40 text-amber-200'
                         : 'bg-amber-50/70 border-amber-300 text-amber-900'
                       : isDark
-                      ? `bg-gradient-to-b from-[#1C211D]/90 via-[#151916]/95 to-[#101311]/95 border-white/[0.08] ${cat.hoverBorder} shadow-[0_4px_20px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]`
-                      : `bg-gradient-to-b from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 ${cat.hoverBorder} shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.07)]`
+                      ? `bg-[#0E131F]/90 hover:bg-[#131927] border-white/[0.08] ${cat.hoverBorder} shadow-premium-sm hover:shadow-premium-md`
+                      : `bg-white hover:bg-slate-50/90 border-slate-200/90 ${cat.hoverBorder} shadow-premium-sm hover:shadow-premium-md`
                   } hover:-translate-y-1 active:scale-[0.98]`}
                 >
                   {/* Subtle Top Chamfer Highlight */}
                   {isDark && (
-                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.16] to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.12] to-transparent pointer-events-none" />
                   )}
 
                   {/* Ambient Glow on Hover */}
@@ -1250,45 +1286,40 @@ export function HomePage({
                   />
 
                   {/* Glowing Icon Frame */}
-                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-all duration-300 group-hover:scale-108 group-hover:-rotate-2 shrink-0 relative z-10`}>
-                    <IconComp size={19} className="transition-transform duration-300 group-hover:scale-110" />
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${cat.iconStyle} border flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0 relative z-10`}>
+                    <IconComp size={18} className="transition-transform duration-300" />
                   </div>
 
                   {/* Text Content */}
                   <div className="flex-1 min-w-0 relative z-10">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`font-space font-extrabold text-xs sm:text-[13px] tracking-tight transition-colors duration-200 truncate ${
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`font-space font-bold text-xs sm:text-[13px] tracking-tight transition-colors duration-200 truncate ${
                         isDark
-                          ? `text-[#F5F7F2] ${cat.accentText}`
+                          ? `text-white ${cat.accentText}`
                           : `text-slate-900 ${cat.accentText}`
                       }`}>
                         {cat.label}
                       </span>
                       {isMaintenance ? (
-                        <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 uppercase tracking-tighter shadow-xs">
-                          Maintenance
+                        <span className="text-[7.5px] sm:text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 uppercase tracking-tighter shadow-xs shrink-0">
+                          MT
                         </span>
                       ) : cat.badge ? (
-                        <span className={`inline-flex items-center gap-1 text-[8.5px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider border backdrop-blur-xs ${cat.badgeStyle}`}>
+                        <span className={`inline-flex items-center gap-0.5 text-[7.5px] sm:text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider border shrink-0 ${cat.badgeStyle}`}>
                           <span className="w-1 h-1 rounded-full bg-current animate-pulse shrink-0" />
                           <span>{cat.badge}</span>
                         </span>
                       ) : null}
                     </div>
-                    <p className={`text-[10px] mt-0.5 truncate font-jakarta transition-colors ${
+                    <p className={`text-[10px] sm:text-[10.5px] mt-0.5 truncate font-jakarta transition-colors ${
                       isMaintenance
                         ? 'text-amber-500 font-bold'
                         : isDark
-                        ? 'text-[#9DA69F] group-hover:text-[#CBD5CD]'
+                        ? 'text-slate-400 group-hover:text-slate-300'
                         : 'text-slate-500 group-hover:text-slate-700'
                     }`}>
-                      {isMaintenance ? 'Maintenance akan segera kembali' : cat.desc}
+                      {isMaintenance ? 'Maintenance sistem' : cat.desc}
                     </p>
-                  </div>
-
-                  {/* Interactive Micro Chevron */}
-                  <div className="hidden xl:block shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300 text-slate-400 group-hover:text-white relative z-10">
-                    <ChevronRight size={13} />
                   </div>
                 </button>
               );
@@ -1296,13 +1327,13 @@ export function HomePage({
           </div>
 
           {/* Mini Sandbox Promo Strip */}
-          <div className={`p-3 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs`}>
+          <div className={`p-3 rounded-2xl ${isDark ? 'bg-[#0E131F]/80 border-white/[0.08]' : 'bg-white border-slate-200'} border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-premium-sm`}>
             <div className="flex items-center gap-2.5">
               <span className={`px-2 py-0.5 rounded-md ${isDark ? 'bg-sky-500/15 border-sky-500/30 text-sky-300' : 'bg-blue-50 border-blue-200 text-blue-700'} border text-[10px] font-bold font-space uppercase`}>
                 API GATEWAY AI
               </span>
-              <span className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-600'} font-jakarta`}>
-                Integrasi H2H Website &amp; Bot Otomatis: <strong className={isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}>1-3 Detik Live Transaksi</strong>
+              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta`}>
+                Integrasi H2H Website &amp; Bot Otomatis: <strong className={isDark ? 'text-white' : 'text-slate-900'}>1-3 Detik Live Transaksi</strong>
               </span>
             </div>
             <button
@@ -1310,7 +1341,7 @@ export function HomePage({
                 const el = document.getElementById('section-api-sandbox');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className={`text-xs font-space font-bold ${isDark ? 'text-[#C7FF4D] hover:underline' : 'text-amber-600 hover:text-amber-700 hover:underline'} flex items-center gap-1 cursor-pointer shrink-0`}
+              className="text-xs font-space font-bold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
             >
               <span>Buka Developer Sandbox</span>
               <ChevronRight size={13} />
@@ -1320,49 +1351,49 @@ export function HomePage({
 
         {/* 4. THREE STAT METRICS BAR */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-xs`}>
-            <div className={`w-11 h-11 rounded-xl ${isDark ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-600'} border flex items-center justify-center shrink-0`}>
+          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#0E131F]/90 border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-premium-sm`}>
+            <div className={`w-11 h-11 rounded-xl ${isDark ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-600'} border flex items-center justify-center shrink-0`}>
               <Zap size={22} />
             </div>
             <div>
-              <div className={`font-space font-bold text-2xl ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+              <div className={`font-space font-bold text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 142.980+
               </div>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-600'} font-jakarta`}>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta`}>
                 Transaksi Sukses (24 Jam Terakhir)
               </p>
               <span className="text-[10px] text-emerald-500 font-medium">● 99.98% Pemrosesan Otomatis</span>
             </div>
           </div>
 
-          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-xs`}>
+          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#0E131F]/90 border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-premium-sm`}>
             <div className={`w-11 h-11 rounded-xl ${isDark ? 'bg-blue-500/15 border-blue-500/30 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-600'} border flex items-center justify-center shrink-0`}>
               <ShieldCheck size={22} />
             </div>
             <div>
-              <div className={`font-space font-bold text-2xl ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+              <div className={`font-space font-bold text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 8.420+
               </div>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-600'} font-jakarta`}>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta`}>
                 Mitra Reseller Aktif
               </p>
-              <span className={`text-[10px] ${isDark ? 'text-[#68736B]' : 'text-slate-500'}`}>Tersebar di 128 Kota Indonesia</span>
+              <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Tersebar di 128 Kota Indonesia</span>
             </div>
           </div>
 
-          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-xs`}>
+          <div className={`p-4.5 rounded-2xl ${isDark ? 'bg-[#0E131F]/90 border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-center gap-3.5 shadow-premium-sm`}>
             <div className={`w-11 h-11 rounded-xl ${isDark ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-500'} border flex items-center justify-center shrink-0`}>
               <Star size={22} className="fill-amber-400 text-amber-500" />
             </div>
             <div>
-              <div className={`font-space font-bold text-2xl ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} flex items-center gap-1.5`}>
+              <div className={`font-space font-bold text-2xl ${isDark ? 'text-white' : 'text-slate-900'} flex items-center gap-1.5`}>
                 <span>4.96</span>
                 <span className="text-xs text-amber-500 font-normal">★★★★★</span>
               </div>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-600'} font-jakarta`}>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} font-jakarta`}>
                 Rating Kepuasan Pelanggan
               </p>
-              <span className={`text-[10px] ${isDark ? 'text-[#68736B]' : 'text-slate-500'}`}>Berdasarkan 58.700+ Ulasan Pelanggan</span>
+              <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Berdasarkan 58.700+ Ulasan Pelanggan</span>
             </div>
           </div>
         </section>
@@ -1370,25 +1401,25 @@ export function HomePage({
 
         {/* 6. KATALOG PRODUK GAME UNGGULAN (10 GAME CARDS MATRIX) */}
         <section id="katalog-game-unggulan" className="space-y-4 scroll-mt-20">
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-l-2 ${isDark ? 'border-[#C7FF4D]' : 'border-amber-500'} pl-3`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-l-2 border-amber-500 pl-3">
             <div>
-              <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+              <span className="text-[10px] font-space font-bold text-amber-500 uppercase tracking-wider block">
                 PILIHAN GAME TERLARIS
               </span>
-              <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+              <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                 Katalog Produk Game Unggulan
               </h2>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>Daftar game terfavorit dengan nominal terlengkap se-Indonesia</p>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Daftar game terfavorit dengan nominal terlengkap se-Indonesia</p>
             </div>
 
             {/* Sort Filter Selector */}
             <div className="flex items-center gap-2">
-              <span className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} hidden md:inline`}>Urutkan:</span>
+              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} hidden md:inline`}>Urutkan:</span>
               <div className="relative">
                 <select
                   value={gameSortOption}
                   onChange={(e) => setGameSortOption(e.target.value as any)}
-                  className={`px-3 py-1.5 rounded-xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] text-[#F5F7F2] focus:border-[#C7FF4D]' : 'bg-white border-slate-200 text-slate-900 focus:border-amber-400'} border text-xs font-space font-semibold cursor-pointer shadow-xs`}
+                  className={`px-3 py-1.5 rounded-xl ${isDark ? 'bg-[#0E131F] border-white/[0.08] text-white focus:border-amber-400' : 'bg-white border-slate-200 text-slate-900 focus:border-amber-400'} border text-xs font-space font-semibold cursor-pointer shadow-premium-sm`}
                 >
                   <option value="populer">Paling Populer</option>
                   <option value="termurah">Harga Termurah</option>
@@ -1423,10 +1454,10 @@ export function HomePage({
                 className={`px-3.5 py-1.5 rounded-full text-xs font-space font-semibold transition-all cursor-pointer shrink-0 ${
                   activeCategoryTab === tab.id
                     ? isDark
-                      ? 'bg-[#1E251F] text-[#C7FF4D] border border-[#3E4C41] font-bold shadow-xs'
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-amber-glow'
                       : 'bg-slate-900 text-white font-bold shadow-xs'
                     : isDark
-                      ? 'bg-[#1B1F1C] hover:bg-[#28322A] text-[#A4ADA6] hover:text-[#F5F7F2] border border-[#28302A]'
+                      ? 'bg-[#0E131F] hover:bg-slate-800 text-slate-400 hover:text-white border border-white/[0.08]'
                       : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
                 }`}
               >
@@ -1435,8 +1466,8 @@ export function HomePage({
             ))}
           </div>
 
-          {/* 10 Games Grid (5 Columns on Desktop, 2 on Mobile) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          {/* 10 Games Grid (5 Columns on Desktop, 3 on Tablet, 2 on Mobile) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {featuredGamesCatalog
               .filter(game => {
                 if (activeCategoryTab === 'all') return true;
@@ -1448,56 +1479,86 @@ export function HomePage({
                 <div
                   key={game.id}
                   onClick={() => setSelectedGameModal(game as any)}
-                  className={`group relative rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] hover:border-[#C7FF4D]' : 'bg-white border-slate-200 hover:border-amber-400'} border p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer`}
+                  className={`group relative rounded-2xl sm:rounded-3xl ${
+                    isDark 
+                      ? 'bg-[#0E131F]/90 hover:bg-[#131927] border-white/[0.08] hover:border-amber-500/50 shadow-premium-sm hover:shadow-[0_12px_28px_rgba(245,158,11,0.18)]' 
+                      : 'bg-white hover:bg-slate-50/50 border-slate-200/90 hover:border-amber-400 shadow-premium-sm hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]'
+                  } border p-3 sm:p-3.5 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-1.5 cursor-pointer`}
                 >
+                  {/* Subtle Top Chamfer Highlight */}
+                  {isDark && (
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.12] to-transparent pointer-events-none" />
+                  )}
+
+                  {/* Ambient Glow on Hover */}
+                  <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-amber-500/15 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
                   {/* Poster Image */}
-                  <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden mb-2.5 bg-slate-900">
+                  <div className="relative w-full aspect-[16/10] rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 bg-slate-950 shadow-inner">
                     <img
                       src={game.image}
                       alt={game.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-                    {/* Badge Overlays */}
+                    {/* Top Left Badge */}
                     <div className="absolute top-2 left-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-space font-bold border ${game.badgeColor}`}>
+                      <span className={`px-2 py-0.5 rounded-md text-[8.5px] sm:text-[9px] font-space font-black uppercase tracking-wider shadow-sm ${game.badgeColor}`}>
                         {game.badge}
                       </span>
                     </div>
 
+                    {/* Bottom Right Speed Tag */}
                     <div className="absolute bottom-2 right-2">
-                      <span className={`px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-md text-[9px] font-mono ${isDark ? 'text-[#C7FF4D]' : 'text-amber-300'}`}>
-                        {game.tag}
+                      <span className="px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[8.5px] sm:text-[9px] font-mono font-bold text-amber-300 flex items-center gap-1 shadow-sm">
+                        <Zap size={9} className="text-amber-400 fill-amber-400" />
+                        <span>{game.tag}</span>
                       </span>
                     </div>
                   </div>
 
                   {/* Title & Publisher */}
-                  <div className="space-y-1 flex-1">
-                    <div className={`flex items-center justify-between text-[11px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>
-                      <span className="truncate">{game.publisher}</span>
-                      <span className={`${isDark ? 'text-amber-400' : 'text-amber-500'} flex items-center gap-0.5 font-bold font-mono text-[10px]`}>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={`truncate flex items-center gap-1 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        {game.publisher}
+                      </span>
+                      <span className="inline-flex items-center gap-0.5 font-bold font-mono text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded-md border border-amber-500/20 shrink-0">
                         ★ {game.rating}
                       </span>
                     </div>
 
-                    <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#F5F7F2] group-hover:text-[#C7FF4D]' : 'text-slate-900 group-hover:text-amber-600'} transition-colors truncate`}>
+                    <h3 className={`font-space font-extrabold text-xs sm:text-sm tracking-tight truncate transition-colors duration-200 ${
+                      isDark ? 'text-white group-hover:text-amber-400' : 'text-slate-900 group-hover:text-amber-600'
+                    }`}>
                       {game.title}
                     </h3>
 
-                    <p className={`text-xs font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-slate-900'}`}>
-                      {game.startingPrice}
-                    </p>
+                    <div className="flex items-baseline justify-between pt-0.5">
+                      <span className={`text-[10px] uppercase font-mono tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Mulai dari
+                      </span>
+                      <span className="font-space font-extrabold text-xs sm:text-sm text-amber-500 font-mono">
+                        {game.startingPrice.replace('Mulai ', '')}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Quick Select Button */}
-                  <div className={`mt-2.5 pt-2 border-t ${isDark ? 'border-[#28302A]' : 'border-slate-100'}`}>
+                  <div className={`mt-2.5 pt-2 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-100'}`}>
                     <button
                       type="button"
-                      className={`w-full py-1.5 rounded-xl ${isDark ? 'bg-[#28322A] group-hover:bg-[#C7FF4D] text-[#F5F7F2] group-hover:text-[#101211]' : 'bg-slate-100 group-hover:bg-[#FACC15] text-slate-800 group-hover:text-slate-900'} text-[11px] font-space font-bold transition-all text-center cursor-pointer`}
+                      className={`w-full py-2 px-3 rounded-xl font-space font-bold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                        isDark
+                          ? 'bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/30 hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-slate-950 group-hover:shadow-amber-glow'
+                          : 'bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-slate-950 border border-amber-300 hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-slate-950'
+                      }`}
                     >
-                      Pilih Nominal
+                      <Zap size={12} className="fill-current" />
+                      <span>Pilih Nominal</span>
+                      <ChevronRight size={13} className="transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </div>
                 </div>
@@ -1505,18 +1566,18 @@ export function HomePage({
           </div>
         </section>
 
-        {/* 7. AKUN & LANGGANAN PREMIUM (ICON GAMBAR DAPAT DIEDIT DI DASHBOARD ADMIN) */}
+        {/* 7. AKUN & LANGGANAN PREMIUM */}
         <section id="section-premium-apps" className="space-y-3.5 scroll-mt-20">
           <div id="katalog-akun-premium" className="scroll-mt-24" />
-          <div className={`flex items-center justify-between border-l-2 ${isDark ? 'border-[#C7FF4D]' : 'border-amber-500'} pl-3`}>
+          <div className="flex items-center justify-between border-l-2 border-amber-500 pl-3">
             <div>
-              <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+              <span className="text-[10px] font-space font-bold text-amber-500 uppercase tracking-wider block">
                 LAYANAN STREAMING &amp; PRODUCTIVITY
               </span>
-              <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+              <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                 Katalog Akun &amp; Langganan Premium
               </h2>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>Private Akun &amp; Garansi Anti On-Screen Sharing (Tersinkronisasi Otomatis dari Dashboard Admin)</p>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Private Akun &amp; Garansi Anti On-Screen Sharing (Tersinkronisasi Otomatis dari Dashboard Admin)</p>
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${isDark ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} border hidden sm:inline-block`}>
@@ -1528,7 +1589,7 @@ export function HomePage({
             </div>
           </div>
 
-          {/* HORIZONTAL PILL SUB-CATEGORY FILTER BAR (SESUAI GAMBAR DILAMPIRKAN PENGGUNA) */}
+          {/* HORIZONTAL PILL SUB-CATEGORY FILTER BAR */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none py-1">
             {availablePremiumCategories.map((subCat) => {
               const isSelected = selectedPremiumCategory === subCat;
@@ -1537,12 +1598,14 @@ export function HomePage({
                   key={subCat}
                   type="button"
                   onClick={() => setSelectedPremiumCategory(subCat)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 border ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 border ${
                     isSelected
-                      ? 'border-blue-600 text-blue-600 bg-blue-50/70 font-bold shadow-xs dark:bg-blue-600/15 dark:border-blue-500 dark:text-blue-400'
+                      ? isDark
+                        ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-amber-glow'
+                        : 'bg-slate-900 text-white font-bold border-slate-900 shadow-xs'
                       : isDark
-                      ? 'border-[#28302A] text-[#A4ADA6] bg-[#1B1F1C] hover:bg-[#252B26] hover:text-[#F5F7F2]'
-                      : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-xs'
+                      ? 'border-white/[0.08] text-slate-400 bg-[#0E131F] hover:bg-slate-800 hover:text-white'
+                      : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-xs'
                   }`}
                 >
                   {subCat}
@@ -1564,97 +1627,145 @@ export function HomePage({
               </p>
             </div>
           ) : displayedPremiumProducts.length === 0 ? (
-            <div className={`py-12 px-4 text-center rounded-2xl border border-dashed ${isDark ? 'border-[#28302A] bg-[#1B1F1C]/40' : 'border-slate-200 bg-slate-50/60'}`}>
-              <Sparkles className="mx-auto w-8 h-8 text-blue-500 mb-2 opacity-60" />
-              <h3 className={`font-bold text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-800'}`}>
+            <div className={`py-12 px-4 text-center rounded-2xl border border-dashed ${isDark ? 'border-white/[0.08] bg-[#0E131F]/40' : 'border-slate-200 bg-slate-50/60'}`}>
+              <Sparkles className="mx-auto w-8 h-8 text-amber-500 mb-2 opacity-60" />
+              <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 Belum ada produk untuk kategori "{selectedPremiumCategory}"
               </h3>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} mt-1 max-w-sm mx-auto`}>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1 max-w-sm mx-auto`}>
                 Produk akun premium baru dapat disinkronkan langsung oleh admin melalui menu Dashboard Admin &gt; Produk Premium.
               </p>
               <button
                 type="button"
                 onClick={() => setSelectedPremiumCategory('Semua')}
-                className="mt-3 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
+                className="mt-3 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors cursor-pointer shadow-premium-sm"
               >
                 Tampilkan Semua Kategori
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
               {displayedPremiumProducts.map((app) => {
                 const hasVars = Boolean(app.hasVariants && app.variants && app.variants.length > 0);
                 const minVarPrice = hasVars ? Math.min(...app.variants!.map(v => v.sellingPrice)) : app.sellingPrice;
+                const stockInfo = getPremiumProductStock(app);
 
                 return (
                   <div
                     key={app.id}
-                    className={`p-3.5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] hover:border-[#3E4C41]' : 'bg-white border-slate-200 hover:border-slate-300'} border hover:shadow-md flex flex-col justify-between space-y-3 transition-all hover:-translate-y-0.5 group`}
+                    className={`group relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between ${
+                      isDark
+                        ? 'bg-gradient-to-b from-[#111827] via-[#0E131F] to-[#0A0D14] border-white/[0.08] hover:border-amber-500/50 hover:shadow-[0_12px_32px_rgba(245,158,11,0.12)]'
+                        : 'bg-white border-slate-200 hover:border-amber-400 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)]'
+                    } border hover:-translate-y-1`}
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        {/* Icon Gambar Akun Premium */}
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-slate-900 border border-slate-700/60">
-                          <ProductLogo
-                            provider={app.provider || app.name}
-                            name={app.name}
-                            iconUrl={app.iconUrl}
-                            category="premium"
-                            size="xl"
-                            className="w-full h-full"
-                          />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {hasVars && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-blue-500/15 text-blue-400 border-blue-500/30">
-                              {app.variants!.length} Varian
+                      {/* Top Header: Logo + Provider & Badges + Stock Badge */}
+                      <div className="flex items-start justify-between gap-3 mb-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-slate-900 border border-white/[0.1] group-hover:scale-105 transition-transform duration-300">
+                            <ProductLogo
+                              provider={app.provider || app.name}
+                              name={app.name}
+                              iconUrl={app.iconUrl}
+                              category="premium"
+                              size="xl"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-space font-extrabold uppercase tracking-wider text-amber-500 block">
+                              {app.provider || 'Premium'}
                             </span>
-                          )}
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-purple-500/15 text-purple-400 border-purple-500/30">
-                            {app.badge || 'VIP'}
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {hasVars && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-blue-500/15 text-blue-400 border-blue-500/30">
+                                  {app.variants!.length} Varian
+                                </span>
+                              )}
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-amber-500/15 text-amber-400 border-amber-500/30">
+                                {app.badge || 'VIP'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Prominent Stock Badge (API vs Manual Admin) */}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wide shadow-xs ${stockInfo.badgeStyle.bg} ${stockInfo.badgeStyle.text} ${stockInfo.badgeStyle.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${stockInfo.badgeStyle.dot} ${stockInfo.isAvailable ? 'animate-pulse' : ''}`} />
+                            {stockInfo.badgeLabel}
+                          </span>
+                          <span className={`text-[9px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {stockInfo.isApi ? '⚡ API Sync' : '🛡️ Admin Stock'}
                           </span>
                         </div>
                       </div>
 
-                      <span className={`text-[10px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-space block`}>
-                        {app.provider || 'Premium'}
-                      </span>
-
-                      <h3 className={`font-space font-bold text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} mt-0.5 line-clamp-1`}>
+                      {/* Product Title */}
+                      <h3 className={`font-space font-bold text-sm sm:text-base leading-snug ${isDark ? 'text-white group-hover:text-amber-400' : 'text-slate-900 group-hover:text-amber-600'} transition-colors line-clamp-1`}>
                         {app.name}
                       </h3>
 
-                      <p className={`text-[11px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} mt-1 font-jakarta leading-relaxed line-clamp-2`}>
-                        {app.description}
+                      {/* Product Description */}
+                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} mt-1.5 font-jakarta leading-relaxed line-clamp-2`}>
+                        {app.description || 'Akun lisensi resmi premium dengan aktivasi instan dan garansi penuh.'}
                       </p>
+
+                      {/* Trust / Benefit Badges Strip */}
+                      <div className={`mt-3 py-1.5 px-2.5 rounded-xl ${isDark ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-slate-50 border-slate-100'} border flex items-center justify-between text-[11px]`}>
+                        <span className={`font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'} flex items-center gap-1`}>
+                          <Clock size={12} className="text-amber-500" />
+                          {app.duration || '1 Bulan Aktif'}
+                        </span>
+                        <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                          <ShieldCheck size={12} />
+                          Garansi Penuh
+                        </span>
+                      </div>
                     </div>
 
-                    <div className={`pt-2 border-t ${isDark ? 'border-[#28302A]' : 'border-slate-100'} flex items-center justify-between mt-auto`}>
+                    {/* Card Footer: Price & CTA */}
+                    <div className={`mt-4 pt-3.5 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-100'} flex items-center justify-between gap-3`}>
                       <div>
-                        <span className={`text-[9px] ${isDark ? 'text-[#68736B]' : 'text-slate-400'} block`}>
-                          {hasVars ? 'Mulai dari' : 'Harga'}
+                        <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'} block`}>
+                          {hasVars ? 'Mulai dari' : 'Harga Resmi'}
                         </span>
-                        <span className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#C7FF4D]' : 'text-slate-900'}`}>
+                        <span className="font-space font-black text-base sm:text-lg text-amber-500 dark:text-amber-400 tracking-tight">
                           {formatRupiah(minVarPrice)}
                         </span>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (!currentUser) {
-                            onShowToast(
-                              'Wajib Daftar Akun Terlebih Dahulu',
-                              'Semua pembeli wajib mendaftar akun untuk melakukan pembelian dan mengakses brankas saldo Anda.',
-                              'warning'
-                            );
-                            onNavigate('daftar');
-                            return;
-                          }
-                          onSelectProductToCheckout(app);
-                        }}
-                        className={`px-3.5 py-1.5 rounded-lg ${isDark ? 'bg-[#C7FF4D] hover:bg-[#D7FF75] text-[#101211] font-bold shadow-lime-glow' : 'bg-[#FACC15] hover:bg-[#EAB308] text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shadow-xs`}
-                      >
-                        Beli
-                      </button>
+
+                      {stockInfo.isAvailable ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!currentUser) {
+                              onShowToast(
+                                'Wajib Daftar Akun Terlebih Dahulu',
+                                'Semua pembeli wajib mendaftar akun untuk melakukan pembelian dan mengakses brankas saldo Anda.',
+                                'warning'
+                              );
+                              onNavigate('daftar');
+                              return;
+                            }
+                            onSelectProductToCheckout(app);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold font-space text-xs tracking-wide shadow-md hover:shadow-amber-500/25 transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <span>Beli</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          className={`px-3.5 py-2 rounded-xl ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'} font-bold font-space text-xs cursor-not-allowed flex items-center gap-1`}
+                        >
+                          <AlertTriangle size={12} />
+                          <span>Habis</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1664,35 +1775,35 @@ export function HomePage({
         </section>
 
         {/* 8. PULSA & KUOTA DATA INTERNET (COMMAND DECK) */}
-        <section id="section-pulsa-kuota" className={`rounded-2xl sm:rounded-3xl p-5 sm:p-7 ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border shadow-sm space-y-5 scroll-mt-20`}>
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-2 ${isDark ? 'border-[#C7FF4D]' : 'border-amber-500'} pl-3`}>
+        <section id="section-pulsa-kuota" className={`rounded-2xl sm:rounded-3xl p-5 sm:p-7 ${isDark ? 'bg-[#0E131F]/90 border-white/[0.08]' : 'bg-white border-slate-200'} border shadow-premium-sm space-y-5 scroll-mt-20`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-2 border-amber-500 pl-3">
             <div>
-              <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+              <span className="text-[10px] font-space font-bold text-amber-500 uppercase tracking-wider block">
                 ISI ULANG REGULER &amp; PAKET DATA
               </span>
-              <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+              <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                 Pulsa &amp; Kuota Data Internet
               </h2>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>Pilih isi pulsa reguler atau paket kuota internet hemat dengan icon resmi tiap operator</p>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pilih isi pulsa reguler atau paket kuota internet hemat dengan icon resmi tiap operator</p>
             </div>
 
             {/* TAB TOGGLE: PULSA vs KUOTA */}
-            <div className={`p-1 rounded-xl border flex items-center gap-1 self-start sm:self-center ${isDark ? 'bg-[#141815] border-[#28302A]' : 'bg-slate-100 border-slate-200'}`}>
+            <div className={`p-1 rounded-xl border flex items-center gap-1 self-start sm:self-center ${isDark ? 'bg-slate-900 border-white/[0.08]' : 'bg-slate-100 border-slate-200'}`}>
               <button
                 type="button"
                 onClick={() => setPulsaOrKuotaTab('pulsa')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-space font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   pulsaOrKuotaTab === 'pulsa'
                     ? isDark
-                      ? 'bg-[#C7FF4D] text-[#101211] shadow-lime-glow'
+                      ? 'bg-amber-500 text-slate-950 shadow-amber-glow'
                       : 'bg-white text-slate-900 shadow-xs'
                     : isDark
-                      ? 'text-[#A4ADA6] hover:text-white'
+                      ? 'text-slate-400 hover:text-white'
                       : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Smartphone size={14} />
-                <span>📱 Pulsa Reguler</span>
+                <span>Pulsa Reguler</span>
               </button>
 
               <button
@@ -1701,15 +1812,15 @@ export function HomePage({
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-space font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   pulsaOrKuotaTab === 'kuota'
                     ? isDark
-                      ? 'bg-[#C7FF4D] text-[#101211] shadow-lime-glow'
+                      ? 'bg-amber-500 text-slate-950 shadow-amber-glow'
                       : 'bg-white text-slate-900 shadow-xs'
                     : isDark
-                      ? 'text-[#A4ADA6] hover:text-white'
+                      ? 'text-slate-400 hover:text-white'
                       : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Wifi size={14} />
-                <span>🌐 Paket Kuota Data</span>
+                <span>Paket Kuota Data</span>
               </button>
             </div>
           </div>
@@ -1718,10 +1829,10 @@ export function HomePage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Phone Number Input with Carrier Badge */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-space font-bold ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} uppercase tracking-wider block`}>
+              <label className={`text-xs font-space font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider block`}>
                 Nomor Handphone Penerima
               </label>
-              <div className={`flex items-center ${isDark ? 'bg-[#141815] border-[#28302A] focus-within:border-[#C7FF4D]' : 'bg-slate-50 border-slate-200 focus-within:border-amber-400 focus-within:bg-white'} border rounded-xl px-3.5 py-2.5 transition-all shadow-inner`}>
+              <div className={`flex items-center ${isDark ? 'bg-slate-900/80 border-white/[0.08] focus-within:border-amber-400' : 'bg-slate-50 border-slate-200 focus-within:border-amber-500 focus-within:bg-white'} border rounded-xl px-3.5 py-2.5 transition-all shadow-inner`}>
                 <div className="mr-2.5 shrink-0">
                   <ProductLogo provider={detectedOp} size="xs" />
                 </div>
@@ -1730,9 +1841,9 @@ export function HomePage({
                   value={pulsaPhone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="08xx - xxxx - xxxx"
-                  className={`bg-transparent ${isDark ? 'text-[#F5F7F2] placeholder-[#68736B]' : 'text-slate-900 placeholder-slate-400'} font-mono text-sm sm:text-base font-bold focus:outline-none flex-1`}
+                  className={`bg-transparent ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'} font-mono text-sm sm:text-base font-bold focus:outline-none flex-1`}
                 />
-                <span className={`px-2.5 py-1 rounded-md ${isDark ? 'bg-[#1B1F1C] text-[#C7FF4D] border-[#3E4C41]' : 'bg-white text-slate-800 border-slate-200'} border text-[10px] font-space font-bold uppercase shrink-0 shadow-xs`}>
+                <span className={`px-2.5 py-1 rounded-md ${isDark ? 'bg-slate-800 text-amber-400 border-white/[0.08]' : 'bg-white text-slate-800 border-slate-200'} border text-[10px] font-space font-bold uppercase shrink-0 shadow-xs`}>
                   {detectedOp}
                 </span>
               </div>
@@ -1740,7 +1851,7 @@ export function HomePage({
 
             {/* Provider Selector Pills WITH OFFICIAL OPERATOR ICONS */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-space font-bold ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} uppercase tracking-wider block`}>
+              <label className={`text-xs font-space font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider block`}>
                 Pilihan Operator (Icon Provider)
               </label>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1761,10 +1872,10 @@ export function HomePage({
                       className={`px-3 py-2 rounded-xl border text-xs font-space font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                         isMatch
                           ? isDark
-                            ? 'bg-[#1E251F] border-[#3E4C41] text-[#C7FF4D] shadow-xs'
+                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-xs'
                             : 'bg-slate-900 border-slate-900 text-white shadow-xs'
                           : isDark
-                            ? 'bg-[#141815] border-[#28302A] text-[#A4ADA6] hover:text-[#F5F7F2] hover:bg-[#1B1F1C]'
+                            ? 'bg-slate-900/60 border-white/[0.08] text-slate-400 hover:text-white hover:bg-slate-800'
                             : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                     >
@@ -1780,15 +1891,13 @@ export function HomePage({
           {/* Telco Packages / Denominations Grid with Provider Icon */}
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
-              <span className={`text-xs font-space font-bold ${isDark ? 'text-[#A4ADA6]' : 'text-slate-600'} uppercase tracking-wider block`}>
+              <span className={`text-xs font-space font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'} uppercase tracking-wider block`}>
                 PILIHAN UTAMA {pulsaOrKuotaTab === 'pulsa' ? 'PULSA' : 'KUOTA'} ({detectedOp})
               </span>
               <button
                 type="button"
                 onClick={() => onNavigate(pulsaOrKuotaTab)}
-                className={`text-xs font-space font-bold ${
-                  isDark ? 'text-[#C7FF4D] hover:underline' : 'text-amber-600 hover:text-amber-700'
-                } flex items-center gap-1 cursor-pointer`}
+                className="text-xs font-space font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <span>Lihat Semua ({pulsaGridProducts.length})</span>
                 <ChevronRight size={13} />
@@ -1799,33 +1908,33 @@ export function HomePage({
               {compactTelcoItems.map((pkg: any) => (
                 <div
                   key={pkg.id}
-                  className={`p-3.5 rounded-2xl ${isDark ? 'bg-[#141815] border-[#28302A] hover:border-[#3E4C41] hover:bg-[#1B1F1C]' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-white'} border flex flex-col justify-between space-y-3 transition-all hover:shadow-xs`}
+                  className={`p-3.5 rounded-2xl ${isDark ? 'bg-slate-900/60 border-white/[0.08] hover:border-amber-500/40 hover:bg-[#131927]' : 'bg-slate-50/80 border-slate-200 hover:border-slate-300 hover:bg-white'} border flex flex-col justify-between space-y-3 transition-all hover:shadow-premium-sm`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <ProductLogo provider={pkg.provider || selectedPulsaProvider || detectedOp} size="xs" />
-                        <span className={`text-[9px] font-space font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-[#C7FF4D]/15 text-[#C7FF4D]' : 'bg-amber-100 text-amber-800'} uppercase`}>
+                        <span className={`text-[9px] font-space font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-800'} uppercase`}>
                           {pkg.badge || pkg.tag || (pulsaOrKuotaTab === 'pulsa' ? 'PULSA' : 'KUOTA')}
                         </span>
                       </div>
-                      <span className={`text-[10px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-space`}>
+                      <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'} font-space`}>
                         {pkg.provider || detectedOp}
                       </span>
                     </div>
 
-                    <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+                    <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {pkg.name}
                     </h3>
-                    <p className={`text-[11px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} mt-1 font-jakarta leading-relaxed line-clamp-2`}>
+                    <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1 font-jakarta leading-relaxed line-clamp-2`}>
                       {pkg.quotaDetails || pkg.description || pkg.quota || 'Proses otomatis 24 jam langsung masuk'}
                     </p>
                   </div>
 
-                  <div className={`pt-2 border-t ${isDark ? 'border-[#28302A]' : 'border-slate-200/80'} flex items-center justify-between`}>
+                  <div className={`pt-2 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-200/80'} flex items-center justify-between`}>
                     <div>
-                      <span className={`text-[9px] ${isDark ? 'text-[#68736B]' : 'text-slate-400'} block`}>Harga</span>
-                      <span className={`font-space font-bold text-sm ${isDark ? 'text-[#C7FF4D]' : 'text-slate-900'}`}>
+                      <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'} block`}>Harga</span>
+                      <span className={`font-space font-bold text-sm ${isDark ? 'text-amber-400' : 'text-slate-900'}`}>
                         {formatRupiah(pkg.sellingPrice || pkg.price)}
                       </span>
                     </div>
@@ -1834,7 +1943,7 @@ export function HomePage({
                       onClick={() => {
                         handleExecuteQuickPulsa(pkg);
                       }}
-                      className={`px-3.5 py-1.5 rounded-lg ${isDark ? 'bg-[#C7FF4D] hover:bg-[#D7FF75] text-[#101211] font-bold shadow-lime-glow' : 'bg-[#FACC15] hover:bg-[#EAB308] text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shadow-xs`}
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-space font-bold text-xs transition-all cursor-pointer shadow-premium-sm"
                     >
                       {pulsaOrKuotaTab === 'pulsa' ? 'Isi Pulsa' : 'Beli Kuota'}
                     </button>
@@ -1848,19 +1957,19 @@ export function HomePage({
         {/* 9. VOUCHER WIFI RT/RW NET SECTION (PRESERVED FEATURE) */}
         {wifiProducts.length > 0 && (
           <section id="section-wifi-vouchers" className="space-y-3.5 scroll-mt-20">
-            <div className={`flex items-center justify-between border-l-2 ${isDark ? 'border-[#C7FF4D]' : 'border-amber-500'} pl-3`}>
+            <div className={`flex items-center justify-between border-l-2 ${isDark ? 'border-amber-500' : 'border-amber-500'} pl-3`}>
               <div>
-                <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+                <span className={`text-[10px] font-space font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'} uppercase tracking-wider block`}>
                   INTERNET WARGA CEPAT
                 </span>
-                <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+                <h2 className={`text-base sm:text-lg font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                   Voucher WiFi RT/RW Net
                 </h2>
-                <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>Kode voucher login hotspot warga terkirim instan setelah pembayaran</p>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Kode voucher login hotspot warga terkirim instan setelah pembayaran</p>
               </div>
               <button
                 onClick={() => onNavigate('wifi')}
-                className={`text-xs ${isDark ? 'text-[#C7FF4D] hover:underline' : 'text-amber-600 hover:text-amber-700'} font-space font-bold flex items-center gap-1 cursor-pointer`}
+                className={`text-xs ${isDark ? 'text-amber-400 hover:underline' : 'text-amber-600 hover:text-amber-700'} font-space font-bold flex items-center gap-1 cursor-pointer`}
               >
                 <span>Lihat Semua Lokasi</span>
                 <ChevronRight size={13} />
@@ -1871,21 +1980,21 @@ export function HomePage({
               {wifiProducts.slice(0, 6).map((wifi) => (
                 <div
                   key={wifi.id}
-                  className={`p-4 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] hover:border-[#3E4C41]' : 'bg-white border-slate-200 hover:border-slate-300'} border hover:shadow-md flex items-center justify-between gap-3 transition-all hover:-translate-y-0.5`}
+                  className={`p-4 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08] hover:border-white/15' : 'bg-white border-slate-200 hover:border-slate-300'} border hover:shadow-md flex items-center justify-between gap-3 transition-all hover:-translate-y-0.5`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-blue-500/15 border-blue-500/30 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-600'} border flex items-center justify-center shrink-0`}>
                       <Radio size={18} />
                     </div>
                     <div>
-                      <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} line-clamp-1`}>{wifi.name}</h3>
+                      <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-white' : 'text-slate-900'} line-clamp-1`}>{wifi.name}</h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {wifi.duration && (
-                          <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${isDark ? 'bg-[#C7FF4D]/15 text-[#C7FF4D]' : 'bg-amber-100 text-amber-800'}`}>
+                          <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-800'}`}>
                             {wifi.duration}
                           </span>
                         )}
-                        <span className={`text-[10px] ${isDark ? 'text-[#C7FF4D]' : 'text-slate-600'} font-bold`}>
+                        <span className={`text-[10px] ${isDark ? 'text-amber-400' : 'text-slate-600'} font-bold`}>
                           {formatRupiah(wifi.sellingPrice)}
                         </span>
                       </div>
@@ -1894,7 +2003,7 @@ export function HomePage({
 
                   <button
                     onClick={() => onSelectProductToCheckout(wifi)}
-                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-[#C7FF4D] hover:bg-[#D7FF75] text-[#101211] font-bold shadow-lime-glow' : 'bg-[#FACC15] hover:bg-[#EAB308] text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shadow-xs shrink-0`}
+                    className={`px-3.5 py-1.5 rounded-xl ${isDark ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-amber-glow' : 'bg-amber-500 hover:bg-amber-400 text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shadow-xs shrink-0`}
                   >
                     Beli
                   </button>
@@ -1906,10 +2015,10 @@ export function HomePage({
 
         {/* 10. API GATEWAY AI & DEVELOPER SANDBOX SECTION (KHUSUS JUALAN TOKEN API KEY AI) */}
         <section id="section-api-sandbox" className="rounded-2xl sm:rounded-3xl p-5 sm:p-7 bg-gradient-to-br from-[#0B132B] via-[#0F172A] to-[#0A101D] border border-slate-800 shadow-xl space-y-6 scroll-mt-20 text-white">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-l-2 border-[#C7FF4D] pl-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-l-2 border-amber-500 pl-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-[#C7FF4D]/20 border border-[#C7FF4D]/40 text-[#C7FF4D] text-[10px] font-space font-bold uppercase">
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-space font-bold uppercase">
                   ⚡ JUALAN TOKEN API KEY AI RESMI &amp; DEVELOPER SANDBOX
                 </span>
               </div>
@@ -1924,7 +2033,7 @@ export function HomePage({
             <div className="flex items-center gap-3 text-xs font-mono">
               <span className="text-emerald-400">● Saldo Resmi Instan</span>
               <span className="text-slate-600">|</span>
-              <span className="text-[#C7FF4D]">&lt; 150ms Latency</span>
+              <span className="text-amber-400">&lt; 150ms Latency</span>
             </div>
           </div>
 
@@ -1933,7 +2042,7 @@ export function HomePage({
             {aiTokenProductsList.map((aiProd) => (
               <div 
                 key={aiProd.id}
-                className="p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 hover:border-[#C7FF4D]/60 transition-all flex flex-col justify-between space-y-3 relative group"
+                className="p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-500/60 transition-all flex flex-col justify-between space-y-3 relative group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -1946,7 +2055,7 @@ export function HomePage({
                         <h3 className="font-space font-bold text-sm text-white line-clamp-1">{aiProd.name}</h3>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#C7FF4D]/15 text-[#C7FF4D] border border-[#C7FF4D]/30 font-bold uppercase shrink-0">
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold uppercase shrink-0">
                       {aiProd.badge || 'TOKEN AI'}
                     </span>
                   </div>
@@ -1974,7 +2083,7 @@ export function HomePage({
                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
                   <div>
                     <span className="text-[9px] text-slate-400 block font-space">Harga Resmi</span>
-                    <span className="font-space font-bold text-base text-[#C7FF4D]">
+                    <span className="font-space font-bold text-base text-amber-400">
                       {formatRupiah(aiProd.sellingPrice)}
                     </span>
                   </div>
@@ -1991,7 +2100,7 @@ export function HomePage({
                       }
                       onSelectProductToCheckout(aiProd);
                     }}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#C7FF4D] hover:bg-[#D7FF75] text-[#0B132B] font-space font-bold text-xs transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-space font-bold text-xs transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
                   >
                     <span>Beli Token</span>
                     <ArrowRight size={13} />
@@ -2017,7 +2126,7 @@ export function HomePage({
                 <button
                   onClick={() => setCodeSnippetTab('node')}
                   className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition-colors ${
-                    codeSnippetTab === 'node' ? 'bg-[#C7FF4D] text-[#0B132B]' : 'text-slate-400 hover:text-white'
+                    codeSnippetTab === 'node' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   Node.js
@@ -2025,7 +2134,7 @@ export function HomePage({
                 <button
                   onClick={() => setCodeSnippetTab('curl')}
                   className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition-colors ${
-                    codeSnippetTab === 'curl' ? 'bg-[#C7FF4D] text-[#0B132B]' : 'text-slate-400 hover:text-white'
+                    codeSnippetTab === 'curl' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   cURL
@@ -2033,7 +2142,7 @@ export function HomePage({
                 <button
                   onClick={() => setCodeSnippetTab('python')}
                   className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition-colors ${
-                    codeSnippetTab === 'python' ? 'bg-[#C7FF4D] text-[#0B132B]' : 'text-slate-400 hover:text-white'
+                    codeSnippetTab === 'python' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   Python
@@ -2048,7 +2157,7 @@ export function HomePage({
                         : `curl https://router.clouvia.id/v1/chat/completions \\\n  -H "Authorization: Bearer clv_live_xxxxxxxxxxxxxxxxxxxxxxxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n  "model": "coding-high",\n  "messages": [\n    {"role": "system", "content": "Kamu asisten arsitektur teknis yang ringkas dan solutif."},\n    {"role": "user", "content": "Jelaskan konsep zero-copy buffer dalam 2 kalimat."}\n  ],\n  "temperature": 0.3\n}'`
                     );
                   }}
-                  className="px-2 py-1 rounded text-[10px] text-slate-400 hover:text-[#C7FF4D] transition-colors cursor-pointer flex items-center gap-1 ml-2 border border-slate-700"
+                  className="px-2 py-1 rounded text-[10px] text-slate-400 hover:text-amber-400 transition-colors cursor-pointer flex items-center gap-1 ml-2 border border-slate-700"
                 >
                   <Copy size={11} />
                   <span>Copy</span>
@@ -2116,49 +2225,49 @@ export function HomePage({
         {/* 11. CARA PEMBELIAN 3 LANGKAH MUDAH */}
         <section className="space-y-4 pt-2">
           <div className="text-center max-w-xl mx-auto space-y-1">
-            <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+            <span className={`text-[10px] font-space font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'} uppercase tracking-wider block`}>
               TRANSAKSI INSTAN &amp; PRAKTIS
             </span>
-            <h2 className={`text-lg sm:text-2xl font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+            <h2 className={`text-lg sm:text-2xl font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Cara Pembelian 3 Langkah Mudah
             </h2>
-            <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-jakarta`}>
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} font-jakarta`}>
               Cepat &amp; praktis, pesanan diproses otomatis 1-3 detik dengan brankas riwayat &amp; saldo akun member
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
-            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
+            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
               <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-amber-100 text-amber-800 border-amber-300'} border flex items-center justify-center font-space font-bold text-base shrink-0`}>
                 01
               </div>
               <div className="space-y-1">
-                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>Pilih Produk &amp; Nominal</h3>
-                <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-jakarta leading-relaxed`}>
+                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Pilih Produk &amp; Nominal</h3>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} font-jakarta leading-relaxed`}>
                   Tentukan item game, voucher WiFi, atau kuota data yang Anda butuhkan dengan harga bersahabat.
                 </p>
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
+            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
               <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-blue-100 text-blue-800 border-blue-300'} border flex items-center justify-center font-space font-bold text-base shrink-0`}>
                 02
               </div>
               <div className="space-y-1">
-                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>Masukkan Data Akun</h3>
-                <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-jakarta leading-relaxed`}>
+                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Masukkan Data Akun</h3>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} font-jakarta leading-relaxed`}>
                   Ketik User ID Game, nomor HP, atau pilih voucher hotspot. Sistem kami otomatis memvalidasi nickname.
                 </p>
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
+            <div className={`p-5 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08]' : 'bg-white border-slate-200'} border flex items-start gap-3.5 shadow-xs`}>
               <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 border-emerald-300'} border flex items-center justify-center font-space font-bold text-base shrink-0`}>
                 03
               </div>
               <div className="space-y-1">
-                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>Bayar &amp; Selesai Otomatis</h3>
-                <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-jakarta leading-relaxed`}>
+                <h3 className={`font-space font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Bayar &amp; Selesai Otomatis</h3>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} font-jakarta leading-relaxed`}>
                   Pilih pembayaran QRIS, e-wallet, atau transfer. Pesanan terproses instan 1-3 detik tanpa kendala.
                 </p>
               </div>
@@ -2167,16 +2276,16 @@ export function HomePage({
         </section>
 
         {/* 12. LACAK STATUS PESANAN ANDA */}
-        <section className={`p-5 sm:p-6 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs`}>
+        <section className={`p-5 sm:p-6 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08]' : 'bg-white border-slate-200'} border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs`}>
           <div className="flex items-center gap-3">
             <div className={`w-11 h-11 rounded-xl ${isDark ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-600'} border flex items-center justify-center shrink-0`}>
               <ReceiptText size={22} />
             </div>
             <div>
-              <h3 className={`font-space font-bold text-sm sm:text-base ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+              <h3 className={`font-space font-bold text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 Lacak Status Pesanan Anda
               </h3>
-              <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} font-jakarta`}>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} font-jakarta`}>
                 Masukkan Nomor Invoice / Kode Transaksi untuk verifikasi status pengiriman
               </p>
             </div>
@@ -2188,11 +2297,11 @@ export function HomePage({
               value={trackingInvoiceInput}
               onChange={(e) => setTrackingInvoiceInput(e.target.value)}
               placeholder="Contoh: INV-2026..."
-              className={`flex-1 ${isDark ? 'bg-[#141815] text-[#F5F7F2] placeholder-[#68736B] border-[#28302A] focus:border-[#C7FF4D]' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200 focus:border-amber-400'} text-xs font-mono rounded-xl px-3.5 py-2.5 border focus:outline-none transition-all`}
+              className={`flex-1 ${isDark ? 'bg-slate-900/70 text-white placeholder-slate-500 border-white/[0.08] focus:border-amber-500' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200 focus:border-amber-400'} text-xs font-mono rounded-xl px-3.5 py-2.5 border focus:outline-none transition-all`}
             />
             <button
               onClick={handleTrackInvoice}
-              className={`px-4 py-2.5 rounded-xl ${isDark ? 'bg-[#C7FF4D] hover:bg-[#D7FF75] text-[#101211] font-bold shadow-lime-glow' : 'bg-[#FACC15] hover:bg-[#EAB308] text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shrink-0 shadow-xs`}
+              className={`px-4 py-2.5 rounded-xl ${isDark ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-amber-glow' : 'bg-amber-500 hover:bg-amber-400 text-slate-900'} font-space font-bold text-xs transition-all cursor-pointer shrink-0 shadow-xs`}
             >
               Cek Resi
             </button>
@@ -2202,13 +2311,13 @@ export function HomePage({
         {/* 13. PERTANYAAN YANG SERING DIAJUKAN (FAQ ACCORDION) */}
         <section className="space-y-3.5 pt-2">
           <div className="text-center max-w-xl mx-auto space-y-1">
-            <span className={`text-[10px] font-space font-bold ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} uppercase tracking-wider block`}>
+            <span className={`text-[10px] font-space font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'} uppercase tracking-wider block`}>
               BANTUAN &amp; EDUKASI PELANGGAN
             </span>
-            <h2 className={`text-lg sm:text-2xl font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+            <h2 className={`text-lg sm:text-2xl font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Pertanyaan yang Sering Diajukan
             </h2>
-            <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               Ketahui lebih lanjut mengenai cara transaksi dan keamanan operasional WayaheDigital
             </p>
           </div>
@@ -2232,24 +2341,24 @@ export function HomePage({
               return (
                 <div
                   key={idx}
-                  className={`rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A]' : 'bg-white border-slate-200'} border overflow-hidden shadow-xs transition-all`}
+                  className={`rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08]' : 'bg-white border-slate-200'} border overflow-hidden shadow-xs transition-all`}
                 >
                   <button
                     onClick={() => setExpandedFaqIndex(isExpanded ? null : idx)}
-                    className={`w-full p-4 text-left flex items-center justify-between gap-3 cursor-pointer ${isDark ? 'hover:bg-[#141815]' : 'hover:bg-slate-50'} transition-colors`}
+                    className={`w-full p-4 text-left flex items-center justify-between gap-3 cursor-pointer ${isDark ? 'hover:bg-slate-900/70' : 'hover:bg-slate-50'} transition-colors`}
                   >
-                    <span className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'}`}>
+                    <span className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {faq.q}
                     </span>
                     <ChevronDown
                       size={16}
                       className={`text-slate-400 transition-transform duration-200 shrink-0 ${
-                        isExpanded ? (isDark ? 'rotate-180 text-[#C7FF4D]' : 'rotate-180 text-amber-500') : ''
+                        isExpanded ? (isDark ? 'rotate-180 text-amber-400' : 'rotate-180 text-amber-500') : ''
                       }`}
                     />
                   </button>
                   {isExpanded && (
-                    <div className={`px-4 pb-4 pt-1 text-xs ${isDark ? 'text-[#A4ADA6] border-[#28302A]' : 'text-slate-600 border-slate-100'} font-jakarta leading-relaxed border-t`}>
+                    <div className={`px-4 pb-4 pt-1 text-xs ${isDark ? 'text-slate-400 border-white/[0.08]' : 'text-slate-600 border-slate-100'} font-jakarta leading-relaxed border-t`}>
                       {faq.a}
                     </div>
                   )}
@@ -2261,27 +2370,27 @@ export function HomePage({
 
         {/* 14. SEARCH RESULTS OVERLAY (HANYA MUNCUL SAAT MENCARI) */}
         {catalogSearch.trim() !== '' && (
-          <section id="semua-katalog" className={`space-y-4 pt-4 border-t ${isDark ? 'border-[#28302A]' : 'border-slate-200'} animate-fadeIn`}>
+          <section id="semua-katalog" className={`space-y-4 pt-4 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-200'} animate-fadeIn`}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-[#F5F7F2]' : 'text-slate-900'} tracking-tight`}>
+                <h2 className={`text-base sm:text-xl font-bold font-space ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                   Hasil Pencarian Produk
                 </h2>
-                <p className={`text-xs ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'}`}>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   Ditemukan {filteredProducts.length} produk untuk kata kunci "{catalogSearch}"
                 </p>
               </div>
 
               <button
                 onClick={() => setCatalogSearch('')}
-                className={`text-xs ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} hover:underline font-space font-bold cursor-pointer`}
+                className={`text-xs ${isDark ? 'text-amber-400' : 'text-amber-600'} hover:underline font-space font-bold cursor-pointer`}
               >
                 Reset Pencarian
               </button>
             </div>
 
             {filteredProducts.length === 0 ? (
-              <div className={`p-8 rounded-2xl ${isDark ? 'bg-[#1B1F1C] border-[#28302A] text-[#A4ADA6]' : 'bg-white border-slate-200 text-slate-500'} border text-center text-xs shadow-xs`}>
+              <div className={`p-8 rounded-2xl ${isDark ? 'bg-[#0E131F] border-white/[0.08] text-slate-400' : 'bg-white border-slate-200 text-slate-500'} border text-center text-xs shadow-xs`}>
                 Tidak ada produk yang cocok dengan kata kunci "{catalogSearch}".
               </div>
             ) : (
@@ -2294,15 +2403,15 @@ export function HomePage({
                       onClick={() => {
                         if (!isOutOfStock) onSelectProductToCheckout(p);
                       }}
-                      className={`group p-3.5 sm:p-4 rounded-2xl ${isDark ? 'bg-[#1B1F1C]' : 'bg-white'} border transition-all duration-200 flex flex-col justify-between relative cursor-pointer ${
+                      className={`group p-3.5 sm:p-4 rounded-2xl ${isDark ? 'bg-[#0E131F]' : 'bg-white'} border transition-all duration-200 flex flex-col justify-between relative cursor-pointer ${
                         isOutOfStock
-                          ? isDark ? 'opacity-50 border-[#28302A] cursor-not-allowed' : 'opacity-50 border-slate-200 cursor-not-allowed'
-                          : isDark ? 'border-[#28302A] hover:border-[#C7FF4D] hover:shadow-md hover:-translate-y-1 shadow-xs' : 'border-slate-200 hover:border-amber-400 hover:shadow-md hover:-translate-y-1 shadow-xs'
+                          ? isDark ? 'opacity-50 border-white/[0.08] cursor-not-allowed' : 'opacity-50 border-slate-200 cursor-not-allowed'
+                          : isDark ? 'border-white/[0.08] hover:border-amber-500 hover:shadow-md hover:-translate-y-1 shadow-xs' : 'border-slate-200 hover:border-amber-400 hover:shadow-md hover:-translate-y-1 shadow-xs'
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2.5">
-                          <div className={`w-9 h-9 rounded-xl ${isDark ? 'bg-[#141815] border-[#28302A]' : 'bg-slate-50 border-slate-200'} border flex items-center justify-center shrink-0`}>
+                          <div className={`w-9 h-9 rounded-xl ${isDark ? 'bg-slate-900/70 border-white/[0.08]' : 'bg-slate-50 border-slate-200'} border flex items-center justify-center shrink-0`}>
                             <ProductLogo
                               provider={p.provider}
                               name={p.name}
@@ -2312,28 +2421,28 @@ export function HomePage({
                               className="rounded-lg"
                             />
                           </div>
-                          <span className={`text-[10px] font-bold font-space ${isDark ? 'text-[#C7FF4D] bg-[#C7FF4D]/15 border-[#C7FF4D]/30' : 'text-amber-700 bg-amber-50 border-amber-200'} border px-2 py-0.5 rounded-full uppercase`}>
+                          <span className={`text-[10px] font-bold font-space ${isDark ? 'text-amber-400 bg-amber-500/15 border-amber-500/30' : 'text-amber-700 bg-amber-50 border-amber-200'} border px-2 py-0.5 rounded-full uppercase`}>
                             {p.provider}
                           </span>
                         </div>
 
-                        <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#F5F7F2] group-hover:text-[#C7FF4D]' : 'text-slate-900 group-hover:text-amber-600'} transition-colors line-clamp-1`}>
+                        <h3 className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-white group-hover:text-amber-400' : 'text-slate-900 group-hover:text-amber-600'} transition-colors line-clamp-1`}>
                           {p.name}
                         </h3>
-                        <p className={`text-[11px] ${isDark ? 'text-[#A4ADA6]' : 'text-slate-500'} mt-0.5 line-clamp-1`}>
+                        <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5 line-clamp-1`}>
                           {p.quotaDetails || p.duration || p.description}
                         </p>
                       </div>
 
-                      <div className={`mt-3 pt-2.5 border-t ${isDark ? 'border-[#28302A]' : 'border-slate-100'} flex items-center justify-between`}>
+                      <div className={`mt-3 pt-2.5 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-100'} flex items-center justify-between`}>
                         <div>
-                          <span className={`text-[9px] ${isDark ? 'text-[#68736B]' : 'text-slate-400'} block uppercase font-mono`}>Harga</span>
-                          <span className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-[#C7FF4D]' : 'text-slate-900'}`}>
+                          <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'} block uppercase font-mono`}>Harga</span>
+                          <span className={`font-space font-bold text-xs sm:text-sm ${isDark ? 'text-amber-400' : 'text-slate-900'}`}>
                             {formatRupiah(p.sellingPrice)}
                           </span>
                         </div>
 
-                        <span className={`text-xs font-bold font-space ${isDark ? 'text-[#C7FF4D]' : 'text-amber-600'} group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5`}>
+                        <span className={`text-xs font-bold font-space ${isDark ? 'text-amber-400' : 'text-amber-600'} group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5`}>
                           <span>Beli</span>
                           <ArrowRight size={12} />
                         </span>
@@ -2352,6 +2461,8 @@ export function HomePage({
       <GameTopUpModal
         isOpen={!!selectedGameModal}
         game={selectedGameModal}
+        allGames={featuredGamesCatalog}
+        onSelectGame={(g) => setSelectedGameModal(g as any)}
         products={products}
         onClose={() => setSelectedGameModal(null)}
         onCheckout={(product, targetAccount) => {

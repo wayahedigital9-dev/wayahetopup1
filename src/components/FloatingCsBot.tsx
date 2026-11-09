@@ -83,7 +83,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
         <div 
           className={`absolute bottom-16 right-0 w-[92vw] sm:w-[380px] rounded-3xl shadow-2xl border transition-all animate-in fade-in slide-in-from-bottom-5 duration-200 overflow-hidden flex flex-col ${
             isDark 
-              ? 'bg-[#181D19] border-[#2C382E] text-[#F5F7F2]' 
+              ? 'bg-[#0E131F] border-[#1E293B] text-[#F8FAFC]' 
               : 'bg-white border-slate-200 text-slate-800 shadow-slate-300/50'
           }`}
           style={{ maxHeight: 'calc(100vh - 120px)' }}
@@ -129,13 +129,13 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
 
           {/* Quick FAQ / Topics Shortcut Chips */}
           <div className={`px-3 py-2 border-b flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px] ${
-            isDark ? 'bg-[#131714] border-[#242D26]' : 'bg-slate-50 border-slate-100'
+            isDark ? 'bg-[#0B0F17] border-[#1E293B]' : 'bg-slate-50 border-slate-100'
           }`}>
             <button
               onClick={() => handleOpenWhatsApp('Halo Admin, saya butuh bantuan pembelian Token API Key AI.')}
               className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 isDark 
-                  ? 'bg-[#1E2620] hover:bg-[#28352B] text-[#C7FF4D] border border-[#38483C]' 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30' 
                   : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
               }`}
             >
@@ -147,7 +147,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
               onClick={() => handleOpenWhatsApp('Halo Admin, saya ingin klaim garansi / bantuan Akun Premium.')}
               className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 isDark 
-                  ? 'bg-[#1E2620] hover:bg-[#28352B] text-purple-300 border border-[#38483C]' 
+                  ? 'bg-[#131927] hover:bg-[#1A2233] text-purple-300 border border-[#334155]' 
                   : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
               }`}
             >
@@ -164,7 +164,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
               }}
               className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 isDark 
-                  ? 'bg-[#1E2620] hover:bg-[#28352B] text-amber-300 border border-[#38483C]' 
+                  ? 'bg-[#131927] hover:bg-[#1A2233] text-amber-300 border border-[#334155]' 
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
               }`}
             >
@@ -175,7 +175,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
 
           {/* Message Thread History */}
           <div className={`p-4 space-y-3 overflow-y-auto flex-1 text-xs max-h-[260px] ${
-            isDark ? 'bg-[#151916]' : 'bg-slate-50/70'
+            isDark ? 'bg-[#0B0F17]' : 'bg-slate-50/70'
           }`}>
             {chatMessages.map((msg, idx) => (
               <div 
@@ -192,7 +192,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
                     msg.sender === 'user'
                       ? 'bg-emerald-600 text-white rounded-br-xs'
                       : isDark
-                        ? 'bg-[#212822] text-[#E3E8DF] border border-[#2F3A30] rounded-bl-xs'
+                        ? 'bg-[#131927] text-[#E2E8F0] border border-[#1E293B] rounded-bl-xs'
                         : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs shadow-xs'
                   }`}
                 >
@@ -207,7 +207,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
 
           {/* Input text & Send Bot */}
           <form onSubmit={handleSendQuery} className={`p-3 border-t flex items-center gap-2 ${
-            isDark ? 'bg-[#181D19] border-[#2C382E]' : 'bg-white border-slate-100'
+            isDark ? 'bg-[#0E131F] border-[#1E293B]' : 'bg-white border-slate-100'
           }`}>
             <input
               type="text"
@@ -216,7 +216,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
               placeholder="Ketik pertanyaan untuk CS Programmer..."
               className={`flex-1 text-xs py-2 px-3 rounded-xl border focus:outline-none transition-all ${
                 isDark 
-                  ? 'bg-[#111412] border-[#2D3930] text-[#F5F7F2] placeholder-[#6A786E] focus:border-emerald-500' 
+                  ? 'bg-[#080B12] border-[#1E293B] text-[#F8FAFC] placeholder-[#64748B] focus:border-emerald-500' 
                   : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500'
               }`}
             />
@@ -231,7 +231,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
 
           {/* Footer Direct WhatsApp Connect Action */}
           <div className={`p-3 border-t space-y-2 ${
-            isDark ? 'bg-[#121513] border-[#242D26]' : 'bg-slate-100 border-slate-200'
+            isDark ? 'bg-[#0B0F17] border-[#1E293B]' : 'bg-slate-100 border-slate-200'
           }`}>
             <button
               onClick={() => handleOpenWhatsApp()}
@@ -267,7 +267,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
             <div className="relative">
               <Bot size={26} className="text-white drop-shadow-md" />
               {/* Terminal Code brackets overlay badge */}
-              <span className="absolute -bottom-1 -right-2 text-[8px] font-mono font-black bg-slate-950 text-[#C7FF4D] px-1 py-0.2 rounded border border-emerald-400">
+              <span className="absolute -bottom-1 -right-2 text-[8px] font-mono font-black bg-slate-950 text-emerald-400 px-1 py-0.2 rounded border border-emerald-400">
                 &lt;/&gt;
               </span>
             </div>
@@ -288,7 +288,7 @@ export const FloatingCsBot: React.FC<FloatingCsBotProps> = ({
           <div className="hidden sm:block absolute bottom-2 right-18 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <div className={`px-3 py-1.5 rounded-xl shadow-lg border text-xs font-space font-bold whitespace-nowrap flex items-center gap-1.5 ${
               isDark 
-                ? 'bg-[#181D19] border-[#2C382E] text-[#C7FF4D]' 
+                ? 'bg-slate-900 border-white/[0.1] text-emerald-400' 
                 : 'bg-white border-slate-200 text-slate-800'
             }`}>
               <Bot size={13} className="text-emerald-500" />

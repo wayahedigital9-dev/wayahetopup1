@@ -40,7 +40,6 @@ export function KuotaPage({
 
   const kuotaProducts = products.filter(
     p => p.categoryId === 'kuota' && 
-         p.isActive &&
          p.provider.toLowerCase().includes(selectedOperator.toLowerCase())
   );
 
@@ -54,6 +53,13 @@ export function KuotaPage({
   const handleSelectToCheckout = (product: Product) => {
     if (!phoneNumber || phoneNumber.trim().length < 8) {
       alert('Masukkan nomor handphone tujuan yang valid.');
+      return;
+    }
+    const isAvail = product.isActive !== false &&
+      product.sellerProductStatus !== false &&
+      !(product.unlimitedStock === false && product.stock !== undefined && Number(product.stock) <= 0);
+    if (!isAvail) {
+      alert(product.statusNote || 'Stok kuota ini sedang kosong atau cut-off dari supplier API. Silakan pilih paket lainnya.');
       return;
     }
     onSelectProductToCheckout(product, phoneNumber.trim());
@@ -173,139 +179,162 @@ export function KuotaPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredProducts.map((p) => (
-              <div
-                key={p.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-teal-300 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <ProductLogo
-                        provider={p.provider}
-                        name={p.name}
-                        category={p.categoryId}
-                        iconUrl={p.iconUrl}
-                        size="md"
-                      />
-                      <div>
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide block">
-                          {p.provider}
-                        </span>
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full inline-block">
-                          {p.quotaDetails || 'Kuota Utama'}
-                        </span>
+            {filteredProducts.map((p) => {
+              const isAvailable = p.isActive !== false &&
+                p.sellerProductStatus !== false &&
+                !(p.unlimitedStock === false && p.stock !== undefined && Number(p.stock) <= 0);
+
+              return (
+                <div
+                  key={p.id}
+                  className={`bg-white rounded-2xl p-5 border transition-all flex flex-col justify-between ${
+                    !isAvailable
+                      ? 'opacity-65 border-dashed border-rose-300 bg-slate-50/50'
+                      : 'border-slate-200 shadow-xs hover:shadow-md hover:border-teal-300'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <ProductLogo
+                          provider={p.provider}
+                          name={p.name}
+                          category={p.categoryId}
+                          iconUrl={p.iconUrl}
+                          size="md"
+                        />
+                        <div>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide block">
+                            {p.provider}
+                          </span>
+                          <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full inline-block">
+                            {p.quotaDetails || 'Kuota Utama'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        {!isAvailable ? (
+                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md shrink-0">
+                            {p.statusNote || 'Stok Kosong'}
+                          </span>
+                        ) : p.badge ? (
+                          <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md shrink-0">
+                            {p.badge}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
 
-                    {p.badge && (
-                      <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md shrink-0">
-                        {p.badge}
+                    <h3 className="text-base font-bold text-slate-900 leading-snug">
+                      {p.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                      {p.description}
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-3 text-xs text-slate-600">
+                      <Clock size={13} className="text-slate-400" />
+                      <span>Masa Aktif: <strong>{p.duration || '30 Hari'}</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Harga Paket</span>
+                      <span className="text-lg font-extrabold text-teal-600">
+                        {formatRupiah(p.sellingPrice)}
                       </span>
-                    )}
-                  </div>
+                    </div>
 
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
-                    {p.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-                    {p.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-3 text-xs text-slate-600">
-                    <Clock size={13} className="text-slate-400" />
-                    <span>Masa Aktif: <strong>{p.duration || '30 Hari'}</strong></span>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Harga Paket</span>
-                    <span className="text-lg font-extrabold text-teal-600">
-                      {formatRupiah(p.sellingPrice)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setDetailModalProduct(p)}
-                      className="px-2.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
-                      title="Lihat Rincian & Syarat"
-                    >
-                      Detail
-                    </button>
-                    <button
-                      onClick={() => handleSelectToCheckout(p)}
-                      id={`buy-kuota-${p.id}`}
-                      className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <span>Pilih Paket</span>
-                      <ArrowRight size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setDetailModalProduct(p)}
+                        className="px-2.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
+                        title="Lihat Rincian & Syarat"
+                      >
+                        Detail
+                      </button>
+                      <button
+                        onClick={() => handleSelectToCheckout(p)}
+                        id={`buy-kuota-${p.id}`}
+                        disabled={!isAvailable}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
+                          isAvailable
+                            ? 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer'
+                            : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                        }`}
+                      >
+                        <span>{isAvailable ? 'Pilih Paket' : 'Stok Habis'}</span>
+                        {isAvailable && <ArrowRight size={14} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Package Detail Modal */}
       {detailModalProduct && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
-            <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-[#0E131F] rounded-2xl sm:rounded-3xl max-w-md w-full max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl border border-white/[0.08] text-slate-100 my-auto">
+            <div className="shrink-0 p-4 sm:p-5 border-b border-white/[0.08] flex items-start justify-between">
               <div>
-                <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
                   Rincian Paket Kuota
                 </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-1">
+                <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
                   {detailModalProduct.name}
                 </h3>
               </div>
               <button
                 onClick={() => setDetailModalProduct(null)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/[0.08] transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-xl text-xs space-y-2 border border-slate-200">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Kuota Utama:</span>
-                <span className="font-bold text-slate-900">{detailModalProduct.quotaDetails}</span>
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4">
+              <div className="bg-[#080B12] p-3.5 rounded-xl text-xs space-y-2 border border-white/[0.08]">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Kuota Utama:</span>
+                  <span className="font-bold text-white">{detailModalProduct.quotaDetails}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Masa Aktif:</span>
+                  <span className="font-bold text-white">{detailModalProduct.duration}</span>
+                </div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-slate-400">Harga:</span>
+                  <span className="font-black text-amber-400 text-sm font-mono">{formatRupiah(detailModalProduct.sellingPrice)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Masa Aktif:</span>
-                <span className="font-bold text-slate-900">{detailModalProduct.duration}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Harga:</span>
-                <span className="font-extrabold text-teal-600 text-sm">{formatRupiah(detailModalProduct.sellingPrice)}</span>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Ketentuan & Pembagian Kuota
+                </h4>
+                <ul className="text-xs text-slate-400 space-y-1.5 list-disc pl-4 leading-relaxed">
+                  {detailModalProduct.terms?.map((term, i) => (
+                    <li key={i}>{term}</li>
+                  )) || (
+                    <>
+                      <li>Kuota aktif 24 jam di seluruh jaringan nasional.</li>
+                      <li>Pastikan nomor dalam keadaan aktif dan tidak sedang masa tenggang.</li>
+                    </>
+                  )}
+                </ul>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Ketentuan & Pembagian Kuota
-              </h4>
-              <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
-                {detailModalProduct.terms?.map((term, i) => (
-                  <li key={i}>{term}</li>
-                )) || (
-                  <>
-                    <li>Kuota aktif 24 jam di seluruh jaringan nasional.</li>
-                    <li>Pastikan nomor dalam keadaan aktif dan tidak sedang masa tenggang.</li>
-                  </>
-                )}
-              </ul>
-            </div>
-
-            <div className="pt-2 flex gap-2">
+            <div className="shrink-0 p-4 border-t border-white/[0.08] bg-[#0A0D14]/95 backdrop-blur-md flex gap-2.5">
               <button
                 onClick={() => setDetailModalProduct(null)}
-                className="w-1/2 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                className="w-1/2 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
               >
                 Tutup
               </button>
@@ -315,7 +344,7 @@ export function KuotaPage({
                   setDetailModalProduct(null);
                   handleSelectToCheckout(p);
                 }}
-                className="w-1/2 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs"
+                className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shadow-md shadow-amber-950/30 transition-all cursor-pointer"
               >
                 Beli Paket Ini
               </button>

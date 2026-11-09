@@ -65,7 +65,7 @@ export function HeroAdBanner({
 
   return (
     <div 
-      className="relative rounded-[22px] overflow-hidden border border-[#3E352B] bg-[#181411] shadow-2xl min-h-[380px] sm:min-h-[420px] flex flex-col justify-between group transition-all duration-300"
+      className="relative rounded-[22px] overflow-hidden border border-[#1E293B] bg-[#0B0F17] shadow-2xl min-h-[380px] sm:min-h-[420px] flex flex-col justify-between group transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       id="hero-ad-billboard"
@@ -92,8 +92,8 @@ export function HeroAdBanner({
             {/* Intelligent Sogan Gradient Overlay: menjaga keterbacaan teks di kiri, foto terang di kanan */}
             {showText && (
               <>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#181411] via-[#181411]/90 sm:via-[#181411]/80 to-[#181411]/30 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#181411]/95 via-transparent to-black/35 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0B0F17] via-[#0B0F17]/90 sm:via-[#0B0F17]/80 to-[#0B0F17]/30 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/95 via-transparent to-black/35 pointer-events-none" />
               </>
             )}
 
@@ -113,17 +113,17 @@ export function HeroAdBanner({
               referrerPolicy="no-referrer"
             />
             {/* Smooth gradient blend into the dark left side */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#181411] via-[#181411]/40 to-transparent pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#181411]/90 via-transparent to-black/30 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0B0F17] via-[#0B0F17]/40 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/90 via-transparent to-black/30 pointer-events-none" />
           </div>
         )
       ) : (
         /* Fallback Default Background jika belum ada foto */
-        <div className="absolute inset-0 bg-gradient-to-r from-[#201A15] via-[#28221B] to-[#181411] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#111827] via-[#1A2233] to-[#0B0F17] z-0" />
       )}
 
       {/* 2. Soft Ambient Warm Glow */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#D4A359]/10 blur-3xl pointer-events-none z-1" />
+      <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#F59E0B]/10 blur-3xl pointer-events-none z-1" />
       <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-[#C85A32]/10 blur-3xl pointer-events-none z-1" />
 
       {/* ========================================================================= */}
@@ -135,20 +135,20 @@ export function HeroAdBanner({
             {/* Left Col: Badges, Title, Subtitle, CTA */}
             <div className="lg:col-span-8 xl:col-span-8 space-y-4 text-left">
               {/* Pill Badge */}
-              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#1D1814]/90 backdrop-blur-md border border-[#4A3E31] text-xs font-semibold text-[#D4A359] shadow-md">
-                <span className="w-2 h-2 rounded-full bg-[#D4A359] animate-pulse" />
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#0E131F]/90 backdrop-blur-md border border-[#334155] text-xs font-semibold text-[#F59E0B] shadow-md">
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse" />
                 <span className="tracking-wider uppercase text-[11px] font-extrabold">{currentBanner.badge}</span>
-                <span className="text-[#5C5042]">•</span>
-                <span className="text-[#A89F91] text-[11px] font-medium">{currentBanner.tagline}</span>
+                <span className="text-[#475569]">•</span>
+                <span className="text-[#94A3B8] text-[11px] font-medium">{currentBanner.tagline}</span>
               </div>
 
               {/* Heading 1 */}
-              <h1 className="text-2xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-[#FAF4EB] leading-[1.18] drop-shadow-md">
+              <h1 className="text-2xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-[#F8FAFC] leading-[1.18] drop-shadow-md">
                 {currentBanner.title}
               </h1>
 
               {/* Subtitle / Description */}
-              <p className="text-xs sm:text-sm md:text-base text-[#D5CEBF] max-w-2xl leading-relaxed drop-shadow-sm font-medium">
+              <p className="text-xs sm:text-sm md:text-base text-[#CBD5E1] max-w-2xl leading-relaxed drop-shadow-sm font-medium">
                 {currentBanner.subtitle}
               </p>
 
@@ -158,7 +158,7 @@ export function HeroAdBanner({
                 <button
                   onClick={() => onNavigate(currentBanner.ctaCategory)}
                   id="hero-banner-cta-btn"
-                  className="px-6 py-3 bg-[#D4A359] hover:bg-[#E2B774] text-[#181411] font-extrabold rounded-full transition-all flex items-center gap-2 text-xs sm:text-sm shadow-xl shadow-[#D4A359]/25 hover:shadow-[#D4A359]/40 cursor-pointer active:scale-95"
+                  className="px-6 py-3 bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B0F17] font-extrabold rounded-full transition-all flex items-center gap-2 text-xs sm:text-sm shadow-xl shadow-[#F59E0B]/25 hover:shadow-[#F59E0B]/40 cursor-pointer active:scale-95"
                 >
                   <span>{currentBanner.ctaText}</span>
                   <ArrowRight size={17} />
@@ -168,9 +168,9 @@ export function HeroAdBanner({
                 <button
                   onClick={() => onNavigate(currentBanner.secondaryCtaAction || 'transaksi')}
                   id="hero-banner-secondary-btn"
-                  className="px-5 py-3 bg-[#1D1814]/90 hover:bg-[#28221B] text-[#FAF4EB] font-bold rounded-full border border-[#4A3E31] hover:border-[#D4A359]/70 transition-all flex items-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-95 backdrop-blur-sm"
+                  className="px-5 py-3 bg-[#0E131F]/90 hover:bg-[#1A2233] text-[#F8FAFC] font-bold rounded-full border border-[#334155] hover:border-[#F59E0B]/70 transition-all flex items-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-95 backdrop-blur-sm"
                 >
-                  <ReceiptText size={17} className="text-[#D4A359]" />
+                  <ReceiptText size={17} className="text-[#F59E0B]" />
                   <span>{currentBanner.secondaryCtaText || 'Lacak Pesanan'}</span>
                 </button>
               </div>
@@ -180,17 +180,17 @@ export function HeroAdBanner({
             <div className="lg:col-span-4 xl:col-span-4 hidden lg:flex flex-col items-end justify-center">
               <div 
                 onClick={() => onNavigate(currentBanner.ctaCategory)}
-                className="p-4 rounded-2xl bg-[#181411]/85 backdrop-blur-md border border-[#D4A359]/40 text-right shadow-2xl space-y-2 cursor-pointer hover:border-[#D4A359] transition-colors group/tag"
+                className="p-4 rounded-2xl bg-[#0B0F17]/85 backdrop-blur-md border border-[#F59E0B]/40 text-right shadow-2xl space-y-2 cursor-pointer hover:border-[#F59E0B] transition-colors group/tag"
               >
-                <div className="flex items-center justify-end gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#D4A359]">
+                <div className="flex items-center justify-end gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#F59E0B]">
                   <Tag size={13} />
                   <span>{currentBanner.imageTag || 'Slot Iklan Foto'}</span>
                 </div>
-                <div className="text-xs text-[#FAF4EB] font-semibold flex items-center justify-end gap-1.5">
-                  <ShieldCheck size={15} className="text-[#84A951]" />
+                <div className="text-xs text-[#F8FAFC] font-semibold flex items-center justify-end gap-1.5">
+                  <ShieldCheck size={15} className="text-[#10B981]" />
                   <span>Garansi Resmi 100% Legal</span>
                 </div>
-                <div className="text-[11px] text-[#A89F91] flex items-center justify-end gap-1 group-hover/tag:text-[#D4A359] transition-colors">
+                <div className="text-[11px] text-[#94A3B8] flex items-center justify-end gap-1 group-hover/tag:text-[#F59E0B] transition-colors">
                   <span>Lihat Penawaran</span>
                   <ExternalLink size={12} />
                 </div>
@@ -203,7 +203,7 @@ export function HeroAdBanner({
             onClick={() => onNavigate(currentBanner.ctaCategory)}
             className="flex-1 flex flex-col justify-end cursor-pointer"
           >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#181411]/85 backdrop-blur-md border border-[#D4A359]/50 text-xs font-bold text-[#D4A359] w-fit shadow-xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B0F17]/85 backdrop-blur-md border border-[#F59E0B]/50 text-xs font-bold text-[#F59E0B] w-fit shadow-xl">
               <Tag size={13} />
               <span>{currentBanner.imageTag || currentBanner.title}</span>
               <ArrowRight size={13} className="ml-1" />
@@ -214,7 +214,7 @@ export function HeroAdBanner({
         {/* ========================================================================= */}
         {/* 4. ROW BAWAH: INDIKATOR SLIDER (KIRI) & TOMBOL NAVIGASI (KANAN)           */}
         {/* ========================================================================= */}
-        <div className="relative z-20 pt-6 mt-6 border-t border-[#4A3E31]/60 flex items-center justify-between">
+        <div className="relative z-20 pt-6 mt-6 border-t border-[#334155]/60 flex items-center justify-between">
           {/* Kiri: Indikator Dash & Titik */}
           <div className="flex items-center gap-2">
             {activeList.map((banner, idx) => (
@@ -226,8 +226,8 @@ export function HeroAdBanner({
                 }}
                 className={`transition-all duration-300 rounded-full cursor-pointer ${
                   currentIndex === idx
-                    ? 'w-8 h-2 bg-[#D4A359]'
-                    : 'w-2 h-2 bg-[#4A3E31] hover:bg-[#A89F91]'
+                    ? 'w-8 h-2 bg-[#F59E0B]'
+                    : 'w-2 h-2 bg-[#334155] hover:bg-[#94A3B8]'
                 }`}
                 aria-label={`Pindah ke banner ${idx + 1}`}
               />
@@ -242,7 +242,7 @@ export function HeroAdBanner({
                   e.stopPropagation();
                   handlePrev();
                 }}
-                className="w-8 h-8 rounded-full border border-[#4A3E31] bg-[#1D1814]/90 hover:bg-[#28221B] hover:border-[#D4A359] text-[#FAF4EB] flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                className="w-8 h-8 rounded-full border border-[#334155] bg-[#0E131F]/90 hover:bg-[#1A2233] hover:border-[#F59E0B] text-[#F8FAFC] flex items-center justify-center transition-colors cursor-pointer shadow-md"
                 aria-label="Banner Sebelumnya"
               >
                 <ChevronLeft size={16} />
@@ -252,7 +252,7 @@ export function HeroAdBanner({
                   e.stopPropagation();
                   handleNext();
                 }}
-                className="w-8 h-8 rounded-full border border-[#4A3E31] bg-[#1D1814]/90 hover:bg-[#28221B] hover:border-[#D4A359] text-[#FAF4EB] flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                className="w-8 h-8 rounded-full border border-[#334155] bg-[#0E131F]/90 hover:bg-[#1A2233] hover:border-[#F59E0B] text-[#F8FAFC] flex items-center justify-center transition-colors cursor-pointer shadow-md"
                 aria-label="Banner Selanjutnya"
               >
                 <ChevronRight size={16} />
