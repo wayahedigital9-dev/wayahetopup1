@@ -3007,7 +3007,7 @@ try {
           alertsEnabled: dbSettings.telegramAlertsEnabled !== false,
         });
         if (dbSettings.telegramStoreMode === 'polling' && dbSettings.telegramStoreEnabled !== false && (dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN)) {
-          await telegramBotService.startPolling();
+          try { await telegramBotService.registerCommands(); await telegramBotService.startPolling(); } catch (_) {}
         }
       }
       lastErr = null;
