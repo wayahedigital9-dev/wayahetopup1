@@ -919,6 +919,70 @@ app.get('/api/digiflazz/game-status', requireAdmin, async (req: Request, res: Re
   }
 });
 
+app.post('/api/settings/digiflazz', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { username, mode, productionKey, developmentKey, webhookSecret, webhookUrl, whitelistIp, outboundProxy } = req.body || {};
+    
+    const settingsToSave: Record<string, any> = {};
+    
+    if (username !== undefined) settingsToSave.digiflazzUsername = String(username || '').trim();
+    if (mode !== undefined) settingsToSave.digiflazzMode = String(mode || 'PRODUCTION').toUpperCase() === 'DEVELOPMENT' ? 'DEVELOPMENT' : 'PRODUCTION';
+    if (productionKey !== undefined) settingsToSave.digiflazzProductionKey = String(productionKey || '').trim();
+    if (developmentKey !== undefined) settingsToSave.digiflazzDevelopmentKey = String(developmentKey || '').trim();
+    if (webhookSecret !== undefined) settingsToSave.digiflazzWebhookSecret = String(webhookSecret || '').trim();
+    if (webhookUrl !== undefined) settingsToSave.digiflazzWebhookUrl = String(webhookUrl || '').trim();
+    if (whitelistIp !== undefined) settingsToSave.digiflazzWhitelistIp = String(whitelistIp || '').trim();
+    if (outboundProxy !== undefined) settingsToSave.digiflazzOutboundProxy = String(outboundProxy || '').trim();
+    
+    if (Object.keys(settingsToSave).length === 0) {
+      return res.status(400).json({ success: false, message: 'Minimal satu field Digiflazz harus diisi.' });
+    }
+    
+    const syncOk = await mongoDbService.syncEntity('settings', settingsToSave);
+    if (!syncOk) {
+      return res.status(503).json({ success: false, message: 'Database tidak tersedia. Konfigurasi Digiflazz belum disimpan.' });
+    }
+    
+    await hydrateDigiflazzRuntime();
+    syncDigiflazzCatalog().catch((e: any) => console.log('Settings update Digiflazz sync note:', e.message));
+    
+    return res.json({ 
+      success: true, 
+      message: 'Konfigurasi Digiflazz tersimpan ke database dan dimuat ulang. Settings akan bertahan setelah restart backend.' 
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/settings/digiflazz', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const settings = await mongoDbService.getSettingsFromDatabase();
+    const hasUsername = Boolean(settings.digiflazzUsername || settings.digiflazzUser);
+    const hasApiKey = Boolean(settings.digiflazzProductionKey || settings.digiflazzDevelopmentKey || settings.digiflazzApiKey);
+    const hasSecret = Boolean(settings.digiflazzWebhookSecret || settings.digiflazzSecretCode);
+    const testing = settings.digiflazzMode === 'DEVELOPMENT';
+    
+    return res.json({
+      success: true,
+      data: {
+        username: settings.digiflazzUsername || settings.digiflazzUser || '',
+        mode: settings.digiflazzMode || 'PRODUCTION',
+        hasProductionKey: Boolean(settings.digiflazzProductionKey || settings.digiflazzApiKey),
+        hasDevelopmentKey: Boolean(settings.digiflazzDevelopmentKey),
+        hasWebhookSecret: Boolean(settings.digiflazzWebhookSecret || settings.digiflazzSecretCode),
+        webhookUrl: settings.digiflazzWebhookUrl || '',
+        whitelistIp: settings.digiflazzWhitelistIp || '',
+        outboundProxy: settings.digiflazzOutboundProxy || '',
+        testing: testing,
+      },
+      configured: hasUsername && hasApiKey && hasSecret,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.post('/api/digiflazz/update-ip-config', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { whitelistIp, outboundProxy } = req.body || {};
