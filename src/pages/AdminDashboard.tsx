@@ -7444,6 +7444,13 @@ export function AdminDashboard({
                               <span>{botTestLoading ? 'Mengirim...' : 'Kirim Test Pesan'}</span>
                             </button>
                           </div>
+
+                          {botTestLoading && (
+                            <div className="mt-3 flex items-center gap-2 animate-pulse">
+                              <Loader2 size={12} className="animate-spin text-sky-400" />
+                              <span className="text-[10px] text-sky-400 font-bold">Memproses permintaan ke Telegram…</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Input Grid Form */}
