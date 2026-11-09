@@ -315,12 +315,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     // Durable insert-only reservations close concurrent races before payment/provider work.
     const reserved = await mongoDbService.createOrder(reservation);
     if (!reserved.success) return res.status(reserved.conflict ? 409 : 503).json({ success: false, message: reserved.conflict ? 'ID atau nomor invoice pesanan sudah digunakan.' : 'Database reservasi pesanan tidak tersedia.' });
-    // Simpan cadangan ke Supabase (best-effort; tidak gagalkan checkout). MongoDB adalah sumber kebenaran.
-    try {
-      await supabaseService.saveOrder(reservation, true);
-    } catch (supabaseErr) {
-      console.warn('⚠️ [Supabase] Gagal menyimpan cadangan order (checkout tetap lanjut via MongoDB):', (supabaseErr as any)?.message || supabaseErr);
-    }
+    // Simpan cadangan ke Supabase dinonaktifkan — checkout sekarang menggunakan MongoDB saja.
     const { userId: _owner, productId: _product, variantId: _variant, variantName: _variantName, createdAt: _created, updatedAt: _updated, ...prismaReservation } = reservation as any;
     await prisma.order.create({ data: { ...prismaReservation, idempotencyKey: idempotencyKey || invoiceNumber } });
 
