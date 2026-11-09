@@ -400,6 +400,7 @@ export function HomePage({
 
   // Subkategori Akun Premium terpilih (sesuai filter pills di screenshot)
   const [selectedPremiumCategory, setSelectedPremiumCategory] = useState<string>('Semua');
+  const [selectedPremiumAccount, setSelectedPremiumAccount] = useState<{ appId: string; nomor: string } | null>(null);
 
   // Dynamic Premium Products (editable by admin in dashboard and includes synced products)
   const premiumProductsList = useMemo(() => {
@@ -1707,7 +1708,38 @@ export function HomePage({
                         </div>
                       </div>
 
-                      {/* Product Title */}
+                      {/*                       {/* Pilih Nomor / Akun (chip pilihan stok) */}
+                      {stockInfo.stockCount && stockInfo.stockCount > 0 && (
+                        <div className="my-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Nomor / Akun</span>
+                          <div className="flex flex-wrap gap-2">
+                            {Array.from({ length: Math.min(stockInfo.stockCount, 4) }).map((_, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setSelectedPremiumAccount({ appId: app.id, nomor: `Akun #${i + 1}` })}
+                                className={'w-10 h-10 shrink-0 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 border transition-all border-transparent ' +
+                                (selectedPremiumAccount?.appId === app.id && selectedPremiumAccount?.nomor === ('Akun #' + (i + 1))
+                                  ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.35)]'
+                                  : isDark ? 'bg-[#0E131F]/60 text-slate-300 border-white/[0.10] hover:bg-white/[0.08]'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50 hover:border-amber-300')}
+                              >
+                                <span>#{i + 1}</span>
+                              </button>
+                            ))}
+                            {stockInfo.stockCount > 4 && (
+                              <span className="w-10 h-10 shrink-0 rounded-xl text-[10px] font-bold flex items-center justify-center bg-white/10 dark:bg-slate-800 border border-white/[0.08] text-slate-400">+{stockInfo.stockCount - 4}</span>
+                            )}
+                          </div>
+                          {selectedPremiumAccount?.appId === app.id && (
+                            <p className={`text-[10px] font-bold mt-1.5 ${isDark ? 'text-amber-400' : 'text-amber-600'} flex items-center gap-1.5`}>
+                              <Sparkles size={10} className="animate-pulse" /> Dipilih: {selectedPremiumAccount.nomor}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+{/* Product Title */}
                       <h3 className={`font-space font-bold text-sm sm:text-base leading-snug ${isDark ? 'text-white group-hover:text-amber-400' : 'text-slate-900 group-hover:text-amber-600'} transition-colors line-clamp-1`}>
                         {app.name}
                       </h3>
