@@ -207,10 +207,25 @@ export class TelegramBotService {
       this.sessions.delete(String(chatId));
     }
 
-    // 1. COMMAND /start
+    // 1. COMMAND /start (tampilkan statistik akun & bot di pesan sambutan)
     if (text.startsWith('/start')) {
       this.sessions.set(String(chatId), { step: 'IDLE', updatedAt: Date.now() });
-      await this.sendMainMenu(chatId, firstName);
+      try {
+        const state = await mongoDbService.getAllState();
+        const orders = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+        const totalOrder = orders.length;
+        const totalPenjualan = orders.reduce((s,o:any) => s + (Number(o.totalAmount||0)), 0);
+        const users = new Set(orders.map((o:any)=>o.telegramChatId||o.customerId||o.id).filter(Boolean));
+        const statsText =
+          `\n━━━━━━━━━━━━━━━━━━━━━\n` +
+          `📊 <b>Statistik Toko Anda</b>\n` +
+          `• Total Order: <b>${totalOrder}</b>\n` +
+          `• Total Penjualan: <b>Rp ${totalPenjualan.toLocaleString('id-ID')}</b>\n` +
+          `• Total Pengguna Bot: <b>${users.size}</b>`;
+        await this.sendMainMenu(chatId, firstName, statsText);
+      } catch (_) {
+        await this.sendMainMenu(chatId, firstName);
+      }
     // COMMAND /stock
     if (text === '/stock') {
       this.sessions.set(String(chatId), { step: 'IDLE', updatedAt: Date.now() });
@@ -500,8 +515,8 @@ export class TelegramBotService {
     return keyboard;
   }
 
-  public async sendMainMenu(chatId: string | number, firstName = 'Pelanggan') {
-    const text = this.getMainMenuText(firstName);
+  public async sendMainMenu(chatId: string | number, firstName = 'Pelanggan', statsText = '') {
+    const text = this.getMainMenuText(firstName) + statsText;
     const keyboard = this.getMainMenuKeyboard();
     await this.sendMessage(chatId, text, {
       reply_markup: { inline_keyboard: keyboard },
