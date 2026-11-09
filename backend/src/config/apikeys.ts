@@ -67,7 +67,9 @@ export const DIGIFLAZZ_CONFIG = {
     process.env.DIGIFLAZZ_WEBHOOK_URL,
     ...(process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS ? process.env.DIGIFLAZZ_ALLOWED_CALLBACK_URLS.split(',') : [])
   ].map(u => u?.trim()).filter(Boolean) as string[])),
-  ENFORCE_SIGNATURE: process.env.DIGIFLAZZ_ENFORCE_SIGNATURE === 'true',
+  // Default TRUE agar webhook Digiflazz divalidasi signature (HMAC-SHA1) ketika secret sudah diisi.
+  // Hanya bisa di-matikan secara eksak via DIGIFLAZZ_ENFORCE_SIGNATURE=false di .env.
+  ENFORCE_SIGNATURE: process.env.DIGIFLAZZ_ENFORCE_SIGNATURE !== 'false',
 };
 
 // ── 2c. NGROK (Webhook Tunnel) ─────────────────────────────────
