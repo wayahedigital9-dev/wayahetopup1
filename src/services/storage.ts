@@ -318,9 +318,17 @@ const DEFAULT_SETTINGS: AppSettings = {
   digiflazzMode: 'DEVELOPMENT',
   digiflazzAutoFulfill: true,
 
-  // Bot & Automation Notifications (Dikelola aman di Backend .env)
+  // Bot & Automation Notifications & Telegram Store
   telegramBotToken: '',
   telegramChatId: '',
+  telegramBotUsername: '',
+  telegramStoreEnabled: true,
+  telegramStoreMode: 'webhook',
+  telegramWebhookUrl: '',
+  telegramWebAppUrl: '',
+  telegramWelcomeMessage: '',
+  telegramChannelUrl: '',
+  telegramCsUsername: '',
   telegramAlertsEnabled: true,
   whatsappBotApiKey: '',
   whatsappAlertsEnabled: false,

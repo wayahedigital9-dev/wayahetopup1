@@ -15,7 +15,8 @@ import {
   Crown,
   ChevronRight,
   Sun,
-  Moon
+  Moon,
+  Send
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { storage } from '../services/storage';
@@ -127,6 +128,7 @@ export function Navbar({
               { id: 'home', label: 'Beranda' },
               { id: 'pulsa', label: 'Pulsa & Data' },
               { id: 'wifi', label: 'Voucher WiFi' },
+              { id: 'tg-store', label: 'Toko Telegram', badge: 'Auto' },
               { id: 'kuota', label: 'Promo' },
             ].map((tab) => {
               const isActive = currentTab === tab.id;
@@ -134,7 +136,7 @@ export function Navbar({
                 <button
                   key={tab.id}
                   onClick={() => handleNav(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer font-jakarta ${isActive
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer font-jakarta flex items-center gap-1.5 ${isActive
                     ? isLight
                       ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-white/10 text-white border border-white/15'
@@ -143,7 +145,13 @@ export function Navbar({
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                 >
-                  {tab.label}
+                  {tab.id === 'tg-store' && <Send size={12} className="text-sky-400" />}
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -258,6 +266,7 @@ export function Navbar({
               { id: 'home', label: 'Beranda Storefront', icon: Zap },
               { id: 'pulsa', label: 'Pulsa & Kuota Data', icon: Smartphone },
               { id: 'wifi', label: 'Voucher WiFi RT/RW Net', icon: Radio },
+              { id: 'tg-store', label: 'Toko Bot Telegram (Auto Order)', icon: Send },
               { id: 'transaksi', label: 'Lacak Status Transaksi', icon: ReceiptText },
             ].map((item) => {
               const Icon = item.icon;

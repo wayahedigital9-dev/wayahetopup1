@@ -32,6 +32,7 @@ import { pushNotificationService } from './services/pushNotificationService.js';
 import { pakasirService } from './services/pakasir.js';
 import { outboundIpService } from './services/outboundIpService.js';
 import { loadXavieraConfig, xavieraProducts, xavieraSmmServices, xavieraGames } from './services/xavieraClient.js';
+import { telegramBotService } from './services/telegramBot.js';
 
 // ── Config terpisah: Console (terminal) vs API Keys ──────────
 import { CONSOLE_CONFIG } from './config/console.js';
@@ -1633,6 +1634,109 @@ app.post('/webhook/callback_secret/digiflazz', handleDigiflazzWebhook);
 app.post('/webhook/:secret/digiflazz', handleDigiflazzWebhook);
 
 // ══════════════════════════════════════════════════════════════
+// ── TELEGRAM BOT STORE & INTEGRATION ENDPOINTS ────────────────
+// ══════════════════════════════════════════════════════════════
+
+// 1. Webhook endpoint (POST /api/telegram/webhook & /webhook/telegram)
+app.post(['/api/telegram/webhook', '/webhook/telegram', '/api/telegram/bot'], async (req: Request, res: Response) => {
+  try {
+    await telegramBotService.handleUpdate(req.body);
+    res.status(200).json({ ok: true });
+  } catch (err: any) {
+    console.error('[Telegram Webhook Error]:', err.message);
+    res.status(200).json({ ok: false, error: err.message });
+  }
+});
+
+// GET ping handler for telegram webhook testing
+app.get(['/api/telegram/webhook', '/webhook/telegram'], (_req: Request, res: Response) => {
+  res.json({ status: 'ready', message: 'Telegram Store Bot Webhook endpoint active' });
+});
+
+// 2. Get Telegram Bot Info & Status (requireAdmin)
+app.get('/api/telegram/info', requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const info = await telegramBotService.getMe();
+    const config = telegramBotService.getConfig();
+    res.json({
+      success: Boolean(info?.ok),
+      bot: info?.result || null,
+      config: {
+        isConfigured: telegramBotService.isConfigured(),
+        chatId: config.chatId,
+        botUsername: config.botUsername,
+        storeEnabled: config.storeEnabled,
+        storeMode: config.storeMode,
+        webhookUrl: config.webhookUrl,
+        webAppUrl: config.webAppUrl,
+        csUsername: config.csUsername,
+        channelUrl: config.channelUrl,
+      },
+      description: info?.description || (info?.ok ? 'Bot Telegram terhubung' : 'Token bot tidak valid'),
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 3. Set Webhook URL to Telegram API (requireAdmin)
+app.post('/api/telegram/set-webhook', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const url = req.body?.url || telegramBotService.getConfig().webhookUrl;
+    if (!url) return res.status(400).json({ success: false, message: 'URL webhook wajib diisi' });
+    const result = await telegramBotService.setWebhook(url);
+    res.json({ success: Boolean(result?.ok), result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 4. Send Test Message to Admin (requireAdmin)
+app.post('/api/telegram/test-message', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const targetChatId = req.body?.chatId || telegramBotService.getConfig().chatId;
+    if (!targetChatId) return res.status(400).json({ success: false, message: 'Admin Chat ID belum diisi' });
+    const config = telegramBotService.getConfig();
+    const testMsg =
+      `🚀 <b>TEST KONEKSI TOKO BOT TELEGRAM WAYAHEDIGITAL</b>\n\n` +
+      `Halo Admin! Bot Toko Telegram berhasil terhubung ke server website.\n\n` +
+      `⚡ <b>Layanan Siap Melayani Pembeli:</b>\n` +
+      `• Auto Order Realtime dari Katalog Website\n` +
+      `• QRIS Otomatis Terbit di Chat Pembeli\n` +
+      `• Broadcast Notifikasi Pembayaran Lunas\n` +
+      `• Mini App WebApp Terintegrasi\n\n` +
+      `Waktu Uji: <code>${new Date().toLocaleString('id-ID')}</code>`;
+
+    const result = await telegramBotService.sendMessage(targetChatId, testMsg, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🛍️ Buka Menu Toko', callback_data: 'nav_home' }],
+          [{ text: '🌐 Buka WebApp Store', url: config.webAppUrl || 'http://localhost:7844' }],
+        ],
+      },
+    });
+    res.json({ success: Boolean(result?.ok), result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 5. Toggle Polling Mode (requireAdmin)
+app.post('/api/telegram/toggle-polling', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const active = Boolean(req.body?.active);
+    if (active) {
+      telegramBotService.startPolling();
+    } else {
+      telegramBotService.stopPolling();
+    }
+    res.json({ success: true, isPolling: active });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // ── PAKASIR API v2 SECURE ENDPOINTS ────────────────────────────
 // ══════════════════════════════════════════════════════════════
 
@@ -2682,6 +2786,27 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
         webhookSecret: DIGIFLAZZ_CONFIG.WEBHOOK_SECRET,
         webhookUrl: DIGIFLAZZ_CONFIG.WEBHOOK_URL,
       });
+
+      // Refresh memory configuration Telegram Bot Service
+      telegramBotService.refreshConfig({
+        botToken: settings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN,
+        chatId: settings.telegramChatId || BOT_CONFIG.TELEGRAM_CHAT_ID,
+        botUsername: settings.telegramBotUsername,
+        storeEnabled: settings.telegramStoreEnabled !== false,
+        storeMode: settings.telegramStoreMode || 'webhook',
+        webhookUrl: settings.telegramWebhookUrl,
+        webAppUrl: settings.telegramWebAppUrl,
+        welcomeMessage: settings.telegramWelcomeMessage,
+        csUsername: settings.telegramCsUsername,
+        channelUrl: settings.telegramChannelUrl,
+        alertsEnabled: settings.telegramAlertsEnabled !== false,
+      });
+
+      if (settings.telegramStoreMode === 'polling' && settings.telegramStoreEnabled !== false && settings.telegramBotToken) {
+        telegramBotService.startPolling();
+      } else {
+        telegramBotService.stopPolling();
+      }
     } catch (e: any) {
       console.warn('Could not write .env file:', e.message);
     }
@@ -2833,6 +2958,30 @@ try {
   await hydrateDigiflazzRuntime();
 } catch {
   console.error('[DIGIFLAZZ CONFIG] Database unavailable; Digiflazz disabled until confirmed settings reload.');
+}
+
+try {
+  const dbSettings = await mongoDbService.getSettingsFromDatabase();
+  if (dbSettings) {
+    telegramBotService.refreshConfig({
+      botToken: dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN,
+      chatId: dbSettings.telegramChatId || BOT_CONFIG.TELEGRAM_CHAT_ID,
+      botUsername: dbSettings.telegramBotUsername,
+      storeEnabled: dbSettings.telegramStoreEnabled !== false,
+      storeMode: dbSettings.telegramStoreMode || 'webhook',
+      webhookUrl: dbSettings.telegramWebhookUrl,
+      webAppUrl: dbSettings.telegramWebAppUrl,
+      welcomeMessage: dbSettings.telegramWelcomeMessage,
+      csUsername: dbSettings.telegramCsUsername,
+      channelUrl: dbSettings.telegramChannelUrl,
+      alertsEnabled: dbSettings.telegramAlertsEnabled !== false,
+    });
+    if (dbSettings.telegramStoreMode === 'polling' && dbSettings.telegramStoreEnabled !== false && (dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN)) {
+      telegramBotService.startPolling();
+    }
+  }
+} catch (e: any) {
+  // silent startup catch
 }
 
 app.listen(PORT, '127.0.0.1', () => {

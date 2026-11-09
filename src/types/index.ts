@@ -442,9 +442,17 @@ export interface AppSettings {
   digiflazzMode?: 'PRODUCTION' | 'DEVELOPMENT';
   digiflazzAutoFulfill?: boolean;
 
-  // Bot & Automation Notifications (Telegram / WhatsApp)
+  // Bot & Automation Notifications (Telegram / WhatsApp) & Telegram Store Bot
   telegramBotToken?: string;
   telegramChatId?: string;
+  telegramBotUsername?: string;
+  telegramStoreEnabled?: boolean;
+  telegramStoreMode?: 'polling' | 'webhook';
+  telegramWebhookUrl?: string;
+  telegramWebAppUrl?: string;
+  telegramWelcomeMessage?: string;
+  telegramChannelUrl?: string;
+  telegramCsUsername?: string;
   telegramAlertsEnabled?: boolean;
   whatsappBotApiKey?: string;
   whatsappAlertsEnabled?: boolean;

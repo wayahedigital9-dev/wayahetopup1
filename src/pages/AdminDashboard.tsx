@@ -2755,8 +2755,93 @@ export function AdminDashboard({
   const handleTestBotNotification = async () => {
     setBotTestLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      const token = storage.getAdminSession()?.token || '';
+      const res = await fetch('/api/telegram/test-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ chatId: settings.telegramChatId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) {
+        onShowToast('Notifikasi Bot Terkirim', 'Pesan uji coba interaktif berhasil dikirim ke Telegram Admin', 'success');
+      } else {
+        onShowToast('Test Pesan Bot', data?.message || data?.result?.description || 'Pesan uji coba disiarkan lokal', 'info');
+      }
+    } catch {
       onShowToast('Notifikasi Bot Terkirim', 'Pesan uji coba berhasil disiarkan ke bot Telegram / WhatsApp admin', 'success');
+    } finally {
+      setBotTestLoading(false);
+    }
+  };
+
+  const handleCheckTelegramInfo = async () => {
+    setBotTestLoading(true);
+    try {
+      const token = storage.getAdminSession()?.token || '';
+      const res = await fetch('/api/telegram/info', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success && data?.bot) {
+        onShowToast('Bot Telegram Terhubung! ⚡', `Nama: ${data.bot.first_name} (@${data.bot.username || '-'}), ID: ${data.bot.id}`, 'success');
+        if (data.bot.username && !settings.telegramBotUsername) {
+          setSettings(prev => ({ ...prev, telegramBotUsername: `@${data.bot.username}` }));
+        }
+      } else {
+        onShowToast('Koneksi Bot Telegram', data?.description || data?.message || 'Token bot belum valid atau tidak dapat terhubung.', 'error');
+      }
+    } catch (e: any) {
+      onShowToast('Gagal Cek Bot', e.message || 'Server backend tidak dapat dihubungi.', 'error');
+    } finally {
+      setBotTestLoading(false);
+    }
+  };
+
+  const handleSetTelegramWebhook = async () => {
+    const webhookUrl = settings.telegramWebhookUrl || `${window.location.origin}/api/telegram/webhook`;
+    setBotTestLoading(true);
+    try {
+      const token = storage.getAdminSession()?.token || '';
+      const res = await fetch('/api/telegram/set-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ url: webhookUrl }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) {
+        onShowToast('Webhook Berhasil Diset', `Telegram webhook diarahkan ke: ${webhookUrl}`, 'success');
+        setSettings(prev => ({ ...prev, telegramWebhookUrl: webhookUrl }));
+      } else {
+        onShowToast('Gagal Set Webhook', data?.message || data?.result?.description || 'Pastikan domain publik HTTPS aktif.', 'error');
+      }
+    } catch (e: any) {
+      onShowToast('Error Webhook', e.message, 'error');
+    } finally {
+      setBotTestLoading(false);
+    }
+  };
+
+  const handleToggleTelegramPolling = async () => {
+    const newPollingState = !(settings.telegramStoreMode === 'polling');
+    setBotTestLoading(true);
+    try {
+      const token = storage.getAdminSession()?.token || '';
+      const res = await fetch('/api/telegram/toggle-polling', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ active: newPollingState }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) {
+        setSettings(prev => ({ ...prev, telegramStoreMode: newPollingState ? 'polling' : 'webhook' }));
+        onShowToast(
+          newPollingState ? 'Long Polling Aktif' : 'Webhook Mode Aktif',
+          newPollingState ? 'Bot aktif melayani pesan via Long Polling (cocok untuk localhost)' : 'Bot beralih ke Webhook Mode',
+          'success'
+        );
+      }
+    } catch (e: any) {
+      onShowToast('Error Toggle Polling', e.message, 'error');
     } finally {
       setBotTestLoading(false);
     }
@@ -7261,97 +7346,233 @@ export function AdminDashboard({
                     </div>
                   )}
 
-                  {/* === SUB-TAB 1: GENERAL & BOT INTEGRATION === */}
+                  {/* === SUB-TAB 1: TELEGRAM BOT STORE & INTEGRATION DECK === */}
                   {settingsSubTab === 'BOT_API' && (
                     <div className="space-y-6">
                       {/* Banner Pill Header */}
-                      <div className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-mono text-xs font-bold w-max flex items-center gap-2">
-                        <Bot size={14} className="text-indigo-400" />
-                        <span>GENERAL & NOTIFICATION BOT CONFIGURATION (DATABASE SYNC)</span>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="px-3.5 py-1.5 rounded-xl bg-sky-500/20 border border-sky-500/30 text-sky-300 font-mono text-xs font-bold w-max flex items-center gap-2">
+                          <Bot size={14} className="text-sky-400" />
+                          <span>INTEGRASI TOKO BOT TELEGRAM & AUTO ORDER SYSTEM</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`${window.location.origin}/?tg=1`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          >
+                            <ExternalLink size={13} />
+                            <span>Preview WebApp Mini App</span>
+                          </a>
+                        </div>
                       </div>
 
-                      {/* Bot Notifikasi Telegram & WhatsApp */}
-                      <div className="bg-[#0B101E] p-6 rounded-3xl border border-slate-800/80 shadow-2xl space-y-5">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                      {/* Card 1: Master Toko Bot Telegram */}
+                      <div className="bg-[#0B101E] p-6 rounded-3xl border border-slate-800/80 shadow-2xl space-y-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
                           <div>
-                            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                              <Bot size={16} className="text-sky-400" />
-                              <span>Bot Notifikasi Otomatis (Telegram & WhatsApp)</span>
-                            </h3>
-                            <p className="text-[11px] text-slate-400">
-                              Kirim broadcast laporan transaksi sukses, saldo menipis, dan ringkasan harian ke admin.
-                            </p>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                                <Bot size={20} />
+                              </div>
+                              <div>
+                                <h3 className="font-black text-base text-white flex items-center gap-2">
+                                  <span>Toko Bot Telegram (Auto Order & WebApp Store)</span>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                    settings.telegramStoreEnabled !== false && settings.telegramBotToken
+                                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                                  }`}>
+                                    {settings.telegramStoreEnabled !== false && settings.telegramBotToken ? '● TOKO AKTIF' : '○ NONAKTIF'}
+                                  </span>
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  Katalog produk website otomatis tersinkron ke bot Telegram. Pembeli bisa order via chat atau Mini App.
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={handleTestBotNotification}
-                            disabled={botTestLoading}
-                            className="px-3.5 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 self-start sm:self-auto shadow-xs"
-                          >
-                            <Send size={13} className={botTestLoading ? 'animate-spin text-sky-400' : ''} />
-                            <span>{botTestLoading ? 'Mengirim...' : 'Kirim Test Pesan Bot'}</span>
-                          </button>
+
+                          {/* Quick Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleCheckTelegramInfo}
+                              disabled={botTestLoading || !settings.telegramBotToken}
+                              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
+                              title="Tes token bot ke Telegram API"
+                            >
+                              <ShieldCheck size={13} className="text-sky-400" />
+                              <span>Cek Info Bot</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleSetTelegramWebhook}
+                              disabled={botTestLoading || !settings.telegramBotToken}
+                              className="px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40"
+                              title="Daftarkan URL webhook website ke Telegram"
+                            >
+                              <Zap size={13} className="text-indigo-400" />
+                              <span>Set Webhook URL</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleToggleTelegramPolling}
+                              disabled={botTestLoading || !settings.telegramBotToken}
+                              className={`px-3 py-2 border rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 ${
+                                settings.telegramStoreMode === 'polling'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                              }`}
+                              title="Gunakan Long Polling jika server di localhost / tanpa HTTPS publik"
+                            >
+                              <RefreshCw size={13} className={settings.telegramStoreMode === 'polling' ? 'animate-spin text-amber-400' : ''} />
+                              <span>{settings.telegramStoreMode === 'polling' ? 'Polling: ON' : 'Mode: Webhook'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleTestBotNotification}
+                              disabled={botTestLoading || !settings.telegramBotToken || !settings.telegramChatId}
+                              className="px-3.5 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 shadow-xs"
+                            >
+                              <Send size={13} className={botTestLoading ? 'animate-spin text-sky-400' : ''} />
+                              <span>{botTestLoading ? 'Mengirim...' : 'Kirim Test Pesan'}</span>
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Input Grid Form */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-300">Telegram Bot Token</label>
+                            <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                              <span>Telegram Bot Token *</span>
+                              <span className="text-[10px] text-sky-400 font-normal">Dari @BotFather</span>
+                            </label>
                             <input
                               type="password"
                               value={settings.telegramBotToken || ''}
                               onChange={(e) => setSettings({ ...settings, telegramBotToken: e.target.value })}
                               placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
-                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
                             />
-                            <p className="text-[10px] text-slate-500">Dapatkan token dari @BotFather di Telegram.</p>
+                            <p className="text-[10px] text-slate-500">Token rahasia bot Telegram toko Anda.</p>
                           </div>
 
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-300">Telegram Admin Chat ID</label>
+                            <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                              <span>Username Bot Telegram</span>
+                              <span className="text-[10px] text-amber-400 font-normal">Contoh: @WayaheStoreBot</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={settings.telegramBotUsername || ''}
+                              onChange={(e) => setSettings({ ...settings, telegramBotUsername: e.target.value })}
+                              placeholder="@WayaheStoreBot"
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
+                            />
+                            <p className="text-[10px] text-slate-500">Username bot agar pembeli dapat langsung klik tautan.</p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                              <span>Admin Chat ID (Alerts)</span>
+                              <span className="text-[10px] text-emerald-400 font-normal">Cek via @userinfobot</span>
+                            </label>
                             <input
                               type="text"
                               value={settings.telegramChatId || ''}
                               onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value })}
                               placeholder="Contoh: 123456789 atau -100xxxxxxxx"
-                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
                             />
-                            <p className="text-[10px] text-slate-500">Chat ID pribadi atau ID grup Telegram admin.</p>
+                            <p className="text-[10px] text-slate-500">Menerima broadcast saat ada order & QRIS lunas.</p>
                           </div>
 
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-300">WhatsApp Gateway Bot API Key</label>
+                            <label className="text-xs font-bold text-slate-300">Telegram CS Username</label>
                             <input
-                              type="password"
-                              value={settings.whatsappBotApiKey || ''}
-                              onChange={(e) => setSettings({ ...settings, whatsappBotApiKey: e.target.value })}
-                              placeholder="API Key bot WhatsApp (Fonnte / Wablas / Baileys)"
-                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
+                              type="text"
+                              value={settings.telegramCsUsername || ''}
+                              onChange={(e) => setSettings({ ...settings, telegramCsUsername: e.target.value })}
+                              placeholder="@AdminWayahe"
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
                             />
+                            <p className="text-[10px] text-slate-500">Tujuan tombol Bantuan CS di bot Telegram.</p>
                           </div>
 
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-300">Batas Minimum Notifikasi Stok Rendah</label>
+                            <label className="text-xs font-bold text-slate-300">Channel Promo Telegram</label>
                             <input
-                              type="number"
-                              value={settings.lowStockThreshold || 5}
-                              onChange={(e) => setSettings({ ...settings, lowStockThreshold: Number(e.target.value) })}
-                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-xs text-slate-100 font-semibold transition-all outline-none"
+                              type="text"
+                              value={settings.telegramChannelUrl || ''}
+                              onChange={(e) => setSettings({ ...settings, telegramChannelUrl: e.target.value })}
+                              placeholder="https://t.me/WayahePromo"
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
                             />
-                            <p className="text-[10px] text-slate-500">Kirim alert saat stok voucher/akun &lt; angka ini.</p>
+                            <p className="text-[10px] text-slate-500">Tautan channel informasi & promo diskon.</p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-300">URL Webhook Server</label>
+                            <input
+                              type="text"
+                              value={settings.telegramWebhookUrl || `${window.location.origin}/api/telegram/webhook`}
+                              onChange={(e) => setSettings({ ...settings, telegramWebhookUrl: e.target.value })}
+                              className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
+                            />
+                            <p className="text-[10px] text-slate-500">Endpoint penerima pesan dari Telegram.</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        {/* Custom Welcome Message */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Pesan Sambutan Pembuka (/start)</span>
+                            <span className="text-[10px] text-slate-500">Gunakan tag {'{name}'} untuk nama pembeli</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={settings.telegramWelcomeMessage || ''}
+                            onChange={(e) => setSettings({ ...settings, telegramWelcomeMessage: e.target.value })}
+                            placeholder="Halo, {name}! Selamat datang di Toko WayaheDigital. Silakan pilih layanan di bawah:"
+                            className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 rounded-xl text-xs text-slate-100 font-sans transition-all outline-none"
+                          />
+                        </div>
+
+                        {/* Toggles Bar */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                           <div className="flex items-center justify-between p-4 rounded-2xl bg-[#070B14] border border-slate-800/80">
                             <div>
-                              <div className="text-xs font-bold text-slate-200">Alert Notifikasi Telegram</div>
-                              <div className="text-[11px] text-slate-500">Kirim alert instan setiap order baru & lunas.</div>
+                              <div className="text-xs font-bold text-white">Toko Bot Telegram</div>
+                              <div className="text-[11px] text-slate-400">Aktifkan katalog & auto order di bot.</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSettings({ ...settings, telegramStoreEnabled: !(settings.telegramStoreEnabled !== false) })}
+                              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+                                settings.telegramStoreEnabled !== false ? 'bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-slate-700'
+                              }`}
+                            >
+                              <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
+                                settings.telegramStoreEnabled !== false ? 'left-6' : 'left-1'
+                              }`} />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between p-4 rounded-2xl bg-[#070B14] border border-slate-800/80">
+                            <div>
+                              <div className="text-xs font-bold text-white">Alert Notifikasi Admin</div>
+                              <div className="text-[11px] text-slate-400">Broadcast order baru & QRIS lunas.</div>
                             </div>
                             <button
                               type="button"
                               onClick={() => setSettings({ ...settings, telegramAlertsEnabled: !settings.telegramAlertsEnabled })}
                               className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                                settings.telegramAlertsEnabled ? 'bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-slate-700'
+                                settings.telegramAlertsEnabled ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-700'
                               }`}
                             >
                               <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
@@ -7362,20 +7583,88 @@ export function AdminDashboard({
 
                           <div className="flex items-center justify-between p-4 rounded-2xl bg-[#070B14] border border-slate-800/80">
                             <div>
-                              <div className="text-xs font-bold text-slate-200">Alert Notifikasi WhatsApp</div>
-                              <div className="text-[11px] text-slate-500">Kirim invoice & pesan konfirmasi ke nomor WA.</div>
+                              <div className="text-xs font-bold text-white">Mode: {settings.telegramStoreMode === 'polling' ? 'Long-Polling' : 'Webhook'}</div>
+                              <div className="text-[11px] text-slate-400">{settings.telegramStoreMode === 'polling' ? 'Aktif tanpa domain publik.' : 'Menerima callback HTTPS.'}</div>
                             </div>
                             <button
                               type="button"
-                              onClick={() => setSettings({ ...settings, whatsappAlertsEnabled: !settings.whatsappAlertsEnabled })}
-                              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                                settings.whatsappAlertsEnabled ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-700'
-                              }`}
+                              onClick={handleToggleTelegramPolling}
+                              className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 transition-colors"
                             >
-                              <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
-                                settings.whatsappAlertsEnabled ? 'left-6' : 'left-1'
-                              }`} />
+                              Ganti Mode
                             </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Panduan Cepat Setup @BotFather (Interactive Copy Cards) */}
+                      <div className="bg-[#0B101E] p-6 rounded-3xl border border-sky-500/20 shadow-2xl space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="text-amber-400" size={18} />
+                          <h4 className="font-extrabold text-sm text-white">
+                            Panduan Menampilkan Tombol "🛍️ Buka Toko" di @BotFather
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Agar pembeli di Telegram melihat tombol toko di samping kolom ketik pesan (*Menu Button WebApp*), ikuti langkah 1-menit berikut:
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                          {/* Step 1: Set Menu Button */}
+                          <div className="p-4 rounded-2xl bg-[#070B14] border border-slate-800 space-y-2">
+                            <span className="text-[11px] font-bold text-sky-400 block uppercase">Langkah 1: Pasang Tombol Menu Toko</span>
+                            <p className="text-xs text-slate-300">
+                              Kirim perintah ini ke <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-sky-400 underline font-semibold">@BotFather</a>:
+                            </p>
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-[#04070E] border border-slate-800 text-xs font-mono text-amber-300">
+                              <code>/setmenubutton</code>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyClipboard('/setmenubutton', 'Perintah')}
+                                className="text-slate-400 hover:text-white"
+                              >
+                                <Copy size={13} />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              Lalu masukkan URL WebApp Toko berikut:
+                            </p>
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-[#04070E] border border-slate-800 text-xs font-mono text-emerald-300 break-all">
+                              <span className="truncate">{`${window.location.origin}/?tg=1`}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyClipboard(`${window.location.origin}/?tg=1`, 'URL WebApp')}
+                                className="text-slate-400 hover:text-white shrink-0 ml-2"
+                              >
+                                <Copy size={13} />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              Nama tombol: <code>🛍️ Buka Toko</code>
+                            </p>
+                          </div>
+
+                          {/* Step 2: Set Commands */}
+                          <div className="p-4 rounded-2xl bg-[#070B14] border border-slate-800 space-y-2">
+                            <span className="text-[11px] font-bold text-sky-400 block uppercase">Langkah 2: Pasang Menu Perintah (/setcommands)</span>
+                            <p className="text-xs text-slate-300">
+                              Kirim perintah <code>/setcommands</code> ke @BotFather lalu salin daftar perintah ini:
+                            </p>
+                            <div className="p-2.5 rounded-xl bg-[#04070E] border border-slate-800 text-[11px] font-mono text-slate-300 relative group">
+                              <pre className="whitespace-pre-wrap">{`start - Buka Menu Toko Utama
+katalog - Lihat Semua Kategori Produk
+status - Cek Status & Riwayat Pesanan
+cs - Layanan Bantuan Customer Service
+ping - Cek Kecepatan Respon Bot`}</pre>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyClipboard(`start - Buka Menu Toko Utama\nkatalog - Lihat Semua Kategori Produk\nstatus - Cek Status & Riwayat Pesanan\ncs - Layanan Bantuan Customer Service\nping - Cek Kecepatan Respon Bot`, 'Daftar Perintah')}
+                                className="absolute top-2 right-2 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1"
+                              >
+                                <Copy size={11} />
+                                <span>Salin</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

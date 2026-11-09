@@ -30,23 +30,28 @@ import { AkunPage } from './pages/AkunPage';
 import { BantuanPage } from './pages/BantuanPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminLoginPage } from './pages/AdminLoginPage';
+import { TelegramStorePage } from './pages/TelegramStorePage';
 
 // Helper to parse route from browser URL or hash
 const getRouteFromUrl = (): string => {
   if (typeof window !== 'undefined') {
+    const search = window.location.search.toLowerCase();
     const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
     const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
 
+    if (search.includes('tg=1') || search.includes('tgwebapp=1') || path === 'tg-store' || hash === 'tg-store') {
+      return 'tg-store';
+    }
     if (path === 'owner' || path === 'admin' || hash === 'owner' || hash === 'admin') {
       return 'admin';
     }
     if (path === 'daftar' || path === 'register' || hash === 'daftar' || hash === 'register') {
       return 'akun';
     }
-    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(path)) {
+    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan', 'tg-store'].includes(path)) {
       return path;
     }
-    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan'].includes(hash)) {
+    if (['pulsa', 'kuota', 'wifi', 'checkout', 'transaksi', 'akun', 'bantuan', 'tg-store'].includes(hash)) {
       return hash;
     }
   }
@@ -270,6 +275,39 @@ export default function App() {
       addToast('Kesalahan Sistem', err.message || 'Gagal memproses status pembayaran', 'error');
     }
   };
+
+  // Telegram Mini App Store View
+  if (activeTab === 'tg-store') {
+    return (
+      <div className="min-h-screen bg-[#070A12] text-slate-100 flex flex-col font-sans relative">
+        <TopProgressBar />
+        <TelegramStorePage
+          products={products}
+          onShowToast={addToast}
+          onNavigateHome={() => handleNavigate('home')}
+        />
+        {/* Toast Notifikasi */}
+        <div className="fixed top-4 right-4 z-[9999] space-y-2 max-w-sm w-full pointer-events-none">
+          {toasts.map(toast => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto p-4 rounded-2xl shadow-2xl border flex items-start gap-3 backdrop-blur-md transition-all ${
+                toast.type === 'success' ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-100' :
+                toast.type === 'error' ? 'bg-rose-950/90 border-rose-500/40 text-rose-100' :
+                toast.type === 'warning' ? 'bg-amber-950/90 border-amber-500/40 text-amber-100' :
+                'bg-slate-900/90 border-slate-700 text-slate-100'
+              }`}
+            >
+              <div className="flex-1 text-xs">
+                <span className="font-bold block">{toast.title}</span>
+                <span className="opacity-80 block mt-0.5">{toast.message}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // If user is inside Admin view
   if (activeTab === 'admin') {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Headphones, Clock, Mail, MessageCircle, ChevronRight, Sparkles } from 'lucide-react';
+import { ShieldCheck, Headphones, Clock, Mail, MessageCircle, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { storage } from '../services/storage';
 import { useTheme } from '../context/ThemeContext';
 
@@ -139,6 +139,15 @@ export function Footer({ onNavigate }: FooterProps) {
                 >
                   <ChevronRight size={13} className="text-amber-500" />
                   <span>Program Reseller VIP</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('tg-store')}
+                  className="text-sky-400 hover:text-sky-300 hover:translate-x-0.5 transition-all flex items-center gap-1.5 cursor-pointer font-medium"
+                >
+                  <Send size={13} className="text-sky-400" />
+                  <span>Toko Bot Telegram (Auto Order)</span>
                 </button>
               </li>
               <li className={`pt-2 border-t ${isDark ? 'border-white/[0.08]' : 'border-slate-100'}`}>

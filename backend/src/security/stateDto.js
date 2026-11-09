@@ -24,7 +24,7 @@ function publicProduct(product) {
 
 export function toPublicState(state) {
   const data = state && typeof state === 'object' ? state : {};
-  const settings = pickScalars(data.settings, 'siteName supportWhatsApp supportEmail supportHours logoUrl systemStatus systemMaintenanceMessage paymentGatewayProvider');
+  const settings = pickScalars(data.settings, 'siteName supportWhatsApp supportEmail supportHours logoUrl systemStatus systemMaintenanceMessage paymentGatewayProvider telegramBotUsername telegramStoreEnabled telegramChannelUrl telegramCsUsername telegramWebAppUrl');
   if (data.settings?.categoryStatus) settings.categoryStatus = Object.fromEntries(
     Object.entries(pickScalars(data.settings.categoryStatus, 'pulsa kuota game premium wifi smm gateway_tambahan ai_gateway pln')).filter(([, value]) => typeof value === 'boolean'));
   if (data.settings?.discountPopup) settings.discountPopup = pickScalars(data.settings.discountPopup,

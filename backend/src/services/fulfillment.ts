@@ -8,6 +8,7 @@ import { CONSOLE_CONFIG } from '../config/console.js';
 import { DIGIFLAZZ_CONFIG } from '../config/apikeys.js';
 import { supabaseService } from './supabaseService.js';
 import { mongoDbService } from './mongodbService.js';
+import { telegramBotService } from './telegramBot.js';
 
 /**
  * Generate unique ref_id untuk transaksi Digiflazz
@@ -39,6 +40,13 @@ export class FulfillmentService {
     try { await this.prisma.order.update({ where: { id: orderId }, data }); }
     catch (_) { console.warn(`[Fulfillment] Prisma mirror unavailable for ${orderId}; canonical state preserved.`); }
     try { await supabaseService.saveOrder(state); } catch (_) {}
+
+    // Notifikasi otomatis ke Telegram Pembeli & Admin saat lunas / sukses
+    if (state.paymentStatus === 'PAID' || state.fulfillmentStatus === 'SUCCESS') {
+      try {
+        telegramBotService.notifyOrderPaid(state).catch(() => {});
+      } catch (_) {}
+    }
   }
 
   /**
