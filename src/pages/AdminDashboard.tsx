@@ -238,7 +238,7 @@ export function AdminDashboard({
   const [settingsSubTab, setSettingsSubTabState] = useState<SettingsSubTab>(() => {
     try {
       const saved = sessionStorage.getItem('wd_admin_settings_sub_tab');
-      if (saved && ['API_PROVIDERS', 'BOT_API', 'PAYMENT_GATEWAY', 'DIGIFLAZZ_H2H', 'API_CONSOLE', 'ADMIN_AUTH', 'STORE_INFO', 'PROMO_POPUP', 'SECURITY', 'MONGODB_SETTINGS'].includes(saved)) {
+      if (saved && ['API_PROVIDERS', 'BOT_API', 'PAYMENT_GATEWAY', 'DIGIFLAZZ_H2H', 'API_CONSOLE', 'ADMIN_AUTH', 'STORE_INFO', 'PROMO_POPUP', 'SECURITY', 'MONGODB_SETTINGS', 'AYOSEL_API'].includes(saved)) {
         return saved as any;
       }
     } catch (_) {}
@@ -5168,7 +5168,7 @@ const playDoneSound = () => {
                   }`}
                 >
                   <Sparkles size={16} className={premiumMode === 'PROVIDER' ? 'text-white' : 'text-amber-400'} />
-                  <span>⚡ API Provider (Xaviera Store)</span>
+                  <span>⚡ API Provider (Ayosel)</span>
                 </button>
               </div>
 
@@ -5187,7 +5187,7 @@ const playDoneSound = () => {
                   subtitle="Katalog resmi lisensi & akun premium digital Xaviera Store"
                   onNavigateToSettings={() => {
                     setActiveTab('SETTINGS');
-                    setSettingsSubTab('API_PROVIDERS');
+                    setSettingsSubTab('AYOSEL_API');
                   }}
                   onRefreshData={onRefreshData}
                   onShowToast={onShowToast}
