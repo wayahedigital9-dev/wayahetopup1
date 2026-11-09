@@ -299,8 +299,8 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     const existingOrders = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
     const collision = existingOrders.some((o: any) => o.id === orderId || o.invoiceNumber === invoiceNumber)
       || await prisma.order.findFirst({ where: { OR: [{ id: orderId }, { invoiceNumber }] } })
-      || await supabaseService.getOrder(orderId, true)
-      || await supabaseService.getOrder(invoiceNumber, true);
+      || await supabaseService.getOrder(orderId, false)
+      || await supabaseService.getOrder(invoiceNumber, false);
     if (collision) return res.status(409).json({ success: false, message: 'ID atau nomor invoice pesanan sudah digunakan.' });
 
     const accessToken = typeof guestAccessToken === 'string' && guestAccessToken.length >= 20 ? guestAccessToken : `gst_${crypto.randomBytes(24).toString('hex')}`;
