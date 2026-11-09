@@ -212,7 +212,7 @@ export class TelegramBotService {
 
     // COMMAND /saldo
     if (text === '/saldo') {
-      const bal = this.config.balanceInfo || 'Saldo Anda akan ditampilkan setelah login di WebApp Toko.';
+      const bal = 'Saldo Anda akan ditampilkan setelah login di WebApp Toko.';
       await this.sendMessage(chatId, `💰 <b>Cek Saldo & Deposit</b>\n\n${bal}\n\nKlik tombol <b>Buka Toko Mini App</b> di menu untuk melihat saldo realtime dan melakukan top up saldo.`);
       return;
     }
@@ -220,6 +220,39 @@ export class TelegramBotService {
     // COMMAND /id
     if (text === '/id') {
       await this.sendMessage(chatId, `🆔 <b>Chat ID Anda</b>\n\nKode chat: <code>${chatId}</code>\nGunakan kode ini untuk verifikasi atau hubungi admin.`);
+      return;
+    }
+
+    // COMMAND /waktu (tampilkan waktu & tanggal lokal)
+    if (text === '/waktu') {
+      const now = new Date();
+      const opsi = { weekday:'long' as const, year:'numeric' as const, month:'long' as const, day:'numeric' as const, hour:'2-digit' as const, minute:'2-digit' as const, second:'2-digit' as const, timeZone:'Asia/Jakarta' };
+      await this.sendMessage(chatId, `🕒 <b>Waktu & Tanggal Lokal</b>\n\n${now.toLocaleString('id-ID', opsi)} WIB\n\nAtur zona waktu di pengaturan akun di WebApp Toko agar notifikasi & pesanan tertimestamp dengan benar.`);
+      return;
+    }
+
+    // COMMAND /statistik (akun & bot)
+    if (text === '/statistik') {
+      try {
+        const state = await mongoDbService.getAllState();
+        const orders = Array.isArray(state?.orders) ? state.orders : Object.values(state?.orders || {});
+        const totalOrder = orders.length;
+        const totalPenjualan = orders.reduce((s,o:any) => s + (Number(o.totalAmount||0)), 0);
+        const users = new Set(orders.map((o:any)=>o.telegramChatId||o.customerId||o.id).filter(Boolean));
+        const saldoAktif = 'Tersinkron via WebApp Toko';
+        const text =
+          `📊 <b>Statistik Akun & Bot</b>\n\n` +
+          `👤 <b>Akun:</b>\n` +
+          `• Saldo Aktif: <code>${saldoAktif}</code>\n` +
+          `• Total Order: <b>${totalOrder}</b>\n` +
+          `• Total Penjualan: <b>Rp ${totalPenjualan.toLocaleString('id-ID')}</b>\n\n` +
+          `🤖 <b>Bot:</b>\n` +
+          `• Total Pengguna: <b>${users.size}</b>\n` +
+          `• Total Penjualan: <b>Rp ${totalPenjualan.toLocaleString('id-ID')}</b>\n`;
+        await this.sendMessage(chatId, text);
+      } catch (e: any) {
+        await this.sendMessage(chatId, `❌ Gagal memuat statistik: ${e.message}`);
+      }
       return;
     }
 
