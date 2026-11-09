@@ -2812,13 +2812,39 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     }
 
     // Persist full settings ke MongoDB lokal (aaPanel) & file cache — merge menjaga secret lama
-    res.json({ 
-      success: true, 
-      mongoPersisted: syncOk,
-      supabasePersisted: syncOk,
-      message: syncOk
-        ? 'Pengaturan berhasil disimpan ke MongoDB lokal & .env'
-        : 'Pengaturan berhasil disimpan ke cache lokal server & .env (MongoDB offline)',
+    if (!syncOk) {
+      return res.status(503).json({
+        success: false,
+        mongoPersisted: false,
+        message: 'MongoDB tidak tersedia. Pengaturan Telegram Bot belum tersimpan.'
+      });
+    }
+
+    const bundle = {
+      ...settings,
+      telegramBotToken: settings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN,
+      chatId: settings.telegramChatId || BOT_CONFIG.TELEGRAM_CHAT_ID,
+      botUsername: settings.telegramBotUsername,
+      storeEnabled: settings.telegramStoreEnabled !== false,
+      storeMode: settings.telegramStoreMode || 'webhook',
+      webhookUrl: settings.telegramWebhookUrl,
+      webAppUrl: settings.telegramWebAppUrl,
+      welcomeMessage: settings.telegramWelcomeMessage,
+      csUsername: settings.telegramCsUsername,
+      channelUrl: settings.telegramChannelUrl,
+      alertsEnabled: settings.telegramAlertsEnabled !== false,
+    };
+    try { telegramBotService.refreshConfig(bundle); } catch (_) {}
+    if (bundle.storeMode === 'polling' && bundle.storeEnabled !== false && bundle.telegramBotToken) {
+      try { telegramBotService.startPolling(); } catch (_) {}
+    } else {
+      try { telegramBotService.stopPolling(); } catch (_) {}
+    }
+
+    res.json({
+      success: true,
+      mongoPersisted: true,
+      message: 'Pengaturan berhasil disimpan ke MongoDB (konfigurasi Telegram Bot di-refresh).'
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });

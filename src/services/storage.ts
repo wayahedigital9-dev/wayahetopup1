@@ -1582,7 +1582,11 @@ export const storage = {
   },
 
   async saveSettings(settings: AppSettings): Promise<void> {
-    if (!adminSettingsHydrated) throw new Error('Muat konfigurasi admin dari server sebelum menyimpan.');
+    // Coba muat konfigurasi admin dari server bila belum, alih-alih langsung gagal.
+    if (!adminSettingsHydrated) {
+      const hydrated = await this.hydrateSettingsFromBackend();
+      if (!hydrated) throw new Error('Sesi admin tidak tersedia. Silakan login ulang sebelum menyimpan.');
+    }
     const sanitizedSettings = settingsPatch(confirmedSettings, {
       ...settings,
       supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),

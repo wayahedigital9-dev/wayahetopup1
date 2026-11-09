@@ -1904,8 +1904,9 @@ export function AdminDashboard({
       await storage.saveSettings(updated);
       setSettings(storage.getSettings());
       return true;
-    } catch (_) {
-      onShowToast('Gagal Simpan', 'Pengaturan belum tersimpan di server. Periksa koneksi dan akses admin.', 'error');
+    } catch (err: any) {
+      const msg = err?.message || 'Terjadi kesalahan saat menyimpan pengaturan.';
+      onShowToast('Gagal Simpan', msg, 'error');
       return false;
     }
   };
