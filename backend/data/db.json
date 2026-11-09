@@ -10,7 +10,7 @@
       "sellingPrice": 200,
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
-      "stock": 3,
+      "stock": 0,
       "hasVariants": true,
       "isManualCustom": true,
       "variants": [
@@ -18,17 +18,11 @@
           "id": "var-mv0l9ag7-116",
           "name": "30d",
           "sellingPrice": 200,
-          "supplierPrice": 0,
-          "description": "okee",
-          "stock": 3,
-          "voucherCodes": [
-            "458988",
-            "588888",
-            "5885"
-          ],
-          "isActive": true,
+          "stock": 0,
           "sku": "SKU-5035",
-          "expiredDays": 30
+          "description": "okee",
+          "isActive": true,
+          "voucherCodes": []
         }
       ],
       "basePrice": 0,
@@ -74,7 +68,7 @@
       "sellingPrice": 500,
       "deliveryMethod": "AUTOMATIC",
       "isActive": true,
-      "stock": 0,
+      "stock": 1,
       "hasVariants": true,
       "isManualCustom": true,
       "variants": [
@@ -82,11 +76,14 @@
           "id": "var-muzjenwa-959",
           "name": "1 jam",
           "sellingPrice": 500,
-          "stock": 0,
+          "stock": 1,
           "sku": "SKU-8136",
           "description": "okee banget",
           "isActive": true,
-          "voucherCodes": []
+          "voucherCodes": [
+            "798218913289"
+          ],
+          "expiredDays": 7
         }
       ],
       "basePrice": 0,
@@ -8275,8 +8272,37 @@
       "lastSyncedAt": "2026-11-09T11:36:27.185Z"
     }
   ],
-  "manualInventoryRevision": 17,
+  "manualInventoryRevision": 19,
   "orders": [
+    {
+      "_id": "6af1b5f127f1fbbcf1781702",
+      "id": "ord_tg_1794225649799_lxl3",
+      "invoiceNumber": "INV/20261109/WD/1906",
+      "userId": "tg_7234040728",
+      "guestAccessToken": "gst_tg_a496edbf24541fe4be936666476e3301",
+      "productId": "df-2k",
+      "targetDestination": "081211124761",
+      "customerName": "Wayahe",
+      "customerPhone": "081211124761",
+      "customerEmail": "",
+      "category": "pulsa",
+      "subtotal": 3300,
+      "adminFee": 0,
+      "discount": 0,
+      "totalAmount": 3300,
+      "promoCode": "",
+      "deliveryMethod": "AUTOMATIC",
+      "paymentStatus": "UNPAID",
+      "fulfillmentStatus": "NOT_STARTED",
+      "createdAt": "2026-11-09T12:00:49.799Z",
+      "updatedAt": "2026-11-09T12:00:49.799Z",
+      "metadata": {
+        "source": "telegram_bot",
+        "telegramChatId": "7234040728",
+        "telegramUsername": "@Digitalspace31",
+        "buyerName": "Wayahe"
+      }
+    },
     {
       "_id": "6af1a239044a8049cc613320",
       "id": "ord_tg_1794220601119_dwj7",
@@ -10799,6 +10825,13 @@
           "password": "4588435",
           "status": "AVAILABLE",
           "createdAt": "2026-10-08T12:53:37.095Z"
+        },
+        {
+          "id": "vch-mw97kkfr-710",
+          "code": "798218913289",
+          "password": "798218913289",
+          "status": "AVAILABLE",
+          "createdAt": "2026-11-09T11:59:17.367Z"
         }
       ],
       "createdAt": "2026-10-08T12:53:13.210Z"
