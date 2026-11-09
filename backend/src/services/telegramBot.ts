@@ -46,6 +46,7 @@ export class TelegramBotService {
   private isPolling = false;
   private pollingTimeout: NodeJS.Timeout | null = null;
   private lastUpdateId = 0;
+  private qrPhotoMsgByOrder = new Map<string, { chatId: string | number; messageId: number }>();
 
   constructor() {
     this.config = {
@@ -128,6 +129,13 @@ export class TelegramBotService {
       caption,
       parse_mode: 'HTML',
       ...options,
+    });
+  }
+
+  public async deleteMessage(chatId: string | number, messageId: number): Promise<any> {
+    return await this.callApi('deleteMessage', {
+      chat_id: chatId,
+      message_id: messageId,
     });
   }
 
@@ -908,9 +916,15 @@ export class TelegramBotService {
 
       // Kirim pesan dengan foto QRIS jika tersedia
       if (qrImageUrl) {
-        await this.sendPhoto(chatId, qrImageUrl, invoiceCaption, {
+        const sent = await this.sendPhoto(chatId, qrImageUrl, invoiceCaption, {
           reply_markup: { inline_keyboard: actionButtons },
         });
+        try {
+          const msgId = (sent as any)?.result?.message_id || (sent as any)?.message_id;
+          if (msgId && invoiceNumber) {
+            this.qrPhotoMsgByOrder.set(invoiceNumber, { chatId, messageId: Number(msgId) });
+          }
+        } catch (_) {}
       } else {
         await this.sendMessage(chatId, invoiceCaption, {
           reply_markup: { inline_keyboard: actionButtons },
@@ -1036,7 +1050,13 @@ export class TelegramBotService {
     // 1. Notifikasi ke Pembeli Telegram jika order dibuat via Bot
     const buyerChatId = order.metadata?.telegramChatId;
     if (buyerChatId) {
-      const snText = order.serialNumber ? `\n• <b>Serial Number (SN):</b> <code>${order.serialNumber}</code>` : '';
+      // 1a. Hapus foto QRIS lama dari chat pembeli (agar tidak dipakai lagi setelah lunas) + animasi sukses
+      const invoiceNumber = order.invoiceNumber;
+      const qrEntry = invoiceNumber ? this.qrPhotoMsgByOrder.get(invoiceNumber) : null;
+      if (qrEntry) {
+        try { await this.deleteMessage(qrEntry.chatId, qrEntry.messageId); } catch (_) {}
+        this.qrPhotoMsgByOrder.delete(invoiceNumber);
+      }
       const voucherText = order.voucherCode ? `\n• <b>Data Akun / Voucher:</b>\n<code>${order.voucherCode}</code>` : '';
 
       const buyerMsg =
