@@ -7190,42 +7190,7 @@ const playDoneSound = () => {
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-                        {/* 1. Pakasir API v2 */}
-                        <div
-                          onClick={() => {
-                            setSettingsSubTab('PAYMENT_GATEWAY');
-                            setSelectedGatewayProvider('PAKASIR');
-                          }}
-                          className={`p-4 rounded-2xl bg-[#090E1B] border transition-all cursor-pointer relative group ${
-                            settingsSubTab === 'PAYMENT_GATEWAY' && selectedGatewayProvider === 'PAKASIR'
-                              ? 'border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.35)] bg-gradient-to-b from-[#09152E] to-[#090E1B]'
-                              : 'border-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                            <Zap size={18} className={(settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR' ? 'animate-pulse' : ''} />
-                          </div>
-                          <div className="font-extrabold text-xs text-white">Pakasir v2</div>
-                          <div className="text-[10px] text-slate-400 font-mono">qris & e-wallet</div>
-                          <div className="mt-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold border flex items-center gap-1 w-max ${
-                              (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR'
-                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                                : settings.pakasirSlug && settings.pakasirApiKey
-                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                : 'bg-slate-800/80 text-slate-400 border-slate-700'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR'
-                                  ? 'bg-blue-400 animate-ping'
-                                  : settings.pakasirSlug && settings.pakasirApiKey
-                                  ? 'bg-emerald-400'
-                                  : 'bg-slate-500'
-                              }`} />
-                              {(settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR' ? 'ACTIVE' : settings.pakasirSlug ? 'STANDBY' : 'UNSET'}
-                            </span>
-                          </div>
-                        </div>
+                        {/* 2. Qiospay QRIS */}
 
                         {/* 2. Qiospay QRIS */}
                         <div
@@ -7750,64 +7715,7 @@ ping - Cek Kecepatan Respon Bot`}</pre>
 
                         {/* Dual ON/OFF Toggle Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Card 1: Pakasir API v2 */}
-                          <div
-                            onClick={() => {
-                              setSelectedGatewayProvider('PAKASIR');
-                              handleToggleActiveGateway('PAKASIR');
-                            }}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
-                              (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR'
-                                ? 'bg-blue-950/50 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.25)] ring-1 ring-blue-500/50'
-                                : 'bg-[#060A14] border-slate-800/80 hover:border-slate-700 opacity-60 hover:opacity-90'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2.5 rounded-xl ${
-                                (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR'
-                                  ? 'bg-blue-600 text-white shadow-md'
-                                  : 'bg-slate-800 text-slate-400'
-                              }`}>
-                                <Zap size={20} className={(settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR' ? 'animate-pulse' : ''} />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-xs font-bold text-white">Pakasir API v2</h4>
-                                  {(settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR' ? (
-                                    <span className="text-[9.5px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                      ON (Aktif)
-                                    </span>
-                                  ) : (
-                                    <span className="text-[9.5px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-400">
-                                      OFF (Standby)
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10.5px] text-slate-400">
-                                  QRIS dinamis, payment link, & webhook instan
-                                </p>
-                              </div>
-                            </div>
 
-                            {/* Switch Button */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedGatewayProvider('PAKASIR');
-                                handleToggleActiveGateway('PAKASIR');
-                              }}
-                              className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
-                                (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR'
-                                  ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]'
-                                  : 'bg-slate-700'
-                              }`}
-                            >
-                              <span className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
-                                (settings.paymentGatewayProvider || selectedGatewayProvider) === 'PAKASIR' ? 'left-7' : 'left-1'
-                              }`} />
-                            </button>
-                          </div>
 
                           {/* Card 2: Qiospay QRIS */}
                           <div
@@ -7997,214 +7905,7 @@ ping - Cek Kecepatan Respon Bot`}</pre>
                             </div>
                           </div>
 
-                          {/* Pakasir Form Inputs */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* 1. PAKASIR_SLUG */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>Pakasir Project Slug (PAKASIR_SLUG)</span>
-                                <span className="text-[10px] text-blue-400 font-mono">Wajib</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={pakasirSlug}
-                                onChange={(e) => {
-                                  setPakasirSlug(e.target.value);
-                                  setSettings({ ...settings, pakasirSlug: e.target.value });
-                                }}
-                                placeholder=""
-                                className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                              />
-                              <p className="text-[10px] text-slate-500">
-                                Slug project yang terdaftar di dashboard Pakasir (https://app.pakasir.com).
-                              </p>
-                            </div>
 
-                            {/* 2. PAKASIR_BASE_URL */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300">
-                                Pakasir Base URL (PAKASIR_BASE_URL)
-                              </label>
-                              <input
-                                type="text"
-                                value={pakasirBaseUrl}
-                                onChange={(e) => {
-                                  setPakasirBaseUrl(e.target.value);
-                                  setSettings({ ...settings, pakasirBaseUrl: e.target.value });
-                                }}
-                                placeholder="https://app.pakasir.com"
-                                className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                              />
-                              <p className="text-[10px] text-slate-500">
-                                Endpoint resmi API Pakasir (Default: https://app.pakasir.com).
-                              </p>
-                            </div>
-
-                            {/* 3. PAKASIR_API_KEY */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>Pakasir API Key (PAKASIR_API_KEY)</span>
-                                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                                  <ShieldCheck size={11} />
-                                  <span>Tersimpan Rahasia di Backend</span>
-                                </span>
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="password"
-                                  value={pakasirApiKey}
-                                  onChange={(e) => {
-                                    setPakasirApiKey(e.target.value);
-                                    setSettings({ ...settings, pakasirApiKey: e.target.value });
-                                  }}
-                                  placeholder={settings.pakasirApiKey || pakasirApiKey ? "•••••••••••••••• (Tersimpan di Backend)" : ""}
-                                  autoComplete="new-password"
-                                  className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                                />
-                              </div>
-                              <p className="text-[10px] text-slate-500">
-                                Kunci rahasia disembunyikan dan dienkripsi di server backend.
-                              </p>
-                            </div>
-
-                            {/* 4. PAKASIR_WEBHOOK_SECRET */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>Webhook Secret (PAKASIR_WEBHOOK_SECRET)</span>
-                                <span className="text-[10px] text-amber-400 font-mono flex items-center gap-1">
-                                  <ShieldCheck size={11} />
-                                  <span>Tersimpan Rahasia di Backend</span>
-                                </span>
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="password"
-                                  value={pakasirWebhookSecret}
-                                  onChange={(e) => {
-                                    setPakasirWebhookSecret(e.target.value);
-                                    setSettings({ ...settings, pakasirWebhookSecret: e.target.value });
-                                  }}
-                                  placeholder={settings.pakasirWebhookSecret || pakasirWebhookSecret ? "•••••••••••••••• (Tersimpan di Backend)" : ""}
-                                  autoComplete="new-password"
-                                  className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                                />
-                              </div>
-                              <p className="text-[10px] text-slate-500">
-                                Secret untuk validasi webhook, disembunyikan untuk keamanan server.
-                              </p>
-                            </div>
-                            {/* 5. PAKASIR_MERCHANT_NAME */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>Nama Toko / Penerbit QRIS (PAKASIR_MERCHANT_NAME)</span>
-                                <span className="text-[10px] text-blue-400 font-mono">Tag 59 ASPI</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={pakasirMerchantName}
-                                onChange={(e) => {
-                                  setPakasirMerchantName(e.target.value);
-                                  setSettings({ ...settings, pakasirMerchantName: e.target.value });
-                                }}
-                                placeholder=""
-                                className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                              />
-                              <p className="text-[10px] text-slate-500">
-                                Nama merchant/penerbit resmi yang muncul di layar scan m-Banking (BCA, Mandiri, BRImo, DANA).
-                              </p>
-                            </div>
-
-                            {/* 6. PAKASIR_NMID */}
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>Pakasir NMID (Opsional)</span>
-                                <span className="text-[10px] text-slate-400 font-mono">Tag 51 ASPI</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={pakasirNmid}
-                                onChange={(e) => {
-                                  setPakasirNmid(e.target.value);
-                                  setSettings({ ...settings, pakasirNmid: e.target.value });
-                                }}
-                                placeholder=""
-                                className="w-full px-4 py-3 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                              />
-                              <p className="text-[10px] text-slate-500">
-                                NMID khusus Pakasir jika toko Anda terdaftar di Bank Indonesia via Pakasir.
-                              </p>
-                            </div>
-
-                            {/* 7. PAKASIR_QR_STRING */}
-                            <div className="space-y-1.5 md:col-span-2">
-                              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                                <span>String QRIS Statis Pakasir (Opsional)</span>
-                                <span className="text-[10px] text-slate-400 font-mono">Payload EMVCo 000201...</span>
-                              </label>
-                              <textarea
-                                rows={2}
-                                value={pakasirQrString}
-                                onChange={(e) => {
-                                  setPakasirQrString(e.target.value);
-                                  setSettings({ ...settings, pakasirQrString: e.target.value });
-                                }}
-                                placeholder=""
-                                className="w-full px-4 py-2.5 bg-[#060A14] border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 rounded-xl text-xs text-slate-100 font-mono transition-all outline-none"
-                              />
-                              <p className="text-[10px] text-slate-500">
-                                Jika diisi, sistem akan mengonversi string statis ini menjadi dinamis otomatis saat transaksi dibuat.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* URL Webhook Resmi Pakasir */}
-                          <div className="space-y-2 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
-                                <ShieldCheck size={15} className="text-blue-400" />
-                                <span>URL Webhook Resmi Pakasir API v2</span>
-                              </label>
-                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30 font-mono">
-                                HTTPS Active & Idempotent
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                              <input
-                                type="text"
-                                readOnly
-                                value={settings.pakasirWebhookUrl || 'https://wayahetopup.my.id/api/payment/pakasir/webhook'}
-                                className="flex-1 px-4 py-3 bg-[#060A14] border border-blue-500/40 rounded-xl text-xs text-blue-200 font-mono select-all cursor-not-allowed"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleCopyClipboard(
-                                  settings.pakasirWebhookUrl || 'https://wayahetopup.my.id/api/payment/pakasir/webhook',
-                                  'URL Webhook Pakasir'
-                                )}
-                                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 active:scale-95 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-md transition-all"
-                              >
-                                <Copy size={14} />
-                                <span>Salin URL Webhook</span>
-                              </button>
-                            </div>
-                            <p className="text-[10.5px] text-blue-200/70 leading-relaxed">
-                              Tempelkan URL Webhook resmi di atas ke menu <strong>Settings &gt; Webhook URL</strong> di dashboard Pakasir Anda (https://wayahetopup.my.id/api/payment/pakasir/webhook). Masukkan juga Webhook Secret yang sama.
-                            </p>
-                          </div>
-
-                          {/* Tombol Simpan Konfigurasi */}
-                          <div className="pt-2 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={handleSavePakasirSettings}
-                              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950/40 cursor-pointer transition-all"
-                            >
-                              <Save size={14} />
-                              <span>Simpan Konfigurasi Pakasir</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
 
                       {/* ══════════════════════════════════════════════════════ */}
                       {/* === 2. QIOSPAY QRIS PANEL                          === */}
@@ -8425,6 +8126,10 @@ ping - Cek Kecepatan Respon Bot`}</pre>
                               <span>Simpan Konfigurasi Qiospay</span>
                             </button>
                           </div>
+                        </div>
+
+                        )}
+
 
                         {/* Panel Mutasi Live Qiospay & 1-Click Sync */}
                         <div className="space-y-4 pt-4 border-t border-slate-800">
