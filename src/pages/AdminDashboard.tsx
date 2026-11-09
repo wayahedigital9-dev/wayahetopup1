@@ -80,8 +80,9 @@ import {
   Layers,
   Hash,
   SlidersHorizontal,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+  Api
+  } from 'lucide-react';
 import { Product, ProductVariant, Order, WifiVoucherBatch, AppSettings, PaymentStatus, FulfillmentStatus, AdminAuthSession, PromoBanner, StoreCatalog, DiscountPopupConfig, PromoCode, HeroPromoSlide, HeroPromoCardItem } from '../types';
 import { formatRupiah, formatDateWIB } from '../utils/operator';
 import { PaymentStatusBadge, FulfillmentStatusBadge } from '../components/StatusBadge';
@@ -1984,6 +1985,11 @@ const playDoneSound = () => {
       digiflazzWhitelistIp: (settings.digiflazzWhitelistIp || '').trim(),
       digiflazzMode: settings.digiflazzMode || 'DEVELOPMENT',
       digiflazzAutoFulfill: Boolean(settings.digiflazzAutoFulfill),
+
+      // Ayosel Configuration
+      ayoselHostApi: (settings.ayoselHostApi || '').trim(),
+      ayoselSlug: (settings.ayoselSlug || '').trim(),
+      ayoselApiKey: (settings.ayoselApiKey || '').trim(),
     };
     if (!await persistSettings(updated)) return;
 
@@ -8437,6 +8443,113 @@ ping - Cek Kecepatan Respon Bot`}</pre>
                               }`} />
                             </button>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === SUB-TAB: AYOSEL RESELLER API SETTINGS === */}
+                  {settingsSubTab === 'MONGODB_SETTINGS' && (
+                    <div className="space-y-6">
+                      <div className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-mono text-xs font-bold w-max flex items-center gap-2">
+                        <ExternalLink size={14} className="text-indigo-400" />
+                        <span>AYOSEL RESELLER API SETTINGS</span>
+                      </div>
+
+                      <div className="bg-[#0B101E] p-6 rounded-3xl border border-slate-800/80 shadow-2xl space-y-6">
+                        <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                          <div className="flex items-center gap-2 text-indigo-400 font-extrabold text-xs sm:text-sm tracking-wider uppercase">
+                            <ExternalLink size={16} className="text-indigo-400" />
+                            <span>AYOSEL RESELLER API CONFIGURATION</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleSaveSettings}
+                            className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer font-bold border border-indigo-500/50 px-3 py-1.5 rounded-md hover:bg-indigo-500/10 transition-colors"
+                          >
+                            <Save size={11} /> Simpan Konfigurasi Ayosel
+                          </button>
+                        </div>
+
+                        {/* 1. AYOSEL HOST API */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
+                              AYOSEL_HOST_API
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyClipboard(settings.ayoselHostApi || '', 'AYOSEL_HOST_API')}
+                              className="text-[10px] text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <Copy size={11} />
+                              <span>Salin</span>
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={settings.ayoselHostApi || ''}
+                            onChange={(e) => setSettings({ ...settings, ayoselHostApi: e.target.value })}
+                            placeholder="https://api.ayosel.com"
+                            className="w-full px-4 py-3.5 bg-[#060A14] border border-slate-800 focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-slate-100 font-mono text-xs sm:text-sm transition-all outline-none tracking-wide"
+                          />
+                          <p className="text-[10px] text-slate-500">
+                            Alamat server API Ayosel (contoh: <code className="text-slate-400 font-mono">https://api.ayosel.com</code>)
+                          </p>
+                        </div>
+
+                        {/* 2. AYOSEL SLUG */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
+                              AYOSEL_SLUG_TOKO
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyClipboard(settings.ayoselSlug || '', 'AYOSEL_SLUG')}
+                              className="text-[10px] text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <Copy size={11} />
+                              <span>Salin</span>
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={settings.ayoselSlug || ''}
+                            onChange={(e) => setSettings({ ...settings, ayoselSlug: e.target.value })}
+                            placeholder="tokosaya"
+                            className="w-full px-4 py-3.5 bg-[#060A14] border border-slate-800 focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-slate-100 font-mono text-xs sm:text-sm transition-all outline-none tracking-wide"
+                          />
+                          <p className="text-[10px] text-slate-500">
+                            Kode toko 3-32 karakter lowercase, angka, strip, diawali huruf
+                          </p>
+                        </div>
+
+                        {/* 3. AYOSEL API KEY */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
+                              AYOSEL_API_KEY
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyClipboard(settings.ayoselApiKey || '', 'AYOSEL_API_KEY')}
+                              className="text-[10px] text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <Copy size={11} />
+                              <span>Salin</span>
+                            </button>
+                          </div>
+                          <input
+                            type="password"
+                            value={settings.ayoselApiKey || ''}
+                            onChange={(e) => setSettings({ ...settings, ayoselApiKey: e.target.value })}
+                            placeholder="ayosel_xxx... (71 karakter)"
+                            className="w-full px-4 py-3.5 bg-[#060A14] border border-slate-800 focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/40 rounded-xl text-slate-100 font-mono text-xs sm:text-sm transition-all outline-none tracking-wide"
+                          />
+                          <p className="text-[10px] text-slate-500">
+                            Format: <code className="text-slate-400 font-mono">ayosel_</code> + 64 karakter heksadesimal. Simpan di <strong>.env</strong> VPS, tidak di-commit.
+                          </p>
                         </div>
                       </div>
                     </div>

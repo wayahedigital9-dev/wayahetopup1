@@ -427,6 +427,11 @@ export interface AppSettings {
   digiflazzMode?: 'PRODUCTION' | 'DEVELOPMENT';
   digiflazzAutoFulfill?: boolean;
 
+  // Ayosel Reseller API (https://ayosel.com/docs/api-reseller)
+  ayoselHostApi?: string;
+  ayoselSlug?: string;
+  ayoselApiKey?: string;
+
   // Bot & Automation Notifications (Telegram / WhatsApp) & Telegram Store Bot
   telegramBotToken?: string;
   telegramChatId?: string;

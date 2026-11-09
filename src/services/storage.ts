@@ -308,6 +308,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   digiflazzMode: 'DEVELOPMENT',
   digiflazzAutoFulfill: true,
 
+  // Ayosel Reseller API
+  ayoselHostApi: '',
+  ayoselSlug: '',
+  ayoselApiKey: '',
+
   // Bot & Automation Notifications & Telegram Store
   telegramBotToken: '',
   telegramChatId: '',
