@@ -2803,6 +2803,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
       });
 
       if (settings.telegramStoreMode === 'polling' && settings.telegramStoreEnabled !== false && settings.telegramBotToken) {
+        await telegramBotService.registerCommands();
         await telegramBotService.startPolling();
       } else {
         telegramBotService.stopPolling();
@@ -2836,7 +2837,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     };
     try { telegramBotService.refreshConfig(bundle); } catch (_) {}
     if (bundle.storeMode === 'polling' && bundle.storeEnabled !== false && bundle.telegramBotToken) {
-      try { await telegramBotService.startPolling(); } catch (_) {}
+      try { await telegramBotService.registerCommands(); await telegramBotService.startPolling(); } catch (_) {}
     } else {
       try { telegramBotService.stopPolling(); } catch (_) {}
     }

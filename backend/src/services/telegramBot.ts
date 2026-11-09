@@ -203,6 +203,32 @@ export class TelegramBotService {
     if (text.startsWith('/start')) {
       this.sessions.set(String(chatId), { step: 'IDLE', updatedAt: Date.now() });
       await this.sendMainMenu(chatId, firstName);
+    // COMMAND /stock
+    if (text === '/stock') {
+      this.sessions.set(String(chatId), { step: 'IDLE', updatedAt: Date.now() });
+      await this.sendCategorySelection(chatId);
+      return;
+    }
+
+    // COMMAND /saldo
+    if (text === '/saldo') {
+      const bal = this.config.balanceInfo || 'Saldo Anda akan ditampilkan setelah login di WebApp Toko.';
+      await this.sendMessage(chatId, `💰 <b>Cek Saldo & Deposit</b>\n\n${bal}\n\nKlik tombol <b>Buka Toko Mini App</b> di menu untuk melihat saldo realtime dan melakukan top up saldo.`);
+      return;
+    }
+
+    // COMMAND /id
+    if (text === '/id') {
+      await this.sendMessage(chatId, `🆔 <b>Chat ID Anda</b>\n\nKode chat: <code>${chatId}</code>\nGunakan kode ini untuk verifikasi atau hubungi admin.`);
+      return;
+    }
+
+    // COMMAND /kontak
+    if (text === '/kontak') {
+      await this.sendCsInfo(chatId);
+      return;
+    }
+
       return;
     }
 
@@ -1043,6 +1069,27 @@ export class TelegramBotService {
   // ─────────────────────────────────────────────────────────────
   // LONG POLLING SUPPORT (UNTUK LOCALHOST TANPA WEBHOOK PUBLIK)
   // ─────────────────────────────────────────────────────────────
+  public async registerCommands() {
+    if (!this.isConfigured()) return;
+    try {
+      const token = this.config.botToken;
+      await axios.post(
+        `https://api.telegram.org/bot${token}/setMyCommands`,
+        { commands: [
+          { command: 'start', description: 'Buka menu toko utama' },
+          { command: 'stock', description: 'Lihat katalog produk' },
+          { command: 'saldo', description: 'Cek saldo & deposit' },
+          { command: 'id', description: 'Lihat Chat ID Anda' },
+          { command: 'kontak', description: 'Hubungi admin / CS' },
+          { command: 'katalog', description: 'Lihat katalog produk' },
+          { command: 'status', description: 'Cek status pesanan' },
+          { command: 'ping', description: 'Cek koneksi bot' },
+        ] },
+        { timeout: 15000 },
+      );
+    } catch (_) {}
+  }
+
   public async startPolling() {
     if (this.isPolling) return;
     if (!this.isConfigured()) {
