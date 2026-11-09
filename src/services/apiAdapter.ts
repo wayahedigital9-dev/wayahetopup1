@@ -108,10 +108,7 @@ export const apiAdapter = {
     return { order: confirmed, gatewayRefId: confirmed.gatewayRefId || payload.gatewayRefId || '' };
   },
 
-  // SIMULASI PEMBAYARAN SANDBOX PAKASIR
-  async simulatePakasirPayment(orderId: string, amount: number): Promise<{ success: boolean; message: string; detail?: any }> {
     try {
-      const res = await fetch('/api/payment/pakasir/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, amount }),
@@ -122,10 +119,7 @@ export const apiAdapter = {
     }
   },
 
-  // TOGGLE PAKASIR SANDBOX / REAL MODE
-  async togglePakasirSandbox(isSandbox: boolean): Promise<{ success: boolean; isSandbox: boolean; message: string }> {
     try {
-      const res = await fetch('/api/payment/pakasir/toggle-sandbox', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isSandbox }),

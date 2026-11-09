@@ -90,7 +90,6 @@ export function CheckoutPage({
   }, []);
 
   const settings = storage.getSettings();
-  const isPakasir = settings.paymentGatewayProvider === 'PAKASIR';
   const isSystemStopped = settings.systemStatus === 'STOPPED';
 
   const gameMeta = getGameMeta(product);
@@ -717,7 +716,6 @@ export function CheckoutPage({
                 </h3>
                 <span className="text-sm font-bold text-white">
                   {paymentChannel === 'qris'
-                    ? (isPakasir ? 'QRIS Dinamis (Pakasir API v2)' : 'QRIS Dinamis (Qiospay)')
                     : `Virtual Account ${channels.find((c) => c.id === paymentChannel)?.bankName || ''}`.trim()}
                 </span>
               </div>

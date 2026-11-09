@@ -776,12 +776,10 @@ export function AdminAnalyticsChart({ orders, systemMetrics }: AdminAnalyticsCha
                 </span>
               </div>
 
-              {/* Pakasir API v2 Status */}
               <div className="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white flex items-center gap-1.5">
                     <Crown size={14} className="text-amber-400" />
-                    Pakasir Multi-channel
                   </span>
                   <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
                     Standby

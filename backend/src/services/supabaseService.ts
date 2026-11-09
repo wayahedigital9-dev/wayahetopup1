@@ -751,7 +751,6 @@ export class SupabaseService {
             if (existing?.data?.value && !existing.error) existingVal = existing.data.value as any;
             if (typeof existingVal === 'string') existingVal = JSON.parse(existingVal);
           } catch (_) {}
-          const SECRET_KEYS2 = ['supabaseSecretKey','supabaseServiceRoleKey','pakasirApiKey','pakasirWebhookSecret','qiospayApiKey','qiospaySecretKey','digiflazzApiKey','digiflazzProductionKey','digiflazzSecretCode','digiflazzWebhookSecret'];
           const mergedSupabase: any = { ...(existingVal || {}) };
           for (const [k, v] of Object.entries(data || {})) {
             const isSecret = SECRET_KEYS2.includes(k);
@@ -1062,7 +1061,6 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "qiospayNmid" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "qiospayIssuer" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "qiospayPaidAt" TIMESTAMPTZ;
 
--- Pakasir API v2 Fields
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS order_id TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "orderId" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS product_id TEXT;
@@ -1071,8 +1069,6 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS fee NUMERIC DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS total_payment NUMERIC DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "totalPayment" NUMERIC DEFAULT 0;
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS pakasir_txn_id TEXT;
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "pakasirTxnId" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_link TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "paymentLink" TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS expired_at TIMESTAMPTZ;
@@ -1082,7 +1078,6 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMPTZ;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS raw_payment_response JSONB DEFAULT '{}'::jsonb;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS raw_webhook JSONB DEFAULT '{}'::jsonb;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_pakasir_txn_id ON public.orders(pakasir_txn_id) WHERE pakasir_txn_id IS NOT NULL;
 
 -- =========================================================================
 -- 5. TABEL ORDER ITEMS

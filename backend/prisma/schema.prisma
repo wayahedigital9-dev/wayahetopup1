@@ -128,8 +128,6 @@ model Order {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
-  // Pakasir API v2 Fields
-  pakasirTxnId      String?           @unique
   paymentLink       String?
   qrString          String?
   fee               Int?              @default(0)
@@ -156,7 +154,6 @@ model Order {
   @@index([targetDestination])
   @@index([customerPhone])
   @@index([paymentStatus, fulfillmentStatus])
-  @@index([pakasirTxnId])
 }
 
 model OrderItem {

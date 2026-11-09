@@ -61,26 +61,17 @@ export function PaymentDialog({
   // Virtual Account: nomor VA dikirim server saat order dibuat (channel VA dipilih pembeli).
   const vaNumber = String(order?.vaNumber || '').trim();
   const isVA = vaNumber.length > 0;
-  const isPakasir = selectedProvider === 'PAKASIR';
   const isQiospay = selectedProvider === 'QIOSPAY';
-  const activeGateway = isPakasir ? 'PAKASIR' : 'QIOSPAY';
-  const gatewayTitle = isPakasir ? 'Pakasir API v2' : 'Qiospay QRIS';
-  const isPakasirSandbox = Boolean(
-    isPakasir && (
       order?.isSandbox ||
-      settings.pakasirIsSandbox ||
       (order?.qrString && order.qrString.includes('lorem-ipsum'))
     )
   );
   const [isSimulatingSandbox, setIsSimulatingSandbox] = useState<boolean>(false);
 
-  const merchantStoreName = isPakasir
-    ? (settings.pakasirMerchantName || settings.siteName || 'WAYAHE DIGITAL')
     : (settings.qiospayMerchantName || 'Waroeng Digital QP48797');
 
   const rawQrString = (
     order?.qrString ||
-    (isPakasir ? (settings.pakasirQrString || '') : (settings.qiospayQrString || settings.staticQrisString || '')) ||
     ''
   ).trim();
 
@@ -177,7 +168,6 @@ export function PaymentDialog({
           }
 
           setTimeout(() => {
-            onSimulateResult('PAID', order?.vaNumber ? ('VA ' + (order.vaBankName || order.vaBankCode || '')).trim() : (isPakasir ? 'QRIS (Pakasir)' : 'QRIS'));
           }, 400);
         }
       } catch (e) {
@@ -241,7 +231,6 @@ export function PaymentDialog({
         }
         setTimeout(() => {
           setIsCheckingManual(false);
-          onSimulateResult('PAID', order?.vaNumber ? ('VA ' + (order.vaBankName || order.vaBankCode || '')).trim() : (isPakasir ? 'QRIS (Pakasir)' : 'QRIS'));
         }, 1000);
         return;
       }
@@ -266,13 +255,10 @@ export function PaymentDialog({
     }
   };
 
-  const handleSimulatePakasirSandbox = async () => {
     if (isSimulatingSandbox) return;
     setIsSimulatingSandbox(true);
-    setPollStatus('⚡ Mengirim simulasi pembayaran Sandbox ke Pakasir...');
 
     try {
-      const res = await apiAdapter.simulatePakasirPayment(
         order.invoiceNumber || order.id,
         order.totalAmount || 1000
       );
@@ -284,7 +270,6 @@ export function PaymentDialog({
         if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
         setTimeout(() => {
           setIsSimulatingSandbox(false);
-          onSimulateResult('PAID', 'QRIS (Pakasir Sandbox)');
         }, 1200);
       } else {
         setPollStatus(`⚠️ ${res.message || 'Gagal memproses simulasi sandbox'}`);
@@ -309,12 +294,10 @@ export function PaymentDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header QRIS / VA Payment */}
-        <div className={`shrink-0 p-4 sm:p-5 border-b border-white/[0.08] text-white flex items-center justify-between ${isPakasir
             ? 'bg-gradient-to-r from-blue-600/20 via-[#0E131F] to-[#111827]'
             : 'bg-gradient-to-r from-amber-500/15 via-[#0E131F] to-[#111827]'
           }`}>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${isPakasir
                 ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
                 : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
               }`}>
@@ -325,12 +308,9 @@ export function PaymentDialog({
                 <h2 id="snap-modal-title" className="font-extrabold text-sm sm:text-base tracking-tight text-white">
                   {isVA ? 'Pembayaran Virtual Account' : 'Pembayaran QRIS Dinamis'}
                 </h2>
-                {isPakasir ? (
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 uppercase tracking-wider flex items-center gap-1">
-                      <Zap size={11} className="text-blue-400" /> Pakasir v2
                     </span>
-                    {isPakasirSandbox ? (
                       <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
                         🧪 Sandbox
                       </span>
@@ -504,48 +484,38 @@ export function PaymentDialog({
                 <>
                   <li>Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, DANA, ShopeePay).</li>
                   <li>Pilih menu <strong>Scan QRIS</strong> lalu arahkan kamera ke barcode di atas.</li>
-                  <li>Periksa nama penerbit <strong>{isPakasir ? 'Pakasir' : 'Qiospay'}</strong>, nama toko <strong>{merchantStoreName}</strong>, dan nominal <strong>{formatRupiah(order.totalAmount)}</strong>, lalu selesaikan pembayaran.</li>
                 </>
               )}
             </ol>
           </div>
 
-          {/* Fitur Khusus Sandbox Pakasir */}
-          {isPakasir && isPakasirSandbox && (
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
               <div className="flex items-center justify-between text-xs text-amber-300 font-bold">
                 <span className="flex items-center gap-1.5">
                   <Zap size={14} className="text-amber-400" />
-                  <span>Fitur Uji Coba Sandbox Pakasir</span>
                 </span>
                 <span className="text-[9.5px] bg-amber-500/20 px-2 py-0.5 rounded-full font-mono text-amber-400 border border-amber-500/30">
                   Mode Testing
                 </span>
               </div>
               <p className="text-[10.5px] text-amber-200/80 leading-relaxed">
-                Gateway sedang berjalan di mode <strong>Sandbox (Uji Coba)</strong>. Anda dapat mengonfirmasi pembayaran lunas secara instan via API Pakasir tanpa uang riil.
               </p>
               <button
                 type="button"
-                onClick={handleSimulatePakasirSandbox}
                 disabled={isSimulatingSandbox || isPaymentSuccess}
                 className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-950/40 cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw size={13} className={isSimulatingSandbox ? 'animate-spin' : ''} />
-                <span>{isSimulatingSandbox ? 'Memproses Simulasi Pakasir...' : '⚡ Simulasi Bayar Sandbox (Pakasir)'}</span>
               </button>
             </div>
           )}
 
-          {isPakasir && !isVA && (
             <a
-              href={order.paymentLink || `https://app.pakasir.com/pay/${encodeURIComponent(settings.pakasirSlug || 'waroengdigital')}/${order.totalAmount}?order_id=${encodeURIComponent(order.invoiceNumber)}&qris_only=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/30 cursor-pointer"
             >
               <ExternalLink size={14} />
-              <span>Buka Link Pembayaran Resmi Pakasir (QRIS / E-Wallet)</span>
             </a>
           )}
         </div>

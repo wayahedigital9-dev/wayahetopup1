@@ -1,17 +1,15 @@
-import { QIOSPAY_CONFIG, PAKASIR_CONFIG } from '../config/apikeys.js';
+import { QIOSPAY_CONFIG } from '../config/apikeys.js';
 import { qiospayService } from './qiospay.js';
 import { mongoDbService } from './mongodbService.js';
-import { pakasirService } from './pakasir.js';
 
 /**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  PAYMENT GATEWAY ROUTER (PAKASIR & QIOSPAY DYNAMIC ROUTING)  ║
- * ║  Menyesuaikan harga produk secara dinamis & real-time        ║
- * ║  Kredensial disimpan aman di backend/.env                    ║
- * ╚══════════════════════════════════════════════════════════════╝
+ * ╔═════════════════════════════════════════════════════════════╗
+ * ║  PAYMENT GATEWAY ROUTER (QIOSPAY)                          ║
+ * ║  Satu gateway tunggal: Qiospay QRIS + VA                   ║
+ * ╚═════════════════════════════════════════════════════════════╝
  */
 
-export type ActiveGateway = 'PAKASIR' | 'QIOSPAY' | 'QRIS' | 'NONE';
+export type ActiveGateway = 'QIOSPAY' | 'QRIS' | 'NONE';
 
 export interface PaymentSessionResult {
   /** Gateway yang digunakan */
@@ -52,7 +50,7 @@ export interface PaymentChannel {
   label: string;
   bankName?: string;
   bankCode?: string;
-  /** Metode yang dikirim ke gateway (mis. 'qris' atau method VA Pakasir). */
+  /** Metode yang dikirim ke gateway (mis. 'qris' atau method VA Qiospay). */
   method: string;
   minAmount: number;
   /** true bila channel ini belum bisa dipakai karena kredensial/aktivasi belum ada */
@@ -85,35 +83,7 @@ export function listPaymentChannels(): PaymentChannel[] {
     }
   }
 
-  if (isPakasirActive()) {
-    channels.push({ id: 'pakasir_qris', gateway: 'PAKASIR', kind: 'QRIS', label: 'QRIS (Pakasir)', method: 'qris', minAmount: 1 });
-    for (const method of pakasirVaMethods()) {
-      const bankName = method.replace(/_va$/i, '').toUpperCase();
-      channels.push({
-        id: `pakasir_${method}`, gateway: 'PAKASIR', kind: 'VA', label: `Virtual Account ${bankName} (Pakasir)`,
-        bankName, method, minAmount: 10000,
-      });
-    }
-  }
-
   return channels;
-}
-
-/**
- * Method VA Pakasir bersifat CONFIG-DRIVEN (PAKASIR_VA_METHODS) karena daftar
- * resminya tidak tersedia untuk diperiksa otomatis. Default kosong: bila akun
- * Pakasir belum mendukung VA, channel-nya tidak ditawarkan sama sekali.
- */
-export function pakasirVaMethods(): string[] {
-  return String(process.env.PAKASIR_VA_METHODS || '')
-    .split(',').map((m) => m.trim().toLowerCase()).filter((m) => m && m.endsWith('_va'));
-}
-
-/**
- * Cek apakah Pakasir sudah terkonfigurasi
- */
-function isPakasirActive(): boolean {
-  return pakasirService.isConfigured();
 }
 
 /**
@@ -126,15 +96,13 @@ function isQiospayActive(): boolean {
 }
 
 /**
- * Deteksi gateway mana yang aktif (Pakasir prioritas jika dikonfigurasi)
+ * Deteksi gateway mana yang aktif
  */
 export function detectActiveGateway(): ActiveGateway {
   const envGateway = (process.env.ACTIVE_GATEWAY || process.env.PAYMENT_GATEWAY_PROVIDER || '').trim().toUpperCase();
   if (envGateway === 'QIOSPAY' && isQiospayActive()) return 'QIOSPAY';
-  if (envGateway === 'PAKASIR' && isPakasirActive()) return 'PAKASIR';
 
   if (isQiospayActive()) return 'QIOSPAY';
-  if (isPakasirActive()) return 'PAKASIR';
   return 'QRIS';
 }
 
@@ -143,7 +111,6 @@ export function detectActiveGateway(): ActiveGateway {
  */
 export function listActiveGateways(): ActiveGateway[] {
   const list: ActiveGateway[] = [];
-  if (isPakasirActive()) list.push('PAKASIR');
   if (isQiospayActive()) list.push('QIOSPAY');
   list.push('QRIS');
   return list;
@@ -170,10 +137,9 @@ export async function createPaymentSession(params: {
   const dynamicAmount = Math.max(0, Math.round(Number(params.grossAmount || 0)));
   const gateway = params.preferredGateway || detectActiveGateway();
 
-  // Channel yang diminta pembeli. 'va:<kode bank>' = VA Qiospay; '<bank>_va' = VA Pakasir.
+  // Channel yang diminta pembeli. 'va:<kode bank>' = VA Qiospay.
   const requestedMethod = String(params.paymentMethod || '').trim().toLowerCase();
   const qiospayVaMatch = requestedMethod.match(/^va:(\d+)$/);
-  const pakasirVaMethod = requestedMethod.endsWith('_va') ? requestedMethod : '';
 
   // 0. Jalur Qiospay VIRTUAL ACCOUNT (channel 'va:<kode bank>') — ditangani LEBIH DULU,
   //    terlepas dari gateway QRIS yang aktif, supaya permintaan VA tidak pernah jatuh ke jalur QRIS.
@@ -205,58 +171,7 @@ export async function createPaymentSession(params: {
     };
   }
 
-  // 1. Jalur Utama: PAKASIR API v2 Dynamic Transaction (Terpisah Murni Tanpa Fallback Qiospay)
-  if (gateway === 'PAKASIR') {
-    const slug = PAKASIR_CONFIG.SLUG || 'waroengdigital';
-    // Tautan cadangan hanya berlaku untuk QRIS; VA tidak boleh diarahkan ke QRIS.
-    const fallbackPaymentLink = `https://app.pakasir.com/pay/${encodeURIComponent(slug)}/${dynamicAmount}?order_id=${encodeURIComponent(params.orderId)}&qris_only=1`;
-
-    try {
-      const pakasirRes = await pakasirService.createTransaction({
-        orderId: params.orderId,
-        amount: dynamicAmount,
-        method: pakasirVaMethod || requestedMethod || PAKASIR_CONFIG.PAYMENT_METHOD || 'qris',
-        customerName: params.customerName,
-        customerEmail: params.customerEmail,
-        customerPhone: params.customerPhone,
-      });
-
-      if (pakasirRes.success && pakasirRes.payment) {
-        const p: any = pakasirRes.payment;
-        const finalQR = p.qr_string && p.qr_string.startsWith('000201') && !p.qr_string.includes('lorem-ipsum')
-          ? p.qr_string
-          : undefined;
-        // Nomor VA dari Pakasir (bila channel yang dipilih adalah VA).
-        const vaNumber = String(p.va_number || p.payment_number || p.pay_code || '').trim() || undefined;
-        if (!finalQR && !p.payment_link && !vaNumber) {
-          throw new Error('Pakasir tidak mengembalikan QRIS, nomor VA, atau tautan pembayaran yang valid.');
-        }
-
-        return {
-          gateway: 'PAKASIR',
-          token: p.txn_id || params.orderId,
-          redirectUrl: vaNumber ? undefined : (p.payment_link || fallbackPaymentLink),
-          qrString: finalQR,
-          vaNumber,
-          vaBankCode: p.bank_code || undefined,
-          vaBankName: (p.bank_name || (pakasirVaMethod ? pakasirVaMethod.replace(/_va$/i, '').toUpperCase() : undefined)) || undefined,
-          fee: p.fee || 0,
-          totalPayment: p.total_payment || dynamicAmount,
-          expiredAt: p.expired_at || undefined,
-          isDynamic: true,
-          isSandbox: p.is_sandbox ?? PAKASIR_CONFIG.IS_SANDBOX,
-        };
-      }
-    } catch (err: any) {
-      console.warn('⚠️ [PaymentRouter] Pakasir create transaction fallback notice:', err.message);
-    }
-
-    // A payment gateway failure must never produce a locally fabricated QRIS.
-    // The caller can retry safely; no customer is shown an untracked payment.
-    throw new Error('Pakasir gagal membuat transaksi. Tidak ada pembayaran yang dibuat; silakan coba lagi.');
-  }
-
-  // 2. Jalur Qiospay QRIS Dinamis
+  // 1. Jalur Qiospay QRIS Dinamis
   const depositId = `QP-${params.orderId.replace(/[^a-zA-Z0-9]/g, '')}`;
   const savedSettings = await mongoDbService.getSettingsFromDatabase();
   const staticQrString = String(savedSettings.qiospayQrString || savedSettings.staticQrisString || '').trim();
@@ -280,9 +195,6 @@ export async function createPaymentSession(params: {
  */
 export function logGatewayStatus(): void {
   console.log('── Payment Gateway Status ────────────────────────');
-  if (isPakasirActive()) {
-    console.log(`  ✅ Pakasir API v2 — Gateway Live Terhubung (Slug: ${PAKASIR_CONFIG.SLUG})`);
-  }
   if (isQiospayActive()) {
     console.log('  ✅ Qiospay QRIS — Gateway Live Terhubung');
   }

@@ -1,16 +1,13 @@
 {
   "activeGateway": "QIOSPAY",
-  "pakasir": {
     "slug": "waroengdigital",
     "apiKey": "cvraC3U3lYVMCwoy4E9eLWapC7Xt9lZ5",
     "webhookSecret": "f7e9369fa52a6c86657c55bbe30dccde",
-    "baseUrl": "https://app.pakasir.com",
     "paymentMethod": "qris",
     "merchantName": "WAYAHE DIGITAL",
     "nmid": "",
     "qrString": "",
     "isSandbox": true,
-    "webhookUrl": "https://wayahetopup.my.id/api/payment/pakasir/webhook"
   },
   "qiospay": {
     "merchantCode": "QP048797",

@@ -215,7 +215,6 @@ export function convertStaticToDynamicQRIS(
     preserveTag62?: boolean;
     forceDynamicPOI?: boolean;
     merchantName?: string;
-    gateway?: 'PAKASIR' | 'QIOSPAY' | string;
   }
 ): string {
   if (!staticQRIS || staticQRIS.trim().length < 25) {
@@ -329,7 +328,6 @@ export function convertStaticToDynamicQRIS(
 }
 
 /**
- * Generate fallback dynamic QRIS EMVCo sesuai spesifikasi payment gateway aktif (Pakasir / Qiospay / Bank Nasional)
  */
 export function generateDynamicQRIS(params: {
   amount: number;
@@ -337,17 +335,14 @@ export function generateDynamicQRIS(params: {
   merchantCity?: string;
   invoiceNumber?: string;
   nmid?: string;
-  gateway?: 'PAKASIR' | 'QIOSPAY' | string;
 }): string {
   const amountStr = Math.round(params.amount).toString();
   const gateway = String(params.gateway || '').toUpperCase();
-  const isPakasir = gateway === 'PAKASIR';
   const isQiospay = gateway === 'QIOSPAY';
 
   // Nama merchant dinamis sesuai gateway aktif
   const defaultMerchant = isQiospay 
     ? 'WAROENG DIGITAL QP48797' 
-    : (isPakasir ? 'WAYAHE DIGITAL' : 'WAYAHE DIGITAL');
   const merchantName = (params.merchantName || defaultMerchant).substring(0, 25).toUpperCase();
   const merchantCity = (params.merchantCity || 'SURABAYA').substring(0, 15).toUpperCase();
   const invoice = (params.invoiceNumber || `INV${Date.now()}`).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
@@ -368,15 +363,12 @@ export function generateDynamicQRIS(params: {
     const tag51_01 = formatTLV('01', params.nmid || 'ID1026524496431');
     const tag51_02 = formatTLV('02', '00000000');
     tag51Value = `${tag51_00}${tag51_01}${tag51_02}`;
-  } else if (isPakasir) {
-    // Pakasir QRIS: Acquirer Nasional ASPI / Pakasir (Bukan Nobu Bank / LinkAja)
     const tag26_00 = formatTLV('00', 'ID.CO.QRIS.WWW');
     const tag26_01 = formatTLV('01', `9360099900${invSuffix}`);
     const tag26_02 = formatTLV('02', '000000000000000');
     const tag26_03 = formatTLV('03', 'UMI');
     tag26Value = `${tag26_00}${tag26_01}${tag26_02}${tag26_03}`;
 
-    // Hanya sertakan Tag 51 jika ada NMID resmi Pakasir
     if (params.nmid && params.nmid.trim()) {
       const tag51_00 = formatTLV('00', 'ID.CO.QRIS.WWW');
       const tag51_01 = formatTLV('01', params.nmid.trim());

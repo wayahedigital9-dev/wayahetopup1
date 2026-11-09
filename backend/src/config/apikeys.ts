@@ -87,19 +87,6 @@ export const BOT_CONFIG = {
   WHATSAPP_NUMBER: process.env.WHATSAPP_BOT_NUMBER || '',
 };
 
-// ── 2e. PAKASIR API v2 (Multi-channel & QRIS Gateway) ────────
-export const PAKASIR_CONFIG = {
-  BASE_URL: process.env.PAKASIR_BASE_URL || 'https://app.pakasir.com',
-  SLUG: process.env.PAKASIR_SLUG || '',
-  API_KEY: process.env.PAKASIR_API_KEY || '',
-  WEBHOOK_SECRET: process.env.PAKASIR_WEBHOOK_SECRET || '',
-  PAYMENT_METHOD: process.env.PAKASIR_PAYMENT_METHOD || 'qris',
-  IS_SANDBOX: process.env.PAKASIR_IS_SANDBOX !== 'false', // Default true jika mode Sandbox, false jika Real
-  MERCHANT_NAME: process.env.PAKASIR_MERCHANT_NAME || 'WAYAHE DIGITAL',
-  NMID: process.env.PAKASIR_NMID || '',
-  QR_STRING: process.env.PAKASIR_QR_STRING || '',
-};
-
 // ── 2f. INTERNAL SECRETS ───────────────────────────────────────
 export const INTERNAL_SECRETS = {
   CRON_SECRET: process.env.CRON_SECRET || '',
@@ -129,7 +116,6 @@ export function validateApiKeys(): { valid: boolean; missing: string[] } {
 
 export default {
   QIOSPAY: QIOSPAY_CONFIG,
-  PAKASIR: PAKASIR_CONFIG,
   DIGIFLAZZ: DIGIFLAZZ_CONFIG,
   NGROK: NGROK_CONFIG,
   BOT: BOT_CONFIG,

@@ -295,16 +295,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   qiospayMerchantName: 'WAYAHE DIGITAL',
   qiospayQrString: '',
   staticQrisString: '',
-  pakasirBaseUrl: 'https://app.pakasir.com',
-  pakasirSlug: '',
-  pakasirApiKey: '',
-  pakasirWebhookSecret: '',
-  pakasirPaymentMethod: 'qris',
-  pakasirWebhookUrl: '',
-  pakasirMerchantName: 'WAYAHE DIGITAL',
-  pakasirNmid: '',
-  pakasirQrString: '',
-  pakasirIsSandbox: true,
 
   // Digiflazz H2H (API Keys dikelola aman di Backend .env)
   digiflazzWebhookUrl: '',

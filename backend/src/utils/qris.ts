@@ -164,7 +164,6 @@ export const generateDynamicQRIS = (params: {
 }) => {
   const enc = (tag: string, val: string) => tag + String(val.length).padStart(2, '0') + val;
   const gateway = (params.gateway || '').toUpperCase();
-  const isPakasir = gateway === 'PAKASIR';
   const isQiospay = gateway === 'QIOSPAY';
 
   const inv = (params.invoiceNumber || `INV${Date.now()}`).replace(/[^a-zA-Z0-9]/g, '');
@@ -182,8 +181,6 @@ export const generateDynamicQRIS = (params: {
     tag51 = enc('00', 'ID.CO.QRIS.WWW') + 
             enc('01', params.nmid || 'ID1026524496431') + 
             enc('02', '00000000');
-  } else if (isPakasir) {
-    // Pakasir QRIS: Menggunakan Standar Nasional ASPI / Pakasir (Bebas dari LinkAja/Nobu Bank)
     tag26 = enc('00', 'ID.CO.QRIS.WWW') + 
             enc('01', `9360099900${invSuffix}`) + 
             enc('02', '000000000000000') + 
@@ -206,10 +203,9 @@ export const generateDynamicQRIS = (params: {
     }
   }
 
-  // Nama merchant resmi sesuai gateway yang aktif
-  const defaultMerchant = isQiospay 
-    ? 'WAROENG DIGITAL QP48797' 
-    : (isPakasir ? 'WAYAHE DIGITAL' : 'WAYAHE DIGITAL');
+  const defaultMerchant = isQiospay
+    ? 'WAROENG DIGITAL QP48797'
+    : 'WAROENG DIGITAL';
   const merchantName = (params.merchantName || defaultMerchant).substring(0, 25).toUpperCase();
   const merchantCity = (params.merchantCity || 'SURABAYA').substring(0, 15).toUpperCase();
   const tag62 = enc('01', inv.substring(0, 20)) + enc('07', 'A01');

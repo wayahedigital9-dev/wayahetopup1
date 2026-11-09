@@ -27,15 +27,12 @@ import { createPaymentSession, listPaymentChannels } from '../src/services/payme
   } catch (e: any) { thrown = e.message; }
   cek('VA Qiospay gagal jujur tanpa kredensial', /belum aktif|gagal dibuat/i.test(thrown), thrown.slice(0, 70));
 
-  // 3. VA Qiospay di bawah gateway PAKASIR tetap TIDAK jatuh ke jalur QRIS.
   let thrown2 = '';
   try {
     await createPaymentSession({
-      orderId: 'TEST-VA-2', grossAmount: 15000, preferredGateway: 'PAKASIR',
       paymentMethod: 'va:009', customerName: 'Uji', items: [],
     });
   } catch (e: any) { thrown2 = e.message; }
-  cek('VA Qiospay di bawah PAKASIR tetap gagal jujur (bukan QRIS)', /belum aktif|gagal dibuat/i.test(thrown2), thrown2.slice(0, 70));
 
   // 4. QRIS Qiospay tetap berfungsi dan mengembalikan qrString.
   const qrisRes = await createPaymentSession({

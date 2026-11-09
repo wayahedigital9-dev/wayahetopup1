@@ -187,7 +187,6 @@ export interface Order {
   isDynamic?: boolean;
 
   // Gateway specific fields (Terpisah murni)
-  pakasirTxnId?: string;
   qiospayRefid?: string;
   paymentLink?: string;
   fee?: number;
@@ -199,7 +198,6 @@ export interface Order {
   vaBankCode?: string;
   vaBankName?: string;
   vaPartnerReff?: string;
-  paymentGatewayProvider?: 'PAKASIR' | 'QIOSPAY' | string;
   isSandbox?: boolean;
   
   // Hasil pemenuhan (Top-level & nested)
@@ -406,8 +404,6 @@ export interface AppSettings {
   supportEmail: string;
   supportHours: string;
   
-  // Payment Gateway Config (QIOSPAY / PAKASIR / QRIS)
-  paymentGatewayProvider?: 'QIOSPAY' | 'PAKASIR' | 'QRIS' | 'MANUAL';
   isSandbox?: boolean;
   paymentWebhookUrl?: string;
   qiospaySecretKey?: string;
@@ -418,17 +414,6 @@ export interface AppSettings {
   qiospayQrString?: string;
   staticQrisString?: string;
 
-  // Pakasir API v2 Config
-  pakasirBaseUrl?: string;
-  pakasirSlug?: string;
-  pakasirApiKey?: string;
-  pakasirWebhookSecret?: string;
-  pakasirPaymentMethod?: string;
-  pakasirWebhookUrl?: string;
-  pakasirMerchantName?: string;
-  pakasirNmid?: string;
-  pakasirQrString?: string;
-  pakasirIsSandbox?: boolean;
 
   // Digiflazz H2H API Config
   digiflazzWebhookUrl?: string;

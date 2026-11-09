@@ -7,6 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { hydrateDigiflazzRuntime } from './services/digiflazzRuntime.js';
+import { hydrateQiospayRuntime } from './services/qiospayRuntime.js';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -29,7 +30,6 @@ import { supabaseService, sanitizeSupabaseUrl } from './services/supabaseService
 import { mergeSettings } from './services/settingsMerge.js';
 import { createPaymentSession, detectActiveGateway, logGatewayStatus, listPaymentChannels } from './services/paymentRouter.js';
 import { pushNotificationService } from './services/pushNotificationService.js';
-import { pakasirService } from './services/pakasir.js';
 import { outboundIpService } from './services/outboundIpService.js';
 import { loadXavieraConfig, xavieraProducts, xavieraSmmServices, xavieraGames } from './services/xavieraClient.js';
 import { telegramBotService } from './services/telegramBot.js';
@@ -40,7 +40,6 @@ import {
   validateApiKeys,
   DIGIFLAZZ_CONFIG,
   QIOSPAY_CONFIG,
-  PAKASIR_CONFIG,
   NGROK_CONFIG,
   BOT_CONFIG,
 } from './config/apikeys.js';
@@ -382,7 +381,7 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       deliveryMethod: product.deliveryMethod || 'INSTANT_ROUTER_INJECTION',
       paymentMethod: paymentResult.vaNumber
         ? `VA ${paymentResult.vaBankName || paymentResult.vaBankCode || ''}`.trim()
-        : (paymentResult.gateway === 'PAKASIR' ? 'QRIS (Pakasir)' : 'QRIS'),
+        : 'QRIS',
       gatewayRefId: paymentResult.token,
       qrString: paymentResult.qrString,
       paymentLink: paymentResult.redirectUrl,
@@ -390,7 +389,6 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       vaBankCode: paymentResult.vaBankCode,
       vaBankName: paymentResult.vaBankName,
       vaPartnerReff: paymentResult.partnerReff,
-      pakasirTxnId: paymentResult.gateway === 'PAKASIR' ? paymentResult.token : undefined,
       fee: paymentResult.fee || 0,
       totalPayment: paymentResult.totalPayment || totalAmount,
       expiredAt: paymentResult.expiredAt,
@@ -521,13 +519,6 @@ const handleOrderStatusCheck = async (req: Request, res: Response) => {
     }
     const settings = await mongoDbService.getSettingsFromDatabase();
     const gateway = String(order.paymentGatewayProvider || settings.paymentGatewayProvider || 'QIOSPAY').toUpperCase();
-    if (gateway === 'PAKASIR') {
-      const result = await pakasirService.getOrderStatus(order.invoiceNumber || order.id, prisma, fulfillmentService);
-      if (!result.success) return res.status(502).json({ success: false, message: result.message || 'Gateway belum dapat dihubungi.' });
-      const freshState = await mongoDbService.getAllState();
-      const fresh = (freshState.orders || []).find((o: any) => o.id === order.id) || order;
-      return res.json({ success: true, paymentStatus: fresh.paymentStatus, fulfillmentStatus: fresh.fulfillmentStatus, order: fresh });
-    }
     if (!settings.qiospayMerchantCode || !settings.qiospayApiKey) {
       return res.status(503).json({ success: false, message: 'Konfigurasi gateway di dashboard admin belum lengkap.' });
     }
@@ -1028,6 +1019,98 @@ app.post('/api/digiflazz/test-ip', requireAdmin, async (req: Request, res: Respo
   }
 });
 
+// ── QIOSPAY CONFIG (persist ke MongoDB, tidak hilang saat reload) ──────────────
+app.get('/api/settings/qiospay', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const settings = await mongoDbService.getSettingsFromDatabase();
+    const hasMerchantCode = Boolean(settings.qiospayMerchantCode || settings.qiospayMerchantKey);
+    const hasApiKey = Boolean(settings.qiospayApiKey);
+    const hasSecret = Boolean(settings.qiospaySecretKey || settings.qiospaySecretCode || settings.qiospayCallbackSecret);
+
+    return res.json({
+      success: true,
+      data: {
+        merchantCode: settings.qiospayMerchantCode || settings.qiospayMerchantKey || '',
+        apiKey: settings.qiospayApiKey || '',
+        hasProductionKey: hasMerchantCode && hasApiKey,
+        expectedNmid: settings.qiospayExpectedNmid || settings.qiospayNmid || '',
+        hasSecret,
+        adminToken: settings.qiospayAdminToken || '',
+        merchantName: settings.qiospayMerchantName || 'WAYAHE DIGITAL',
+        qrString: settings.qiospayQrisString || settings.qiospayQrString || '',
+        localDynamicConfirmed: settings.qiospayLocalDynamicConfirmed === 'false' ? false : true,
+        testing: settings.qiospayMode === 'DEVELOPMENT',
+        h2hUsername: settings.qiospayH2hUsername || settings.qiospayUsername || '',
+        h2hPin: settings.qiospayH2hPin || settings.qiospayUsApikey || '',
+        vaEnabled: settings.qiospayVaEnabled === 'false' ? false : true,
+        vaCallbackUrl: settings.qiospayVaCallbackUrl || '',
+        vaBanks: settings.qiospayVaBanks ? String(settings.qiospayVaBanks).split(',').filter(Boolean) : ['BRI:002','BNI:009','Mandiri:008','BSI:451'],
+      },
+      configured: hasMerchantCode && hasApiKey,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/settings/qiospay', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const {
+      merchantCode, apiKey, expectedNmid, callbackSecret, adminToken, merchantName,
+      qrString, localDynamicConfirmed, mode, h2hUsername, h2hPin,
+      vaEnabled, vaCallbackUrl, vaBanks,
+    } = req.body || {};
+
+    const settingsToSave: Record<string, any> = {};
+
+    // Mode tidak bisa diubah setelah diset pertama kali (immutable setelah diset)
+    if (mode !== undefined) {
+      const current = await mongoDbService.getSettingsFromDatabase();
+      const existingMode = current.qiospayMode;
+      const newMode = String(mode || 'PRODUCTION').toUpperCase() === 'DEVELOPMENT' ? 'DEVELOPMENT' : 'PRODUCTION';
+      if (existingMode && existingMode !== newMode) {
+        return res.status(400).json({
+          success: false,
+          message: `Mode Qiospay sudah diset ke "${existingMode}" dan tidak boleh diubah. Hubungi administrator untuk reset.`
+        });
+      }
+      settingsToSave.qiospayMode = newMode;
+    }
+
+    if (merchantCode !== undefined) settingsToSave.qiospayMerchantCode = String(merchantCode || '').trim();
+    if (apiKey !== undefined) settingsToSave.qiospayApiKey = String(apiKey || '').trim();
+    if (expectedNmid !== undefined) settingsToSave.qiospayExpectedNmid = String(expectedNmid || '').trim();
+    if (callbackSecret !== undefined) settingsToSave.qiospayCallbackSecret = String(callbackSecret || '').trim();
+    if (adminToken !== undefined) settingsToSave.qiospayAdminToken = String(adminToken || '').trim();
+    if (merchantName !== undefined) settingsToSave.qiospayMerchantName = String(merchantName || 'WAYAHE DIGITAL').trim();
+    if (qrString !== undefined) settingsToSave.qiospayQrisString = String(qrString || '').trim();
+    if (localDynamicConfirmed !== undefined) settingsToSave.qiospayLocalDynamicConfirmed = String(!!localDynamicConfirmed);
+    if (h2hUsername !== undefined) settingsToSave.qiospayH2hUsername = String(h2hUsername || '').trim();
+    if (h2hPin !== undefined) settingsToSave.qiospayH2hPin = String(h2hPin || '').trim();
+    if (vaEnabled !== undefined) settingsToSave.qiospayVaEnabled = String(!!vaEnabled);
+    if (vaCallbackUrl !== undefined) settingsToSave.qiospayVaCallbackUrl = String(vaCallbackUrl || '').trim();
+    if (vaBanks !== undefined) settingsToSave.qiospayVaBanks = Array.isArray(vaBanks) ? vaBanks.join(',') : String(vaBanks || '').trim();
+
+    if (Object.keys(settingsToSave).length === 0) {
+      return res.status(400).json({ success: false, message: 'Minimal satu field Qiospay harus diisi.' });
+    }
+
+    const syncOk = await mongoDbService.syncEntity('settings', settingsToSave);
+    if (!syncOk) {
+      return res.status(503).json({ success: false, message: 'Database tidak tersedia. Konfigurasi Qiospay belum disimpan.' });
+    }
+
+    await hydrateQiospayRuntime();
+
+    return res.json({
+      success: true,
+      message: 'Konfigurasi Qiospay tersimpan ke database dan dimuat ulang. Mode tidak bisa diubah setelah diset.'
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.post(['/api/orders/:id/fulfill', '/api/fulfillment/fulfill'], requireAdmin, async (req: Request, res: Response) => {
   try {
     const orderId = req.params.id || req.body.orderId || req.body.id || req.body.order?.id;
@@ -1103,12 +1186,6 @@ app.get('/api/system/gateway-status', (req: Request, res: Response) => {
         configured: Boolean(QIOSPAY_CONFIG.MERCHANT_CODE && QIOSPAY_CONFIG.API_KEY),
         merchantCode: QIOSPAY_CONFIG.MERCHANT_CODE,
       },
-      pakasir: {
-        configured: pakasirService.isConfigured(),
-        isSandbox: PAKASIR_CONFIG.IS_SANDBOX,
-        slug: PAKASIR_CONFIG.SLUG ? `${PAKASIR_CONFIG.SLUG.substring(0, 4)}***` : '',
-        hasApiKey: Boolean(PAKASIR_CONFIG.API_KEY),
-      },
       digiflazz: {
         configured: Boolean(DIGIFLAZZ_CONFIG.USERNAME && DIGIFLAZZ_CONFIG.API_KEY),
         username: DIGIFLAZZ_CONFIG.USERNAME,
@@ -1133,21 +1210,9 @@ app.get('/api/settings/gateway-info', (req: Request, res: Response) => {
   const isAdmin = isAdminRequest(req);
   const maskQr = (s: string) => s ? `${s.slice(0,12)}***` : '';
   res.json({
-    success: true, _sanitized: !isAdmin,
-    activeGateway: detectActiveGateway(),
-    pakasir: {
-      configured: pakasirService.isConfigured(),
-      isSandbox: PAKASIR_CONFIG.IS_SANDBOX,
-      baseUrl: PAKASIR_CONFIG.BASE_URL,
-      slug: PAKASIR_CONFIG.SLUG ? (isAdmin ? PAKASIR_CONFIG.SLUG : `${PAKASIR_CONFIG.SLUG.substring(0, 4)}***`) : '',
-      hasApiKey: Boolean(PAKASIR_CONFIG.API_KEY),
-      hasWebhookSecret: Boolean(PAKASIR_CONFIG.WEBHOOK_SECRET),
-      paymentMethod: PAKASIR_CONFIG.PAYMENT_METHOD || 'qris',
-      merchantName: PAKASIR_CONFIG.MERCHANT_NAME || 'WAYAHE DIGITAL',
-      nmid: PAKASIR_CONFIG.NMID || '',
-      qrString: isAdmin ? (PAKASIR_CONFIG.QR_STRING || '') : maskQr(PAKASIR_CONFIG.QR_STRING || ''),
-    },
-    qiospay: {
+  success: true, _sanitized: !isAdmin,
+  activeGateway: detectActiveGateway(),
+  qiospay: {
       configured: Boolean(QIOSPAY_CONFIG.MERCHANT_CODE && QIOSPAY_CONFIG.API_KEY),
       merchantCode: QIOSPAY_CONFIG.MERCHANT_CODE || '',
       merchantName: QIOSPAY_CONFIG.MERCHANT_NAME || '',
@@ -1270,11 +1335,6 @@ app.get('/api/system/metrics', requireAdmin, async (req: Request, res: Response)
           qiospay: {
             status: QIOSPAY_CONFIG.MERCHANT_CODE ? 'ACTIVE' : 'STANDBY',
             merchant: QIOSPAY_CONFIG.MERCHANT_NAME || 'Qiospay QRIS',
-          },
-          pakasir: {
-            status: (PAKASIR_CONFIG.SLUG && PAKASIR_CONFIG.API_KEY) ? 'ACTIVE' : 'STANDBY',
-            slug: PAKASIR_CONFIG.SLUG || '',
-            configured: Boolean(PAKASIR_CONFIG.SLUG && PAKASIR_CONFIG.API_KEY),
           },
           digiflazz: {
             status: (DIGIFLAZZ_CONFIG.USERNAME && DIGIFLAZZ_CONFIG.API_KEY) ? 'ACTIVE' : 'STANDBY',
@@ -1815,435 +1875,6 @@ app.post('/api/telegram/toggle-polling', requireAdmin, async (req: Request, res:
   }
 });
 
-// ══════════════════════════════════════════════════════════════
-// ── PAKASIR API v2 SECURE ENDPOINTS ────────────────────────────
-// ══════════════════════════════════════════════════════════════
-
-// 1. Create Transaction (POST /api/payment/pakasir/create)
-app.post('/api/payment/pakasir/create', async (req: Request, res: Response) => {
-  try {
-    const {
-      productId,
-      paymentMethod = 'qris',
-      orderId: customOrderId,
-      customerName,
-      customerPhone,
-      customerEmail,
-      targetDestination,
-      promoCode,
-    } = req.body || {};
-
-    if (!productId) {
-      return res.status(400).json({ success: false, message: 'Product ID wajib diisi' });
-    }
-
-    // 1. Ambil harga asli dari database (Backend-enforced price)
-    let product: any = null;
-    try {
-      product = await prisma.product.findUnique({ where: { id: productId } });
-    } catch (_) {}
-
-    if (!product) {
-      const state = await mongoDbService.getAllState();
-      const productList = Array.isArray(state?.products) 
-        ? state.products 
-        : (state?.products ? Object.values(state.products) : []);
-      product = productList.find((p: any) => p.id === productId);
-    }
-
-    if (!product) {
-      try {
-        const supa = supabaseService.getClient();
-        if (supa) {
-          const { data } = await supa.from('products').select('*').eq('id', productId).single();
-          if (data) product = data;
-        }
-      } catch (_) {}
-    }
-
-    if (!product && (String(productId).startsWith('df-') || req.body.supplierSku || req.body.buyerSkuCode)) {
-      const getCachedItem = typeof findCachedDigiflazzItem === 'function' ? findCachedDigiflazzItem : null;
-      const cachedDf = getCachedItem ? (getCachedItem(productId) || (req.body.supplierSku ? getCachedItem(req.body.supplierSku) : null)) : null;
-      if (cachedDf && typeof transformDigiflazzProduct === 'function') {
-        product = transformDigiflazzProduct(cachedDf);
-      }
-    }
-
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Produk yang dipilih tidak ditemukan di katalog.' });
-    }
-
-    if (product.isActive === false) {
-      const msg = product.statusNote ? `Produk tidak tersedia: ${product.statusNote}.` : 'Produk sedang tidak aktif atau stok kosong dari provider API.';
-      return res.status(400).json({ success: false, message: msg });
-    }
-
-    if (product.unlimitedStock === false && product.stock !== undefined && Number(product.stock) <= 0) {
-      return res.status(400).json({ success: false, message: 'Stok produk dari supplier API saat ini sedang kosong (Stok: 0).' });
-    }
-
-    if (typeof isWithinCutOff === 'function' && isWithinCutOff(product.startCutOff, product.endCutOff)) {
-      return res.status(400).json({ success: false, message: `Produk sedang dalam jam cut-off/pemeliharaan server (${product.startCutOff || ''} - ${product.endCutOff || ''} WIB).` });
-    }
-
-    // Hitung diskon promo jika ada
-    let discount = 0;
-    if (promoCode) {
-      const state = await mongoDbService.getAllState();
-      const promoList = Array.isArray(state?.promos) ? state.promos : [];
-      const promo = promoList.find((pr: any) => pr.code?.toUpperCase() === String(promoCode).toUpperCase() && pr.isActive);
-      if (promo && product.sellingPrice >= (promo.minTransaction || 0)) {
-        discount = promo.discountAmount || 0;
-      }
-    }
-
-    const subtotal = Number(product.sellingPrice || product.selling_price || 0);
-    const amount = Math.max(0, subtotal - discount);
-
-    // 2. Generate Order ID yang konsisten
-    const dateStr = new Date().toISOString().slice(0, 10).replaceAll('-', '');
-    const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
-    const orderId = customOrderId || `INV-${dateStr}-${randomHex}`;
-
-    const dest = String(targetDestination || customerPhone || '').trim();
-    const custName = customerName || 'Pelanggan Wayahe';
-    const custPhone = customerPhone || dest;
-    const custEmail = customerEmail || '';
-
-    // 3. Simpan order ke database berstatus PENDING
-    const orderRecord = {
-      id: orderId,
-      invoiceNumber: orderId,
-      guestAccessToken: `gst_${crypto.randomBytes(8).toString('hex')}`,
-      targetDestination: dest,
-      customerName: custName,
-      customerPhone: custPhone,
-      customerEmail: custEmail,
-      productId: product.id,
-      productName: product.name,
-      category: product.categoryId || product.category_id || 'PULSA',
-      subtotal,
-      adminFee: 0,
-      discount,
-      promoCode: promoCode || '',
-      totalAmount: amount,
-      paymentStatus: 'PENDING',
-      fulfillmentStatus: 'NOT_STARTED',
-      deliveryMethod: product.deliveryMethod || 'AUTOMATIC',
-      paymentMethod: `QRIS (Pakasir)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    await supabaseService.saveOrder(orderRecord).catch(() => {});
-    await mongoDbService.saveOrder(orderRecord).catch(() => {});
-    try {
-      await prisma.order.create({
-        data: {
-          id: orderRecord.id,
-          invoiceNumber: orderRecord.invoiceNumber,
-          guestAccessToken: orderRecord.guestAccessToken,
-          targetDestination: orderRecord.targetDestination,
-          customerName: orderRecord.customerName,
-          customerPhone: orderRecord.customerPhone,
-          customerEmail: orderRecord.customerEmail,
-          category: orderRecord.category as any,
-          subtotal: orderRecord.subtotal,
-          adminFee: orderRecord.adminFee,
-          discount: orderRecord.discount,
-          promoCode: orderRecord.promoCode,
-          totalAmount: orderRecord.totalAmount,
-          paymentStatus: 'PENDING',
-          fulfillmentStatus: 'NOT_STARTED',
-          paymentMethod: 'QRIS (Pakasir)',
-        },
-      }).catch(() => {});
-    } catch (_) {}
-
-    // 4. Request transaksi ke Pakasir API v2
-    const pakasirResult = await pakasirService.createTransaction({
-      orderId,
-      amount,
-      method: paymentMethod || 'qris',
-      customerName: custName,
-      customerEmail: custEmail,
-      customerPhone: custPhone,
-    });
-
-    if (!pakasirResult.success) {
-      return res.status(500).json(pakasirResult);
-    }
-
-    // 5. Update data Pakasir ke database
-    const paymentData = pakasirResult.payment!;
-    try {
-      await supabaseService.updateOrderStatus(orderId, 'PENDING', 'NOT_STARTED', undefined, {
-        pakasir_txn_id: paymentData.txn_id,
-        payment_link: paymentData.payment_link,
-        qr_string: paymentData.qr_string,
-        fee: paymentData.fee,
-        total_payment: paymentData.total_payment,
-        expired_at: paymentData.expired_at,
-        raw_payment_response: pakasirResult.detail,
-      });
-    } catch (_) {}
-
-    try {
-      await mongoDbService.updateOrder(orderId, {
-        pakasirTxnId: paymentData.txn_id,
-        paymentLink: paymentData.payment_link,
-        qrString: paymentData.qr_string,
-        fee: paymentData.fee,
-        totalPayment: paymentData.total_payment,
-        expiredAt: paymentData.expired_at,
-      });
-    } catch (_) {}
-
-    // Push notification ke Admin HP
-    try {
-      pushNotificationService.sendNewOrderNotification({
-        id: orderId,
-        invoiceNumber: orderId,
-        productName: product.name,
-        totalAmount: paymentData.total_payment || amount,
-        createdAt: orderRecord.createdAt,
-      }).catch(() => {});
-    } catch (_) {}
-
-    return res.status(200).json(pakasirResult);
-  } catch (error: any) {
-    console.error('[PAKASIR CREATE ERROR]:', error.message);
-    return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
-  }
-});
-
-// 2. Webhook Handler (POST /api/payment/pakasir/webhook)
-const handlePakasirWebhookEndpoint = async (req: Request, res: Response) => {
-  try {
-    const receivedSecret = (req.headers['x-secret'] as string) || (req.headers['X-Secret'] as string) || (req.query.secret as string) || '';
-    const payload = req.body || {};
-
-    const result = await pakasirService.handleWebhook(payload, receivedSecret, prisma, fulfillmentService);
-    return res.status(result.statusCode).json(result.responseBody);
-  } catch (error: any) {
-    console.error('[PAKASIR WEBHOOK ENDPOINT ERROR]:', error.message);
-    return res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: error.message });
-  }
-};
-
-app.post('/api/payment/pakasir/webhook', handlePakasirWebhookEndpoint);
-app.post('/api/payment/pakasir/callback', handlePakasirWebhookEndpoint);
-app.post('/webhook/pakasir', handlePakasirWebhookEndpoint);
-app.post('/webhook/:secret/pakasir', handlePakasirWebhookEndpoint);
-
-// GET ping handler for webhook testing
-app.get('/api/payment/pakasir/webhook', (req, res) => res.json({ status: 'ready', message: 'Pakasir API v2 Webhook endpoint active' }));
-app.get('/webhook/pakasir', (req, res) => res.json({ status: 'ready', message: 'Pakasir API v2 Webhook endpoint active' }));
-
-// 3. Status Polling Endpoint (GET /api/payment/pakasir/status/:orderId(*) & /api/payment/pakasir/status)
-app.get(['/api/payment/pakasir/status/:orderId(*)', '/api/payment/pakasir/status'], async (req: Request, res: Response) => {
-  try {
-    const orderId = (req.params.orderId as string) || 
-                    (req.query.order_id as string) || 
-                    (req.query.orderId as string) || 
-                    (req.query.invoice as string) || '';
-    if (!orderId) {
-      return res.status(400).json({ success: false, message: 'order_id parameter required' });
-    }
-    const result = await pakasirService.getOrderStatus(orderId, prisma);
-    const statusCode = result.success ? 200 : (result.error === 'ORDER_NOT_FOUND' ? 404 : 500);
-    return res.status(statusCode).json(result);
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// 4. Safe Health & Public Info (GET /api/payment/pakasir/health)
-app.get('/api/payment/pakasir/health', (req: Request, res: Response) => {
-  res.json(pakasirService.getPublicInfo());
-});
-
-// 5. Admin Test Connection (POST /api/payment/pakasir/test)
-app.post('/api/payment/pakasir/test', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const { slug, apiKey, webhookSecret } = req.body || {};
-    
-    // Check format
-    const targetSlug = (slug || PAKASIR_CONFIG.SLUG || process.env.PAKASIR_SLUG || '').trim();
-    const targetApiKey = (apiKey || PAKASIR_CONFIG.API_KEY || process.env.PAKASIR_API_KEY || '').trim();
-    const targetSecret = (webhookSecret || PAKASIR_CONFIG.WEBHOOK_SECRET || process.env.PAKASIR_WEBHOOK_SECRET || '').trim();
-
-    if (!targetSlug || !targetApiKey) {
-      return res.status(400).json({
-        success: false,
-        message: 'PAKASIR_SLUG dan PAKASIR_API_KEY wajib diisi untuk melakukan pengujian.',
-      });
-    }
-
-    // Refresh memory config temporarily
-    pakasirService.refreshConfig({ slug: targetSlug, apiKey: targetApiKey, webhookSecret: targetSecret });
-
-    // Test real API connection to Pakasir
-    try {
-      const pingUrl = `https://app.pakasir.com/api/v2/create-transaction/${encodeURIComponent(targetSlug)}/TEST-PING-${Date.now()}`;
-      const pingRes = await fetch(pingUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': targetApiKey,
-        },
-        body: JSON.stringify({
-          method: 'qris',
-          amount: 1000,
-        }),
-      });
-
-      const pingData: any = await pingRes.json().catch(() => ({}));
-
-      if (pingRes.ok && (pingData?.success || pingData?.payment || pingData?.txn_id)) {
-        return res.json({
-          success: true,
-          message: `Kredensial Pakasir API v2 Terverifikasi Berhasil! Gateway siap melayani pembayaran untuk slug "${targetSlug}".`,
-          slug: targetSlug,
-          detail: pingData,
-          status: 'CONFIGURED_OK',
-        });
-      }
-
-      if (pingData?.message === "Api key doesn't match") {
-        return res.status(400).json({
-          success: false,
-          message: `API Key tidak cocok dengan slug project "${targetSlug}" di Pakasir. Silakan salin API Key yang sesuai dari dashboard https://app.pakasir.com/project.`,
-          detail: pingData,
-        });
-      }
-
-      if (pingData?.message?.toLowerCase().includes('not foound') || pingData?.message?.toLowerCase().includes('not found')) {
-        return res.status(400).json({
-          success: false,
-          message: `Project dengan slug "${targetSlug}" tidak ditemukan di Pakasir. Periksa penulisan slug di dashboard https://app.pakasir.com.`,
-          detail: pingData,
-        });
-      }
-    } catch (netErr: any) {
-      console.warn('⚠️ [Pakasir Test] Ping warning:', netErr.message);
-    }
-
-    // Fallback if ping timed out or offline
-    return res.json({
-      success: true,
-      message: `Kredensial Pakasir tersimpan untuk slug "${targetSlug}". Pastikan API key sesuai dengan project dashboard Pakasir.`,
-      slug: targetSlug,
-      webhookUrl: process.env.PAKASIR_WEBHOOK_URL || `${process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://wayahetopup.my.id'}/api/payment/pakasir/webhook`,
-      status: 'CONFIGURED_OK',
-    });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// 6. Pakasir Mode Switcher (POST /api/payment/pakasir/toggle-sandbox)
-app.post('/api/payment/pakasir/toggle-sandbox', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const { isSandbox } = req.body;
-    const boolVal = Boolean(isSandbox);
-    PAKASIR_CONFIG.IS_SANDBOX = boolVal;
-    pakasirService.setIsSandbox(boolVal);
-
-    // Simpan ke .env agar persistent (path robust via resolveEnvPath)
-    try {
-      const envPath = resolveEnvPath();
-      if (fs.existsSync(envPath)) {
-        let envContent = fs.readFileSync(envPath, 'utf8');
-        if (envContent.includes('PAKASIR_IS_SANDBOX=')) {
-          envContent = envContent.replace(/PAKASIR_IS_SANDBOX=.*/, `PAKASIR_IS_SANDBOX="${boolVal}"`);
-        } else {
-          envContent += `\nPAKASIR_IS_SANDBOX="${boolVal}"`;
-        }
-        fs.writeFileSync(envPath, envContent, 'utf8');
-        console.log(`✅ [Pakasir] PAKASIR_IS_SANDBOX=${boolVal} disimpan ke ${envPath}`);
-      }
-    } catch (writeErr: any) {
-      console.warn(`⚠️ [Pakasir] Tidak dapat menulis .env (mungkin read-only). Mode tetap aktif di memory: isSandbox=${boolVal}`, writeErr.message);
-    }
-
-    return res.json({
-      success: true,
-      isSandbox: boolVal,
-      message: `Mode operasional Pakasir berhasil diubah ke: ${boolVal ? 'SANDBOX (Uji Coba)' : 'REAL (Production Live)'}`,
-    });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// 7. Pakasir Sandbox Payment Simulation (POST /api/payment/pakasir/simulate)
-app.post('/api/payment/pakasir/simulate', requireAdmin, async (req: Request, res: Response) => {
-  if (CONSOLE_CONFIG.isProduction) {
-    return res.status(404).json({ success: false, message: 'Simulation endpoint is unavailable in production.' });
-  }
-  try {
-    const { orderId, amount } = req.body || {};
-    if (!orderId) {
-      return res.status(400).json({ success: false, message: 'orderId wajib disertakan' });
-    }
-
-    const cleanOrderId = String(orderId).trim();
-    const cleanAmount = Number(amount) || 1000;
-
-    // 1. Panggil API simulasi resmi Pakasir
-    const simResult = await pakasirService.simulatePayment({
-      orderId: cleanOrderId,
-      amount: cleanAmount,
-    });
-
-    // 2. Tandai transaksi sebagai LUNAS (PAID) di database lokal & cloud
-    try {
-      const existingOrder = await prisma.order.findFirst({
-        where: {
-          OR: [{ id: cleanOrderId }, { invoiceNumber: cleanOrderId }],
-        },
-      });
-
-      const targetId = existingOrder ? existingOrder.id : cleanOrderId;
-
-      if (existingOrder) {
-        await prisma.order.update({
-          where: { id: targetId },
-          data: {
-            paymentStatus: 'PAID',
-            fulfillmentStatus: 'PROCESSING',
-            paymentMethod: 'QRIS (Pakasir Sandbox)',
-            paidAt: new Date(),
-          },
-        }).catch(() => {});
-      }
-
-      await supabaseService.updateOrderStatus(
-        targetId,
-        'PAID',
-        'PROCESSING',
-        'Pembayaran sukses melalui Simulasi Sandbox Pakasir'
-      );
-
-      // Jalankan fulfillment produk / voucher otomatis
-      fulfillmentService.fulfillOrder(targetId).catch((err) => {
-        console.warn('⚠️ [Simulate Fulfillment] Fulfillment notice:', err.message);
-      });
-    } catch (dbErr: any) {
-      console.warn('⚠️ [Simulate DB Update notice]:', dbErr.message);
-    }
-
-    return res.json({
-      success: true,
-      message: 'Simulasi pembayaran Sandbox Pakasir berhasil! Pesanan diproses otomatis.',
-      detail: simResult,
-    });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 // 3. Admin Events Inspector
 // GET /api/admin/events (Bearer Token protected)
 app.get('/api/admin/events', async (req: Request, res: Response) => {
@@ -2588,12 +2219,10 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     await hydrateDigiflazzRuntime();
     syncDigiflazzCatalog().catch((e: any) => console.log('Settings update Digiflazz sync note:', e.message));
     // SUPABASE DISABLED — tidak lagi simpan SUPABASE_* ke .env (MongoDB aktif)
-    let envUpdated = false;
     try {
       const envPath = resolveEnvPath();
       if (fs.existsSync(envPath)) {
         let envContent = fs.readFileSync(envPath, 'utf8');
-
         // Simpan SUPABASE Config ke .env dan CONSOLE_CONFIG jika dikirim
         if (settings.supabaseUrl !== undefined && typeof settings.supabaseUrl === 'string') {
           const cleanUrl = sanitizeSupabaseUrl(settings.supabaseUrl);
@@ -2603,7 +2232,6 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
           } else {
             envContent += `\nSUPABASE_URL="${cleanUrl}"`;
           }
-          envUpdated = true;
         }
 
         const pubKey = settings.supabasePublishableKey || settings.supabaseAnonKey;
@@ -2617,7 +2245,6 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
           } else {
             envContent += `\nSUPABASE_PUBLISHABLE_KEY="${pubKey.trim()}"`;
           }
-          envUpdated = true;
         }
 
         const secKey = settings.supabaseSecretKey || settings.supabaseServiceRoleKey;
@@ -2631,7 +2258,6 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
           } else {
             envContent += `\nSUPABASE_SECRET_KEY="${secKey.trim()}"`;
           }
-          envUpdated = true;
         }
 
         if (settings.supabaseDbUrl !== undefined && typeof settings.supabaseDbUrl === 'string') {
@@ -2641,222 +2267,8 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
           } else {
             envContent += `\nSUPABASE_DB_URL="${settings.supabaseDbUrl.trim()}"`;
           }
-          envUpdated = true;
-        }
-
-        // Update Memory & .env untuk Pakasir
-        if (settings.pakasirSlug !== undefined && typeof settings.pakasirSlug === 'string') {
-          const val = settings.pakasirSlug.trim();
-          PAKASIR_CONFIG.SLUG = val;
-          if (envContent.includes('PAKASIR_SLUG=')) {
-            envContent = envContent.replace(/PAKASIR_SLUG=.*/, `PAKASIR_SLUG="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_SLUG="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirApiKey !== undefined && typeof settings.pakasirApiKey === 'string') {
-          const val = settings.pakasirApiKey.trim();
-          PAKASIR_CONFIG.API_KEY = val;
-          if (envContent.includes('PAKASIR_API_KEY=')) {
-            envContent = envContent.replace(/PAKASIR_API_KEY=.*/, `PAKASIR_API_KEY="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_API_KEY="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirWebhookSecret !== undefined && typeof settings.pakasirWebhookSecret === 'string') {
-          const val = settings.pakasirWebhookSecret.trim();
-          PAKASIR_CONFIG.WEBHOOK_SECRET = val;
-          if (envContent.includes('PAKASIR_WEBHOOK_SECRET=')) {
-            envContent = envContent.replace(/PAKASIR_WEBHOOK_SECRET=.*/, `PAKASIR_WEBHOOK_SECRET="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_WEBHOOK_SECRET="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirBaseUrl !== undefined && typeof settings.pakasirBaseUrl === 'string') {
-          const val = settings.pakasirBaseUrl.trim() || 'https://app.pakasir.com';
-          PAKASIR_CONFIG.BASE_URL = val;
-          if (envContent.includes('PAKASIR_BASE_URL=')) {
-            envContent = envContent.replace(/PAKASIR_BASE_URL=.*/, `PAKASIR_BASE_URL="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_BASE_URL="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirPaymentMethod !== undefined && typeof settings.pakasirPaymentMethod === 'string') {
-          const val = settings.pakasirPaymentMethod.trim() || 'qris';
-          PAKASIR_CONFIG.PAYMENT_METHOD = val;
-          if (envContent.includes('PAKASIR_PAYMENT_METHOD=')) {
-            envContent = envContent.replace(/PAKASIR_PAYMENT_METHOD=.*/, `PAKASIR_PAYMENT_METHOD="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_PAYMENT_METHOD="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirMerchantName !== undefined && typeof settings.pakasirMerchantName === 'string') {
-          const val = settings.pakasirMerchantName.trim();
-          (PAKASIR_CONFIG as any).MERCHANT_NAME = val;
-          if (envContent.includes('PAKASIR_MERCHANT_NAME=')) {
-            envContent = envContent.replace(/PAKASIR_MERCHANT_NAME=.*/, `PAKASIR_MERCHANT_NAME="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_MERCHANT_NAME="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirNmid !== undefined && typeof settings.pakasirNmid === 'string') {
-          const val = settings.pakasirNmid.trim();
-          (PAKASIR_CONFIG as any).NMID = val;
-          if (envContent.includes('PAKASIR_NMID=')) {
-            envContent = envContent.replace(/PAKASIR_NMID=.*/, `PAKASIR_NMID="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_NMID="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirQrString !== undefined && typeof settings.pakasirQrString === 'string') {
-          const val = settings.pakasirQrString.trim();
-          (PAKASIR_CONFIG as any).QR_STRING = val;
-          if (envContent.includes('PAKASIR_QR_STRING=')) {
-            envContent = envContent.replace(/PAKASIR_QR_STRING=.*/, `PAKASIR_QR_STRING="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_QR_STRING="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.pakasirIsSandbox !== undefined) {
-          const val = Boolean(settings.pakasirIsSandbox);
-          PAKASIR_CONFIG.IS_SANDBOX = val;
-          pakasirService.setIsSandbox(val);
-          if (envContent.includes('PAKASIR_IS_SANDBOX=')) {
-            envContent = envContent.replace(/PAKASIR_IS_SANDBOX=.*/, `PAKASIR_IS_SANDBOX="${val}"`);
-          } else {
-            envContent += `\nPAKASIR_IS_SANDBOX="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        // Update Memory & .env untuk Qiospay
-        if (settings.qiospayMerchantCode !== undefined && typeof settings.qiospayMerchantCode === 'string') {
-          const val = settings.qiospayMerchantCode.trim();
-          QIOSPAY_CONFIG.MERCHANT_CODE = val;
-          if (envContent.includes('QIOSPAY_MERCHANT_CODE=')) {
-            envContent = envContent.replace(/QIOSPAY_MERCHANT_CODE=.*/, `QIOSPAY_MERCHANT_CODE="${val}"`);
-          } else {
-            envContent += `\nQIOSPAY_MERCHANT_CODE="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.qiospayApiKey !== undefined && typeof settings.qiospayApiKey === 'string') {
-          const val = settings.qiospayApiKey.trim();
-          QIOSPAY_CONFIG.API_KEY = val;
-          if (envContent.includes('QIOSPAY_API_KEY=')) {
-            envContent = envContent.replace(/QIOSPAY_API_KEY=.*/, `QIOSPAY_API_KEY="${val}"`);
-          } else {
-            envContent += `\nQIOSPAY_API_KEY="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.qiospaySecretKey !== undefined && typeof settings.qiospaySecretKey === 'string') {
-          const val = settings.qiospaySecretKey.trim();
-          QIOSPAY_CONFIG.SECRET_KEY = val;
-          QIOSPAY_CONFIG.CALLBACK_SECRET = val;
-          if (envContent.includes('QIOSPAY_SECRET_KEY=')) {
-            envContent = envContent.replace(/QIOSPAY_SECRET_KEY=.*/, `QIOSPAY_SECRET_KEY="${val}"`);
-          } else {
-            envContent += `\nQIOSPAY_SECRET_KEY="${val}"`;
-          }
-          if (envContent.includes('CALLBACK_SECRET=')) {
-            envContent = envContent.replace(/CALLBACK_SECRET=.*/, `CALLBACK_SECRET="${val}"`);
-          } else {
-            envContent += `\nCALLBACK_SECRET="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.qiospayNmid !== undefined && typeof settings.qiospayNmid === 'string') {
-          const val = settings.qiospayNmid.trim();
-          QIOSPAY_CONFIG.NMID = val;
-          QIOSPAY_CONFIG.EXPECTED_NMID = val;
-          if (envContent.includes('QIOSPAY_NMID=')) {
-            envContent = envContent.replace(/QIOSPAY_NMID=.*/, `QIOSPAY_NMID="${val}"`);
-          } else {
-            envContent += `\nQIOSPAY_NMID="${val}"`;
-          }
-          envUpdated = true;
-        }
-
-        if (settings.qiospayMerchantName !== undefined && typeof settings.qiospayMerchantName === 'string') {
-          const val = settings.qiospayMerchantName.trim();
-          (QIOSPAY_CONFIG as any).MERCHANT_NAME = val;
-        }
-
-        const qrisVal = (settings.qiospayQrString || settings.staticQrisString || '').trim();
-        if (qrisVal && qrisVal.length > 20) {
-          QIOSPAY_CONFIG.QRIS_STRING = qrisVal;
-          QIOSPAY_CONFIG.QR_STRING = qrisVal;
-          if (envContent.includes('QIOSPAY_QRIS_STRING=')) {
-            envContent = envContent.replace(/QIOSPAY_QRIS_STRING=.*/, `QIOSPAY_QRIS_STRING="${qrisVal}"`);
-          } else {
-            envContent += `\nQIOSPAY_QRIS_STRING="${qrisVal}"`;
-          }
-          if (envContent.includes('STATIC_QRIS_STRING=')) {
-            envContent = envContent.replace(/STATIC_QRIS_STRING=.*/, `STATIC_QRIS_STRING="${qrisVal}"`);
-          } else {
-            envContent += `\nSTATIC_QRIS_STRING="${qrisVal}"`;
-          }
-          envUpdated = true;
-        }
-
-        // Digiflazz remains database-first; hydration above is independent of .env writability.
-
-        if (envUpdated) {
-          fs.writeFileSync(envPath, envContent, 'utf8');
         }
       }
-
-      // Selalu update memory config Pakasir & Qiospay meskipun .env file read-only di production
-      if (settings.pakasirSlug) PAKASIR_CONFIG.SLUG = settings.pakasirSlug.trim();
-      if (settings.pakasirApiKey) PAKASIR_CONFIG.API_KEY = settings.pakasirApiKey.trim();
-      if (settings.pakasirWebhookSecret) PAKASIR_CONFIG.WEBHOOK_SECRET = settings.pakasirWebhookSecret.trim();
-      if (settings.pakasirBaseUrl) PAKASIR_CONFIG.BASE_URL = settings.pakasirBaseUrl.trim();
-      if (settings.pakasirIsSandbox !== undefined) PAKASIR_CONFIG.IS_SANDBOX = Boolean(settings.pakasirIsSandbox);
-
-      if (settings.qiospayMerchantCode) QIOSPAY_CONFIG.MERCHANT_CODE = settings.qiospayMerchantCode.trim();
-      if (settings.qiospayApiKey) QIOSPAY_CONFIG.API_KEY = settings.qiospayApiKey.trim();
-      if (settings.qiospaySecretKey) {
-        QIOSPAY_CONFIG.SECRET_KEY = settings.qiospaySecretKey.trim();
-        QIOSPAY_CONFIG.CALLBACK_SECRET = settings.qiospaySecretKey.trim();
-      }
-      if (settings.qiospayNmid) {
-        QIOSPAY_CONFIG.NMID = settings.qiospayNmid.trim();
-        QIOSPAY_CONFIG.EXPECTED_NMID = settings.qiospayNmid.trim();
-      }
-      const qrisMem = (settings.qiospayQrString || settings.staticQrisString || '').trim();
-      if (qrisMem) {
-        QIOSPAY_CONFIG.QRIS_STRING = qrisMem;
-        QIOSPAY_CONFIG.QR_STRING = qrisMem;
-      }
-
-      // Refresh memory configuration Pakasir Service
-      pakasirService.refreshConfig({
-        slug: PAKASIR_CONFIG.SLUG,
-        apiKey: PAKASIR_CONFIG.API_KEY,
-        webhookSecret: PAKASIR_CONFIG.WEBHOOK_SECRET,
-        baseUrl: PAKASIR_CONFIG.BASE_URL,
-        isSandbox: PAKASIR_CONFIG.IS_SANDBOX,
-      });
 
       // Refresh memory configuration Digiflazz Service
       digiflazzService.refreshConfig({
@@ -2889,15 +2301,6 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
       }
     } catch (e: any) {
       console.warn('Could not write .env file:', e.message);
-    }
-
-    // Persist full settings ke MongoDB lokal (aaPanel) & file cache — merge menjaga secret lama
-    if (!syncOk) {
-      return res.status(503).json({
-        success: false,
-        mongoPersisted: false,
-        message: 'MongoDB tidak tersedia. Pengaturan Telegram Bot belum tersimpan.'
-      });
     }
 
     const bundle = {
@@ -3064,6 +2467,12 @@ try {
   await hydrateDigiflazzRuntime();
 } catch {
   console.error('[DIGIFLAZZ CONFIG] Database unavailable; Digiflazz disabled until confirmed settings reload.');
+}
+
+try {
+  await hydrateQiospayRuntime();
+} catch {
+  console.error('[QIOSPAY CONFIG] Database unavailable; Qiospay disabled until confirmed settings reload.');
 }
 
 try {
