@@ -715,8 +715,9 @@ export function CheckoutPage({
                   Metode Pembayaran
                 </h3>
                 <span className="text-sm font-bold text-white">
-                  {paymentChannel === 'qris'
-                    : `Virtual Account ${channels.find((c) => c.id === paymentChannel)?.bankName || ''}`.trim()}
+                  {paymentChannel === 'qris' && channels.find((c) => c.id === 'qris')
+                    ? `Virtual Account ${channels.find((c) => c.id === 'qris')?.bankName || ''}`.trim()
+                    : `Pembayaran ${channels.find((c) => c.id === paymentChannel)?.bankName || paymentChannel.toUpperCase()}`}
                 </span>
               </div>
             </div>

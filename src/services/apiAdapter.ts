@@ -108,26 +108,22 @@ export const apiAdapter = {
     return { order: confirmed, gatewayRefId: confirmed.gatewayRefId || payload.gatewayRefId || '' };
   },
 
-    try {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, amount }),
-      });
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, message: `Gagal mengirim simulasi: ${err.message}` };
-    }
+  async simulatePayment(orderId: string, amount: number): Promise<{ success: boolean; message?: string }> {
+    const response = await fetch(`/api/simulate-payment`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, amount }),
+    });
+    return await response.json();
   },
 
-    try {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isSandbox }),
-      });
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, isSandbox, message: `Gagal mengubah mode: ${err.message}` };
-    }
+  async changeSandboxMode(isSandbox: boolean): Promise<{ success: boolean; isSandbox: boolean; message?: string }> {
+    const response = await fetch(`/api/sandbox-mode`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isSandbox }),
+    });
+    return await response.json();
   },
 
   // 3. GET ORDER BY ID OR INVOICE (With Access Token security verification)
