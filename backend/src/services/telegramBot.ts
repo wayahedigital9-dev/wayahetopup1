@@ -1043,7 +1043,7 @@ export class TelegramBotService {
   // ─────────────────────────────────────────────────────────────
   // LONG POLLING SUPPORT (UNTUK LOCALHOST TANPA WEBHOOK PUBLIK)
   // ─────────────────────────────────────────────────────────────
-  public startPolling() {
+  public async startPolling() {
     if (this.isPolling) return;
     if (!this.isConfigured()) {
       console.log('[TelegramBot] Polling tidak dimulai: bot token belum diisi.');
@@ -1052,6 +1052,15 @@ export class TelegramBotService {
 
     this.isPolling = true;
     console.log('[TelegramBot] Long Polling aktif melayani pesan...');
+
+    // Hapus webhook lama agar update datang via polling (bukan dikirim ke endpoint)
+    try {
+      await axios.post(
+        `https://api.telegram.org/bot${this.config.botToken}/deleteWebhook`,
+        { drop_pending_updates: true },
+        { timeout: 15000 },
+      );
+    } catch (_) {}
 
     const poll = async () => {
       if (!this.isPolling) return;

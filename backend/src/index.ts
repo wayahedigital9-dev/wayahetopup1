@@ -1726,7 +1726,7 @@ app.post('/api/telegram/toggle-polling', requireAdmin, async (req: Request, res:
   try {
     const active = Boolean(req.body?.active);
     if (active) {
-      telegramBotService.startPolling();
+      await telegramBotService.startPolling();
     } else {
       telegramBotService.stopPolling();
     }
@@ -2803,7 +2803,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
       });
 
       if (settings.telegramStoreMode === 'polling' && settings.telegramStoreEnabled !== false && settings.telegramBotToken) {
-        telegramBotService.startPolling();
+        await telegramBotService.startPolling();
       } else {
         telegramBotService.stopPolling();
       }
@@ -2836,7 +2836,7 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
     };
     try { telegramBotService.refreshConfig(bundle); } catch (_) {}
     if (bundle.storeMode === 'polling' && bundle.storeEnabled !== false && bundle.telegramBotToken) {
-      try { telegramBotService.startPolling(); } catch (_) {}
+      try { await telegramBotService.startPolling(); } catch (_) {}
     } else {
       try { telegramBotService.stopPolling(); } catch (_) {}
     }
@@ -2987,27 +2987,38 @@ try {
 }
 
 try {
-  const dbSettings = await mongoDbService.getSettingsFromDatabase();
-  if (dbSettings) {
-    telegramBotService.refreshConfig({
-      botToken: dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN,
-      chatId: dbSettings.telegramChatId || BOT_CONFIG.TELEGRAM_CHAT_ID,
-      botUsername: dbSettings.telegramBotUsername,
-      storeEnabled: dbSettings.telegramStoreEnabled !== false,
-      storeMode: dbSettings.telegramStoreMode || 'webhook',
-      webhookUrl: dbSettings.telegramWebhookUrl,
-      webAppUrl: dbSettings.telegramWebAppUrl,
-      welcomeMessage: dbSettings.telegramWelcomeMessage,
-      csUsername: dbSettings.telegramCsUsername,
-      channelUrl: dbSettings.telegramChannelUrl,
-      alertsEnabled: dbSettings.telegramAlertsEnabled !== false,
-    });
-    if (dbSettings.telegramStoreMode === 'polling' && dbSettings.telegramStoreEnabled !== false && (dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN)) {
-      telegramBotService.startPolling();
+  let lastErr = null;
+  for (let i = 0; i < 5; i++) {
+    try {
+      const dbSettings = await mongoDbService.getSettingsFromDatabase();
+      if (dbSettings) {
+        telegramBotService.refreshConfig({
+          botToken: dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN,
+          chatId: dbSettings.telegramChatId || BOT_CONFIG.TELEGRAM_CHAT_ID,
+          botUsername: dbSettings.telegramBotUsername,
+          storeEnabled: dbSettings.telegramStoreEnabled !== false,
+          storeMode: dbSettings.telegramStoreMode || 'webhook',
+          webhookUrl: dbSettings.telegramWebhookUrl,
+          webAppUrl: dbSettings.telegramWebAppUrl,
+          welcomeMessage: dbSettings.telegramWelcomeMessage,
+          csUsername: dbSettings.telegramCsUsername,
+          channelUrl: dbSettings.telegramChannelUrl,
+          alertsEnabled: dbSettings.telegramAlertsEnabled !== false,
+        });
+        if (dbSettings.telegramStoreMode === 'polling' && dbSettings.telegramStoreEnabled !== false && (dbSettings.telegramBotToken || BOT_CONFIG.TELEGRAM_TOKEN)) {
+          await telegramBotService.startPolling();
+        }
+      }
+      lastErr = null;
+      break;
+    } catch (e: any) {
+      lastErr = e;
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
+  if (lastErr) console.error('[TelegramBot Startup] Gagal memuat konfigurasi dari MongoDB setelah 5x percobaan:', lastErr.message);
 } catch (e: any) {
-  // silent startup catch
+  console.error('[TelegramBot Startup] Error fatal:', e.message);
 }
 
 app.listen(PORT, '127.0.0.1', () => {
