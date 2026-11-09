@@ -1687,6 +1687,11 @@ export function HomePage({
                                 {app.badge || 'VIP'}
                               </span>
                             </div>
+                              {app.categoryId === 'premium' && app.voucherCodes && app.voucherCodes.length > 0 && (
+                                <span className="mt-1 text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                  Nomor: {app.voucherCodes[0]}
+                                </span>
+                              )}
                           </div>
                         </div>
 
