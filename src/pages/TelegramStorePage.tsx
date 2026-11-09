@@ -42,8 +42,9 @@ export function TelegramStorePage({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('>');
   const [destinationTarget, setDestinationTarget] = useState<string>('');
+  const [selectedNumber, setSelectedNumber] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeInvoice, setActiveInvoice] = useState<{
     order: any;
@@ -342,8 +343,12 @@ export function TelegramStorePage({
                   whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleOpenProduct(p)}
-                  className="rounded-2xl bg-gradient-to-b from-[#111827] to-[#0A0D15] border border-white/[0.08] hover:border-amber-400/50 p-3.5 flex flex-col justify-between cursor-pointer transition-shadow hover:shadow-lg hover:shadow-amber-500/10 group"
-                >
+                  className={`rounded-2xl bg-gradient-to-b from-[#111827] to-[#0A0D15] border border-white/[0.08] hover:border-amber-400/50 p-3.5 flex flex-col justify-between cursor-pointer transition-shadow hover:shadow-lg hover:shadow-amber-500/10 group ${
+                    p.categoryId === 'premium'
+                      ? 'border-amber-400/30 shadow-[0_0_20px_rgba(245,158,11,0.12)] hover:shadow-[0_0_30px_rgba(245,158,11,0.25)]'
+                      : ''
+                  }`}
+>
                   <div>
                     {/* Top Row: Logo & Stock */}
                     <div className="flex items-start justify-between gap-2 mb-2.5">
@@ -531,6 +536,28 @@ export function TelegramStorePage({
                             </button>
                           );
                         })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pilihan Nomor Tujuan (untuk produk yang menyediakan daftar nomor) */}
+                  {(selectedProduct.voucherCodes?.length || 0) > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">Pilih Nomor Tujuan *</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {selectedProduct.voucherCodes.map((num, i) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => {
+                              setSelectedNumber(num);
+                              setDestinationTarget(num);
+                            }}
+                            className={`py-2.5 rounded-xl text-xs font-bold transition-all text-center border ${selectedNumber === num ? 'border-amber-400 bg-amber-500/15 text-white ring-1 ring-amber-400/40' : 'border-white/[0.08] bg-[#0A0E17] text-slate-400 hover:border-amber-500/40'}`}
+                          >
+                            {num}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
