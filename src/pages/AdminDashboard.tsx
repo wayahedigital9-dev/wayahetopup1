@@ -970,6 +970,39 @@ export function AdminDashboard({
   const [paymentTestResult, setPaymentTestResult] = useState<string | null>(null);
   const [botTestLoading, setBotTestLoading] = useState(false);
 
+// Bunyi UI ringan via Web Audio API (tanpa file eksternal)
+const playTapSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.06);
+  } catch (_) {}
+};
+
+const playDoneSound = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (_) {}
+};
+
   // Realtime Terminal & API Health Console States
   const [terminalStatus, setTerminalStatus] = useState<'RUNNING' | 'STOPPED'>('RUNNING');
   const [terminalLogs, setTerminalLogs] = useState<Array<{
@@ -2754,12 +2787,13 @@ export function AdminDashboard({
   }, [terminalStatus, settings]);
 
   const handleTestBotNotification = async () => {
+    playTapSound();
     setBotTestLoading(true);
     try {
       const token = storage.getAdminSession()?.token || '';
       const res = await fetch('/api/telegram/test-message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `*** ${token}` } : {}) },
         body: JSON.stringify({ chatId: settings.telegramChatId }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2772,15 +2806,17 @@ export function AdminDashboard({
       onShowToast('Notifikasi Bot Terkirim', 'Pesan uji coba berhasil disiarkan ke bot Telegram / WhatsApp admin', 'success');
     } finally {
       setBotTestLoading(false);
+      playDoneSound();
     }
   };
 
   const handleCheckTelegramInfo = async () => {
+    playTapSound();
     setBotTestLoading(true);
     try {
       const token = storage.getAdminSession()?.token || '';
       const res = await fetch('/api/telegram/info', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: token ? { Authorization: `*** ${token}` } : {},
       });
       const data = await res.json().catch(() => ({}));
       if (data?.success && data?.bot) {
@@ -2795,17 +2831,19 @@ export function AdminDashboard({
       onShowToast('Gagal Cek Bot', e.message || 'Server backend tidak dapat dihubungi.', 'error');
     } finally {
       setBotTestLoading(false);
+      playDoneSound();
     }
   };
 
   const handleSetTelegramWebhook = async () => {
+    playTapSound();
     const webhookUrl = settings.telegramWebhookUrl || `${window.location.origin}/api/telegram/webhook`;
     setBotTestLoading(true);
     try {
       const token = storage.getAdminSession()?.token || '';
       const res = await fetch('/api/telegram/set-webhook', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `*** ${token}` } : {}) },
         body: JSON.stringify({ url: webhookUrl }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2819,17 +2857,19 @@ export function AdminDashboard({
       onShowToast('Error Webhook', e.message, 'error');
     } finally {
       setBotTestLoading(false);
+      playDoneSound();
     }
   };
 
   const handleToggleTelegramPolling = async () => {
+    playTapSound();
     const newPollingState = !(settings.telegramStoreMode === 'polling');
     setBotTestLoading(true);
     try {
       const token = storage.getAdminSession()?.token || '';
       const res = await fetch('/api/telegram/toggle-polling', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `*** ${token}` } : {}) },
         body: JSON.stringify({ active: newPollingState }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2845,6 +2885,7 @@ export function AdminDashboard({
       onShowToast('Error Toggle Polling', e.message, 'error');
     } finally {
       setBotTestLoading(false);
+      playDoneSound();
     }
   };
 
