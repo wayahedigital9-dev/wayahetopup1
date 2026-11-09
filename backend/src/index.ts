@@ -754,7 +754,7 @@ app.post('/api/digiflazz/transaction', requireAdmin, async (req: Request, res: R
 // Sinkronisasi Katalog Produk Resmi dari Digiflazz ke Database
 export async function syncDigiflazzCatalog(category?: 'game'): Promise<{ success: boolean; count: number; added?: number; updated?: number; message: string; timestamp: string }> {
   try {
-    const upstream = await digiflazzService.fetchPriceList({ allowCache: false });
+    const upstream = await digiflazzService.fetchPriceList({ allowCache: true });
     const rawList = category === 'game' ? upstream.filter(p => ['game', 'games'].includes(String(p.category).toLowerCase())) : upstream;
     if (!Array.isArray(rawList) || rawList.length === 0) {
       return { success: false, count: 0, message: 'Tidak ada data produk dari Digiflazz.', timestamp: new Date().toISOString() };
@@ -889,7 +889,7 @@ app.get('/api/digiflazz/ip-status', requireAdmin, async (req: Request, res: Resp
 // Read-only fresh upstream catalog verification. No product/order/cache writes.
 app.get('/api/digiflazz/game-status', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const rows = await digiflazzService.fetchPriceList({ allowCache: false });
+    const rows = await digiflazzService.fetchPriceList({ allowCache: true });
     const games = rows.filter(p => ['game', 'games'].includes(String(p.category).toLowerCase()));
     const client = await mongoDbService.getClient();
     if (!client) throw new Error('Database products unavailable');

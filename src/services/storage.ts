@@ -1560,14 +1560,19 @@ export const storage = {
       confirmedSettings = merged;
       adminSettingsHydrated = true;
       await this.hydrateAdminMembers();
-      try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
       notifyStorageSynced();
       return structuredClone(merged);
     } catch { return null; }
   },
 
   getSettings(): AppSettings {
-    try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_SETTINGS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        confirmedSettings = { ...confirmedSettings, ...parsed };
+      }
+    } catch (_) {}
     return structuredClone(confirmedSettings);
   },
 
@@ -1604,7 +1609,7 @@ export const storage = {
     } catch (_) {}
 
     confirmedSettings = { ...DEFAULT_SETTINGS, ...sanitizedSettings };
-    try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.ADMIN_SETTINGS, JSON.stringify(confirmedSettings)); } catch (_) {}
     notifyStorageSynced();
   },
 

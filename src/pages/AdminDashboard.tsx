@@ -1973,6 +1973,17 @@ const playDoneSound = () => {
       qiospayMerchantName: (qiospayMerchantName || settings.qiospayMerchantName || 'Waroeng Digital QP48797').trim(),
       qiospayQrString: (qiospayQrString || settings.qiospayQrString || settings.staticQrisString || '').trim(),
       staticQrisString: (qiospayQrString || settings.staticQrisString || settings.qiospayQrString || '').trim(),
+      // Digiflazz Configuration
+      digiflazzWebhookUrl: (settings.digiflazzWebhookUrl || '').trim(),
+      digiflazzUser: (settings.digiflazzUser || '').trim(),
+      digiflazzUsername: (settings.digiflazzUsername || '').trim(),
+      digiflazzProductionKey: (settings.digiflazzProductionKey || settings.digiflazzApiKey || '').trim(),
+      digiflazzApiKey: (settings.digiflazzApiKey || '').trim(),
+      digiflazzSecretCode: (settings.digiflazzSecretCode || settings.digiflazzWebhookSecret || '').trim(),
+      digiflazzWebhookSecret: (settings.digiflazzWebhookSecret || '').trim(),
+      digiflazzWhitelistIp: (settings.digiflazzWhitelistIp || '').trim(),
+      digiflazzMode: settings.digiflazzMode || 'DEVELOPMENT',
+      digiflazzAutoFulfill: Boolean(settings.digiflazzAutoFulfill),
     };
     if (!await persistSettings(updated)) return;
 
