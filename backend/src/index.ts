@@ -923,10 +923,25 @@ app.post('/api/settings/digiflazz', requireAdmin, async (req: Request, res: Resp
   try {
     const { username, mode, productionKey, developmentKey, webhookSecret, webhookUrl, whitelistIp, outboundProxy } = req.body || {};
     
+    const currentSettings = await mongoDbService.getSettingsFromDatabase();
+    const existingMode = currentSettings.digiflazzMode;
+    
     const settingsToSave: Record<string, any> = {};
     
     if (username !== undefined) settingsToSave.digiflazzUsername = String(username || '').trim();
-    if (mode !== undefined) settingsToSave.digiflazzMode = String(mode || 'PRODUCTION').toUpperCase() === 'DEVELOPMENT' ? 'DEVELOPMENT' : 'PRODUCTION';
+    
+    // Mode tidak bisa diubah setelah diset pertama kali (immutable setelah diset)
+    if (mode !== undefined) {
+      const newMode = String(mode || 'PRODUCTION').toUpperCase() === 'DEVELOPMENT' ? 'DEVELOPMENT' : 'PRODUCTION';
+      if (existingMode && existingMode !== newMode) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Mode Digiflazz sudah diset ke "${existingMode}" dan tidak boleh diubah. Hubungi administrator untuk reset.` 
+        });
+      }
+      settingsToSave.digiflazzMode = newMode;
+    }
+    
     if (productionKey !== undefined) settingsToSave.digiflazzProductionKey = String(productionKey || '').trim();
     if (developmentKey !== undefined) settingsToSave.digiflazzDevelopmentKey = String(developmentKey || '').trim();
     if (webhookSecret !== undefined) settingsToSave.digiflazzWebhookSecret = String(webhookSecret || '').trim();
@@ -948,7 +963,7 @@ app.post('/api/settings/digiflazz', requireAdmin, async (req: Request, res: Resp
     
     return res.json({ 
       success: true, 
-      message: 'Konfigurasi Digiflazz tersimpan ke database dan dimuat ulang. Settings akan bertahan setelah restart backend.' 
+      message: 'Konfigurasi Digiflazz tersimpan ke database dan dimuat ulang. Mode tidak bisa diubah setelah diset.' 
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
