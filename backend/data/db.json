@@ -771,7 +771,7 @@
       "lastSyncAt": "2026-11-09T08:13:38.274Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5042",
+      "_id": "6af194f7e7c7e0b242c47f49",
       "id": "df-100b",
       "name": "Axis Data BRONET 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -796,10 +796,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5043",
+      "_id": "6af194f7e7c7e0b242c47f4a",
       "id": "df-100g",
       "name": "Telkomsel Data Non Puma 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -824,10 +824,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5044",
+      "_id": "6af194f7e7c7e0b242c47f4b",
       "id": "df-100gb",
       "name": "Indosat Freedom Internet Sensasi 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -852,10 +852,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5045",
+      "_id": "6af194f7e7c7e0b242c47f4c",
       "id": "df-100gbb",
       "name": "Indosat Freedom Internet 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -880,10 +880,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5046",
+      "_id": "6af194f7e7c7e0b242c47f4d",
       "id": "df-10gb",
       "name": "Indosat Freedom Internet 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -908,10 +908,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5047",
+      "_id": "6af194f7e7c7e0b242c47f4e",
       "id": "df-10gbhappy",
       "name": "Tri Data Happy 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -936,10 +936,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5048",
+      "_id": "6af194f7e7c7e0b242c47f4f",
       "id": "df-11gb",
       "name": "Indosat Freedom Internet 11 GB 28 Hari",
       "categoryId": "kuota",
@@ -964,10 +964,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5049",
+      "_id": "6af194f7e7c7e0b242c47f50",
       "id": "df-11gbhppy",
       "name": "Tri Data Happy 11 GB 28 Hari",
       "categoryId": "kuota",
@@ -992,10 +992,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504a",
+      "_id": "6af194f7e7c7e0b242c47f51",
       "id": "df-125g",
       "name": "Telkomsel Data Combo Sakti 125 GB 30 Hari",
       "categoryId": "kuota",
@@ -1020,10 +1020,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504b",
+      "_id": "6af194f7e7c7e0b242c47f52",
       "id": "df-125gb",
       "name": "Indosat Freedom Internet 125 GB 28 Hari",
       "categoryId": "kuota",
@@ -1048,10 +1048,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504c",
+      "_id": "6af194f7e7c7e0b242c47f53",
       "id": "df-130gb",
       "name": "Tri Data Happy 130 GB 28 Hari",
       "categoryId": "kuota",
@@ -1076,10 +1076,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504d",
+      "_id": "6af194f7e7c7e0b242c47f54",
       "id": "df-150gb",
       "name": "Axis Data BRONET 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -1104,10 +1104,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504e",
+      "_id": "6af194f7e7c7e0b242c47f55",
       "id": "df-16gb",
       "name": "Axis Data BRONET 16 GB 30 hari",
       "categoryId": "kuota",
@@ -1132,10 +1132,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a504f",
+      "_id": "6af194f7e7c7e0b242c47f56",
       "id": "df-175gb",
       "name": "Tri Data Happy 175 GB 180 Hari",
       "categoryId": "kuota",
@@ -1160,10 +1160,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5050",
+      "_id": "6af194f7e7c7e0b242c47f57",
       "id": "df-18gb",
       "name": "Tri Data Happy 18 GB 28 Hari",
       "categoryId": "kuota",
@@ -1188,10 +1188,10 @@
       "endCutOff": "0:5",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5051",
+      "_id": "6af194f7e7c7e0b242c47f58",
       "id": "df-20gb",
       "name": "Axis Data BRONET 20 GB 30 Hari",
       "categoryId": "kuota",
@@ -1216,10 +1216,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5052",
+      "_id": "6af194f7e7c7e0b242c47f59",
       "id": "df-22gb",
       "name": "Axis Data BRONET 22 GB 28 hari",
       "categoryId": "kuota",
@@ -1244,10 +1244,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5053",
+      "_id": "6af194f7e7c7e0b242c47f5a",
       "id": "df-24g",
       "name": "Axis Data BRONET 24 GB 5 Hari",
       "categoryId": "kuota",
@@ -1272,10 +1272,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5054",
+      "_id": "6af194f7e7c7e0b242c47f5b",
       "id": "df-24gb",
       "name": "Indosat Freedom Internet 24 GB 28 Hari",
       "categoryId": "kuota",
@@ -1300,10 +1300,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5055",
+      "_id": "6af194f7e7c7e0b242c47f5c",
       "id": "df-250gb",
       "name": "Tri Data Happy 250 GB 365 Hari",
       "categoryId": "kuota",
@@ -1328,10 +1328,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5056",
+      "_id": "6af194f7e7c7e0b242c47f5d",
       "id": "df-25gb",
       "name": "Tri Data Happy 25 GB 28 Hari",
       "categoryId": "kuota",
@@ -1356,10 +1356,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5057",
+      "_id": "6af194f7e7c7e0b242c47f5e",
       "id": "df-28gb",
       "name": "Indosat Freedom Internet 28 GB 28 Hari",
       "categoryId": "kuota",
@@ -1384,10 +1384,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5058",
+      "_id": "6af194f7e7c7e0b242c47f5f",
       "id": "df-2k",
       "name": "Telkomsel 2.000",
       "categoryId": "pulsa",
@@ -1412,10 +1412,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5059",
+      "_id": "6af194f7e7c7e0b242c47f60",
       "id": "df-3",
       "name": "Tri Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -1440,10 +1440,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505a",
+      "_id": "6af194f7e7c7e0b242c47f61",
       "id": "df-300g",
       "name": "Tri Data Happy Spesial 300 GB 30 Hari",
       "categoryId": "kuota",
@@ -1468,10 +1468,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505b",
+      "_id": "6af194f7e7c7e0b242c47f62",
       "id": "df-30b",
       "name": "Axis Data BRONET 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -1496,10 +1496,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505c",
+      "_id": "6af194f7e7c7e0b242c47f63",
       "id": "df-30gb",
       "name": "Indosat Freedom Internet 30 GB 28 Hari",
       "categoryId": "kuota",
@@ -1524,10 +1524,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505d",
+      "_id": "6af194f7e7c7e0b242c47f64",
       "id": "df-35gb",
       "name": "Indosat Freedom Internet 35 GB 28 Hari",
       "categoryId": "kuota",
@@ -1552,10 +1552,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505e",
+      "_id": "6af194f7e7c7e0b242c47f65",
       "id": "df-36gb",
       "name": "Indosat Freedom Internet 36 GB 28 Hari",
       "categoryId": "kuota",
@@ -1580,10 +1580,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a505f",
+      "_id": "6af194f7e7c7e0b242c47f66",
       "id": "df-3k",
       "name": "Telkomsel 3.000",
       "categoryId": "pulsa",
@@ -1608,10 +1608,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5060",
+      "_id": "6af194f7e7c7e0b242c47f67",
       "id": "df-43gb",
       "name": "Indosat Freedom Internet 43 GB 30 Hari",
       "categoryId": "kuota",
@@ -1636,10 +1636,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5061",
+      "_id": "6af194f7e7c7e0b242c47f68",
       "id": "df-44gb",
       "name": "Indosat Freedom Internet 44 GB 28 Hari",
       "categoryId": "kuota",
@@ -1664,10 +1664,10 @@
       "endCutOff": "0:5",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5062",
+      "_id": "6af194f7e7c7e0b242c47f69",
       "id": "df-45gb",
       "name": "Telkomsel Data Flash 45 GB 30 Hari",
       "categoryId": "kuota",
@@ -1692,10 +1692,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.327Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5063",
+      "_id": "6af194f7e7c7e0b242c47f6a",
       "id": "df-45gbb",
       "name": "Tri Data Happy 45 GB 28 Hari",
       "categoryId": "kuota",
@@ -1720,10 +1720,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5064",
+      "_id": "6af194f7e7c7e0b242c47f6b",
       "id": "df-49gb",
       "name": "Telkomsel Data Flash 49 GB 30 Hari",
       "categoryId": "kuota",
@@ -1748,10 +1748,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5065",
+      "_id": "6af194f7e7c7e0b242c47f6c",
       "id": "df-5",
       "name": "Mobile Legends Cek Username",
       "categoryId": "game",
@@ -1776,10 +1776,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5066",
+      "_id": "6af194f7e7c7e0b242c47f6d",
       "id": "df-50g",
       "name": "Telkomsel Data Flash 50 GB 30 Hari",
       "categoryId": "kuota",
@@ -1804,10 +1804,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5067",
+      "_id": "6af194f7e7c7e0b242c47f6e",
       "id": "df-50gb",
       "name": "Indosat Freedom Internet Sensasi 50 GB 28 Hari",
       "categoryId": "kuota",
@@ -1832,10 +1832,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5068",
+      "_id": "6af194f7e7c7e0b242c47f6f",
       "id": "df-52gb",
       "name": "Tri Data Happy 52 GB 28 Hari",
       "categoryId": "kuota",
@@ -1860,10 +1860,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5069",
+      "_id": "6af194f7e7c7e0b242c47f70",
       "id": "df-55gb",
       "name": "Tri Data Happy 55 GB 60 Hari",
       "categoryId": "kuota",
@@ -1888,10 +1888,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506a",
+      "_id": "6af194f7e7c7e0b242c47f71",
       "id": "df-55gbb",
       "name": "Tri Data Happy 55 GB 28 Hari",
       "categoryId": "kuota",
@@ -1916,10 +1916,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506b",
+      "_id": "6af194f7e7c7e0b242c47f72",
       "id": "df-568dm",
       "name": "MOBILE LEGENDS 568 Diamond",
       "categoryId": "game",
@@ -1944,10 +1944,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506c",
+      "_id": "6af194f7e7c7e0b242c47f73",
       "id": "df-60gb",
       "name": "Indosat Freedom Internet 60 GB 28 Hari",
       "categoryId": "kuota",
@@ -1972,10 +1972,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506d",
+      "_id": "6af194f7e7c7e0b242c47f74",
       "id": "df-60gbb",
       "name": "Tri Data Happy Spesial 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -2000,10 +2000,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506e",
+      "_id": "6af194f7e7c7e0b242c47f75",
       "id": "df-65gb",
       "name": "Indosat Freedom Internet 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -2028,10 +2028,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a506f",
+      "_id": "6af194f7e7c7e0b242c47f76",
       "id": "df-7gb",
       "name": "Axis Data BRONET 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -2056,10 +2056,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5070",
+      "_id": "6af194f7e7c7e0b242c47f77",
       "id": "df-8",
       "name": "XL Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -2084,10 +2084,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5071",
+      "_id": "6af194f7e7c7e0b242c47f78",
       "id": "df-9b",
       "name": "Axis Data BRONET 9 GB 28 Hari",
       "categoryId": "kuota",
@@ -2112,10 +2112,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5072",
+      "_id": "6af194f7e7c7e0b242c47f79",
       "id": "df-akrab10gb",
       "name": "XL Data Akrab Kuota Bersama 10 GB / 30 Hari",
       "categoryId": "kuota",
@@ -2140,10 +2140,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5073",
+      "_id": "6af194f7e7c7e0b242c47f7a",
       "id": "df-akrab160",
       "name": "XL Data Akrab Kuota Bersama 160 GB / 30 Hari",
       "categoryId": "kuota",
@@ -2168,10 +2168,10 @@
       "endCutOff": "20:25",
       "statusNote": "Cut-off Server (0:0 - 20:25 WIB)",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5074",
+      "_id": "6af194f7e7c7e0b242c47f7b",
       "id": "df-akrabl",
       "name": "XL Data Akrab L",
       "categoryId": "kuota",
@@ -2196,10 +2196,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5075",
+      "_id": "6af194f7e7c7e0b242c47f7c",
       "id": "df-akrabm",
       "name": "XL Data Akrab M",
       "categoryId": "kuota",
@@ -2224,10 +2224,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5076",
+      "_id": "6af194f7e7c7e0b242c47f7d",
       "id": "df-akrabs",
       "name": "XL Data Akrab S",
       "categoryId": "kuota",
@@ -2252,10 +2252,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5077",
+      "_id": "6af194f7e7c7e0b242c47f7e",
       "id": "df-akrabsm",
       "name": "XL Data Akrab SM",
       "categoryId": "kuota",
@@ -2280,10 +2280,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5078",
+      "_id": "6af194f7e7c7e0b242c47f7f",
       "id": "df-akrabxl",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -2308,10 +2308,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5079",
+      "_id": "6af194f7e7c7e0b242c47f80",
       "id": "df-akrabxl4",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -2336,10 +2336,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507a",
+      "_id": "6af194f7e7c7e0b242c47f81",
       "id": "df-akrabxxl",
       "name": "XL Data Akrab XXL",
       "categoryId": "kuota",
@@ -2364,10 +2364,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507b",
+      "_id": "6af194f7e7c7e0b242c47f82",
       "id": "df-alw12gb",
       "name": "Tri Data AlwaysOn 12 GB",
       "categoryId": "kuota",
@@ -2392,10 +2392,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507c",
+      "_id": "6af194f7e7c7e0b242c47f83",
       "id": "df-apls30",
       "name": "Axis 30.000",
       "categoryId": "pulsa",
@@ -2420,10 +2420,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507d",
+      "_id": "6af194f7e7c7e0b242c47f84",
       "id": "df-apls40",
       "name": "Axis 40.000",
       "categoryId": "pulsa",
@@ -2448,10 +2448,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507e",
+      "_id": "6af194f7e7c7e0b242c47f85",
       "id": "df-ax10",
       "name": "Axis 10.000",
       "categoryId": "pulsa",
@@ -2476,10 +2476,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a507f",
+      "_id": "6af194f7e7c7e0b242c47f86",
       "id": "df-ax5",
       "name": "Axis 5.000",
       "categoryId": "pulsa",
@@ -2504,10 +2504,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5080",
+      "_id": "6af194f7e7c7e0b242c47f87",
       "id": "df-axdj1",
       "name": "Axis Data Jawa 2.5 GB 5 Hari",
       "categoryId": "kuota",
@@ -2532,10 +2532,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5081",
+      "_id": "6af194f7e7c7e0b242c47f88",
       "id": "df-axdss2",
       "name": "Axis Data SS 2 GB 3 Hari",
       "categoryId": "kuota",
@@ -2560,10 +2560,10 @@
       "endCutOff": "0:5",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5082",
+      "_id": "6af194f7e7c7e0b242c47f89",
       "id": "df-b35",
       "name": "Axis Data BRONET 35 GB 28 hari",
       "categoryId": "kuota",
@@ -2588,10 +2588,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5083",
+      "_id": "6af194f7e7c7e0b242c47f8a",
       "id": "df-byu10",
       "name": "by.U 10.000",
       "categoryId": "pulsa",
@@ -2616,10 +2616,10 @@
       "endCutOff": "23:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5084",
+      "_id": "6af194f7e7c7e0b242c47f8b",
       "id": "df-byu125",
       "name": "by.U Data 125 GB 30 Hari",
       "categoryId": "kuota",
@@ -2644,10 +2644,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5085",
+      "_id": "6af194f7e7c7e0b242c47f8c",
       "id": "df-byu50gb",
       "name": "by.U Data 50 GB 30 Hari",
       "categoryId": "kuota",
@@ -2672,10 +2672,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5086",
+      "_id": "6af194f7e7c7e0b242c47f8d",
       "id": "df-byu57gb",
       "name": "by.U Data 57 GB 30 Hari",
       "categoryId": "kuota",
@@ -2700,10 +2700,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5087",
+      "_id": "6af194f7e7c7e0b242c47f8e",
       "id": "df-byu75",
       "name": "by.U Data 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -2728,10 +2728,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5088",
+      "_id": "6af194f7e7c7e0b242c47f8f",
       "id": "df-byukaget75",
       "name": "by.U Data Kaget 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -2756,10 +2756,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5089",
+      "_id": "6af194f7e7c7e0b242c47f90",
       "id": "df-combo100gbb",
       "name": "Telkomsel Data Combo Sakti 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -2784,10 +2784,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508a",
+      "_id": "6af194f7e7c7e0b242c47f91",
       "id": "df-combo18",
       "name": "Telkomsel Data Combo Sakti 18 GB 30 Hari",
       "categoryId": "kuota",
@@ -2812,10 +2812,10 @@
       "endCutOff": "0:1",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508b",
+      "_id": "6af194f7e7c7e0b242c47f92",
       "id": "df-combo19",
       "name": "Telkomsel Data Combo Sakti 19 GB 30 Hari",
       "categoryId": "kuota",
@@ -2840,10 +2840,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508c",
+      "_id": "6af194f7e7c7e0b242c47f93",
       "id": "df-combo70",
       "name": "Telkomsel Data Combo Sakti 70 GB 30 Hari",
       "categoryId": "kuota",
@@ -2868,10 +2868,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508d",
+      "_id": "6af194f7e7c7e0b242c47f94",
       "id": "df-combo80",
       "name": "Telkomsel Data Combo Sakti 80 GB 30 Hari",
       "categoryId": "kuota",
@@ -2896,10 +2896,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508e",
+      "_id": "6af194f7e7c7e0b242c47f95",
       "id": "df-data",
       "name": "Telkomsel Cek Sisa Paket Kuota",
       "categoryId": "kuota",
@@ -2924,10 +2924,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a508f",
+      "_id": "6af194f7e7c7e0b242c47f96",
       "id": "df-datal",
       "name": "XL Data Akrab L",
       "categoryId": "kuota",
@@ -2952,10 +2952,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5090",
+      "_id": "6af194f7e7c7e0b242c47f97",
       "id": "df-datam",
       "name": "XL Data Akrab M",
       "categoryId": "kuota",
@@ -2980,10 +2980,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5091",
+      "_id": "6af194f7e7c7e0b242c47f98",
       "id": "df-datas",
       "name": "XL Data Akrab S",
       "categoryId": "kuota",
@@ -3008,10 +3008,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5092",
+      "_id": "6af194f7e7c7e0b242c47f99",
       "id": "df-dataxl",
       "name": "XL Data Akrab XL",
       "categoryId": "kuota",
@@ -3036,10 +3036,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5093",
+      "_id": "6af194f7e7c7e0b242c47f9a",
       "id": "df-falsh1",
       "name": "Telkomsel Data Flash 1 GB 30 Hari",
       "categoryId": "kuota",
@@ -3064,10 +3064,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5094",
+      "_id": "6af194f7e7c7e0b242c47f9b",
       "id": "df-falsh10",
       "name": "Telkomsel Data Flash 10 GB 30 Hari",
       "categoryId": "kuota",
@@ -3092,10 +3092,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5095",
+      "_id": "6af194f7e7c7e0b242c47f9c",
       "id": "df-falsh100gb",
       "name": "Telkomsel Data Flash 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -3120,10 +3120,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5096",
+      "_id": "6af194f7e7c7e0b242c47f9d",
       "id": "df-falsh12",
       "name": "Telkomsel Data Flash 12 GB 30 Hari",
       "categoryId": "kuota",
@@ -3148,10 +3148,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5097",
+      "_id": "6af194f7e7c7e0b242c47f9e",
       "id": "df-falsh200",
       "name": "Telkomsel Data Flash 200 GB 30 Hari",
       "categoryId": "kuota",
@@ -3176,10 +3176,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5098",
+      "_id": "6af194f7e7c7e0b242c47f9f",
       "id": "df-falsh23",
       "name": "Telkomsel Data Flash 23 GB 30 Hari",
       "categoryId": "kuota",
@@ -3204,10 +3204,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5099",
+      "_id": "6af194f7e7c7e0b242c47fa0",
       "id": "df-falsh3",
       "name": "Telkomsel Data Flash 2 GB 30 Hari",
       "categoryId": "kuota",
@@ -3232,10 +3232,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509a",
+      "_id": "6af194f7e7c7e0b242c47fa1",
       "id": "df-falsh5",
       "name": "Telkomsel Data Flash 5 GB 30 Hari",
       "categoryId": "kuota",
@@ -3260,10 +3260,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509b",
+      "_id": "6af194f7e7c7e0b242c47fa2",
       "id": "df-falsh60",
       "name": "Telkomsel Data Flash 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -3288,10 +3288,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509c",
+      "_id": "6af194f7e7c7e0b242c47fa3",
       "id": "df-falsh75",
       "name": "Telkomsel Data Flash 75 GB 30 Hari",
       "categoryId": "kuota",
@@ -3316,10 +3316,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509d",
+      "_id": "6af194f7e7c7e0b242c47fa4",
       "id": "df-falsh8",
       "name": "Telkomsel Data Flash 8 GB 30 Hari",
       "categoryId": "kuota",
@@ -3344,10 +3344,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509e",
+      "_id": "6af194f7e7c7e0b242c47fa5",
       "id": "df-falxmax10",
       "name": "XL Data FlexMax 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -3372,10 +3372,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a509f",
+      "_id": "6af194f7e7c7e0b242c47fa6",
       "id": "df-falxmax100",
       "name": "XL Data FlexMax 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -3400,10 +3400,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a0",
+      "_id": "6af194f7e7c7e0b242c47fa7",
       "id": "df-falxmax150",
       "name": "XL Data FlexMax 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -3428,10 +3428,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a1",
+      "_id": "6af194f7e7c7e0b242c47fa8",
       "id": "df-falxmax65",
       "name": "XL Data FlexMax 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -3456,10 +3456,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a2",
+      "_id": "6af194f7e7c7e0b242c47fa9",
       "id": "df-ff12",
       "name": "Free Fire 12 Diamond",
       "categoryId": "game",
@@ -3484,10 +3484,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a3",
+      "_id": "6af194f7e7c7e0b242c47faa",
       "id": "df-ff140",
       "name": "Free Fire 140 Diamond",
       "categoryId": "game",
@@ -3512,10 +3512,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a4",
+      "_id": "6af194f7e7c7e0b242c47fab",
       "id": "df-ff355",
       "name": "Free Fire 355 Diamond",
       "categoryId": "game",
@@ -3540,10 +3540,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a5",
+      "_id": "6af194f7e7c7e0b242c47fac",
       "id": "df-ff50",
       "name": "Free Fire 50 Diamond",
       "categoryId": "game",
@@ -3568,10 +3568,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a6",
+      "_id": "6af194f7e7c7e0b242c47fad",
       "id": "df-ff70",
       "name": "Free Fire 70 Diamond",
       "categoryId": "game",
@@ -3596,10 +3596,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a7",
+      "_id": "6af194f7e7c7e0b242c47fae",
       "id": "df-flash1",
       "name": "Telkomsel Data Flash 1 GB 30 Hari",
       "categoryId": "kuota",
@@ -3624,10 +3624,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a8",
+      "_id": "6af194f7e7c7e0b242c47faf",
       "id": "df-flash11",
       "name": "Telkomsel Data Flash 11 GB 30 Hari",
       "categoryId": "kuota",
@@ -3652,10 +3652,10 @@
       "endCutOff": "15:9",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.298Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50a9",
+      "_id": "6af194f7e7c7e0b242c47fb0",
       "id": "df-flash14gb",
       "name": "Telkomsel Data Flash 14 GB 30 Hari",
       "categoryId": "kuota",
@@ -3680,10 +3680,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50aa",
+      "_id": "6af194f7e7c7e0b242c47fb1",
       "id": "df-flash20gb",
       "name": "Telkomsel Data Flash 20 GB 30 Hari",
       "categoryId": "kuota",
@@ -3708,10 +3708,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ab",
+      "_id": "6af194f7e7c7e0b242c47fb2",
       "id": "df-flash25",
       "name": "Telkomsel Data Flash 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -3736,10 +3736,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ac",
+      "_id": "6af194f7e7c7e0b242c47fb3",
       "id": "df-flash3",
       "name": "Telkomsel Data Flash 3 GB 30 Hari",
       "categoryId": "kuota",
@@ -3764,10 +3764,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ad",
+      "_id": "6af194f7e7c7e0b242c47fb4",
       "id": "df-flash30gb",
       "name": "Telkomsel Data Flash 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -3792,10 +3792,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ae",
+      "_id": "6af194f7e7c7e0b242c47fb5",
       "id": "df-flash4gb",
       "name": "Telkomsel Data Flash 4 GB 30 Hari",
       "categoryId": "kuota",
@@ -3820,10 +3820,10 @@
       "endCutOff": "0:45",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50af",
+      "_id": "6af194f7e7c7e0b242c47fb6",
       "id": "df-flash6gb",
       "name": "Telkomsel Data Flash 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -3848,10 +3848,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b0",
+      "_id": "6af194f7e7c7e0b242c47fb7",
       "id": "df-flash7gb",
       "name": "Telkomsel Data Flash 7 GB 30 Hari",
       "categoryId": "kuota",
@@ -3876,10 +3876,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b1",
+      "_id": "6af194f7e7c7e0b242c47fb8",
       "id": "df-flash80",
       "name": "Telkomsel Data Flash 80 GB 30 Hari",
       "categoryId": "kuota",
@@ -3904,10 +3904,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b2",
+      "_id": "6af194f7e7c7e0b242c47fb9",
       "id": "df-flash90",
       "name": "Telkomsel Data Flash 90 GB 30 Hari",
       "categoryId": "kuota",
@@ -3932,10 +3932,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b3",
+      "_id": "6af194f7e7c7e0b242c47fba",
       "id": "df-flashh100gb",
       "name": "Telkomsel Data Flash 100 GB 30 Hari",
       "categoryId": "kuota",
@@ -3960,10 +3960,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b4",
+      "_id": "6af194f7e7c7e0b242c47fbb",
       "id": "df-flaxmax6gb",
       "name": "XL Data FlexMax 6 GB 28 Hari",
       "categoryId": "kuota",
@@ -3988,10 +3988,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b5",
+      "_id": "6af194f7e7c7e0b242c47fbc",
       "id": "df-flexmax10gb",
       "name": "XL Data FlexMax 10 GB 28 Hari",
       "categoryId": "kuota",
@@ -4016,10 +4016,10 @@
       "endCutOff": "0:10",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b6",
+      "_id": "6af194f7e7c7e0b242c47fbd",
       "id": "df-flexmax15gb",
       "name": "XL Data FlexMax 15 GB 28 Hari",
       "categoryId": "kuota",
@@ -4044,10 +4044,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b7",
+      "_id": "6af194f7e7c7e0b242c47fbe",
       "id": "df-flexmax23gb",
       "name": "XL Data FlexMax 23 GB 28 Hari",
       "categoryId": "kuota",
@@ -4072,10 +4072,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b8",
+      "_id": "6af194f7e7c7e0b242c47fbf",
       "id": "df-flexmax31gb",
       "name": "XL Data FlexMax 31 GB 28 Hari",
       "categoryId": "kuota",
@@ -4100,10 +4100,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50b9",
+      "_id": "6af194f7e7c7e0b242c47fc0",
       "id": "df-flexmax7",
       "name": "XL Data FlexMax 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -4128,10 +4128,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ba",
+      "_id": "6af194f7e7c7e0b242c47fc1",
       "id": "df-flexmax7gb",
       "name": "XL Data FlexMax 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -4156,10 +4156,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50bb",
+      "_id": "6af194f7e7c7e0b242c47fc2",
       "id": "df-flexs",
       "name": "XL Xtra Combo Flex S 28 Hari",
       "categoryId": "kuota",
@@ -4184,10 +4184,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50bc",
+      "_id": "6af194f7e7c7e0b242c47fc3",
       "id": "df-fredom150g",
       "name": "Indosat Freedom Internet Sensasi 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -4212,10 +4212,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50bd",
+      "_id": "6af194f7e7c7e0b242c47fc4",
       "id": "df-fredom150gb",
       "name": "Indosat Freedom Internet 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -4240,10 +4240,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50be",
+      "_id": "6af194f7e7c7e0b242c47fc5",
       "id": "df-fredom150gbb",
       "name": "Indosat Freedom Internet Sensasi 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -4268,10 +4268,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50bf",
+      "_id": "6af194f7e7c7e0b242c47fc6",
       "id": "df-fredom200gb",
       "name": "Indosat Freedom Internet Sensasi 200 GB 28 Hari",
       "categoryId": "kuota",
@@ -4296,10 +4296,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c0",
+      "_id": "6af194f7e7c7e0b242c47fc7",
       "id": "df-fredom250gb",
       "name": "Indosat Freedom Internet 250 GB 28 Hari",
       "categoryId": "kuota",
@@ -4324,10 +4324,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c1",
+      "_id": "6af194f7e7c7e0b242c47fc8",
       "id": "df-fredom25gb",
       "name": "Indosat Freedom Internet 25 GB 28 Hari",
       "categoryId": "kuota",
@@ -4352,10 +4352,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c2",
+      "_id": "6af194f7e7c7e0b242c47fc9",
       "id": "df-fredom40gb",
       "name": "Indosat Freedom Internet 40 GB 28 Hari",
       "categoryId": "kuota",
@@ -4380,10 +4380,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c3",
+      "_id": "6af194f7e7c7e0b242c47fca",
       "id": "df-fredom45gb",
       "name": "Indosat Freedom Internet 45 GB 28 Hari",
       "categoryId": "kuota",
@@ -4408,10 +4408,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c4",
+      "_id": "6af194f7e7c7e0b242c47fcb",
       "id": "df-fredom52gb",
       "name": "Indosat Freedom Internet 52 GB 28 Hari",
       "categoryId": "kuota",
@@ -4436,10 +4436,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c5",
+      "_id": "6af194f7e7c7e0b242c47fcc",
       "id": "df-fredom55gb",
       "name": "Indosat Freedom Internet 55 GB 28 Hari",
       "categoryId": "kuota",
@@ -4464,10 +4464,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c6",
+      "_id": "6af194f7e7c7e0b242c47fcd",
       "id": "df-fredom62gb",
       "name": "Indosat Freedom Internet 62 GB 28 Hari",
       "categoryId": "kuota",
@@ -4492,10 +4492,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c7",
+      "_id": "6af194f7e7c7e0b242c47fce",
       "id": "df-fredom70gb",
       "name": "Indosat Freedom Internet 70 GB 28 Hari",
       "categoryId": "kuota",
@@ -4520,10 +4520,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c8",
+      "_id": "6af194f7e7c7e0b242c47fcf",
       "id": "df-fredom7gb",
       "name": "Indosat Freedom Internet 7 GB 28 Hari",
       "categoryId": "kuota",
@@ -4548,10 +4548,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50c9",
+      "_id": "6af194f7e7c7e0b242c47fd0",
       "id": "df-fredom80gb",
       "name": "Indosat Freedom Internet 80 GB 28 Hari",
       "categoryId": "kuota",
@@ -4576,10 +4576,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ca",
+      "_id": "6af194f7e7c7e0b242c47fd1",
       "id": "df-fredom8gb",
       "name": "Indosat Freedom Internet 8 GB 28 Hari",
       "categoryId": "kuota",
@@ -4604,10 +4604,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50cb",
+      "_id": "6af194f7e7c7e0b242c47fd2",
       "id": "df-fredom9b",
       "name": "Indosat Freedom Internet 9 GB 28 Hari",
       "categoryId": "kuota",
@@ -4632,10 +4632,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50cc",
+      "_id": "6af194f7e7c7e0b242c47fd3",
       "id": "df-freedom20gb",
       "name": "Indosat Freedom Internet 20 GB 28 Hari",
       "categoryId": "kuota",
@@ -4660,10 +4660,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50cd",
+      "_id": "6af194f7e7c7e0b242c47fd4",
       "id": "df-happy100",
       "name": "Tri Data Happy 100 GB 28 Hari",
       "categoryId": "kuota",
@@ -4688,10 +4688,10 @@
       "endCutOff": "0:5",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ce",
+      "_id": "6af194f7e7c7e0b242c47fd5",
       "id": "df-happy150",
       "name": "Tri Data Happy 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -4716,10 +4716,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50cf",
+      "_id": "6af194f7e7c7e0b242c47fd6",
       "id": "df-happy150gb",
       "name": "Tri Data Happy 150 GB 28 Hari",
       "categoryId": "kuota",
@@ -4744,10 +4744,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d0",
+      "_id": "6af194f7e7c7e0b242c47fd7",
       "id": "df-happy20gb",
       "name": "Tri Data Happy 20 GB 28 Hari",
       "categoryId": "kuota",
@@ -4772,10 +4772,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d1",
+      "_id": "6af194f7e7c7e0b242c47fd8",
       "id": "df-happy24gb",
       "name": "Tri Data Happy 24 GB 28 Hari",
       "categoryId": "kuota",
@@ -4800,10 +4800,10 @@
       "endCutOff": "0:1",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d2",
+      "_id": "6af194f7e7c7e0b242c47fd9",
       "id": "df-happy250",
       "name": "Tri Data Happy 250 GB 28 Hari",
       "categoryId": "kuota",
@@ -4828,10 +4828,10 @@
       "endCutOff": "0:1",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d3",
+      "_id": "6af194f7e7c7e0b242c47fda",
       "id": "df-happy26",
       "name": "Tri Data Happy 26 GB 28 Hari",
       "categoryId": "kuota",
@@ -4856,10 +4856,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d4",
+      "_id": "6af194f7e7c7e0b242c47fdb",
       "id": "df-happy300",
       "name": "Tri Data Happy 300 GB 28 Hari",
       "categoryId": "kuota",
@@ -4884,10 +4884,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d5",
+      "_id": "6af194f7e7c7e0b242c47fdc",
       "id": "df-happy32",
       "name": "Tri Data Happy 32 GB 28 Hari",
       "categoryId": "kuota",
@@ -4912,10 +4912,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d6",
+      "_id": "6af194f7e7c7e0b242c47fdd",
       "id": "df-happy35",
       "name": "Tri Data Happy 35 GB 28 Hari",
       "categoryId": "kuota",
@@ -4940,10 +4940,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d7",
+      "_id": "6af194f7e7c7e0b242c47fde",
       "id": "df-happy40",
       "name": "Tri Data Happy 40 GB 28 Hari",
       "categoryId": "kuota",
@@ -4968,10 +4968,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d8",
+      "_id": "6af194f7e7c7e0b242c47fdf",
       "id": "df-happy42",
       "name": "Tri Data Happy 42 GB 28 Hari",
       "categoryId": "kuota",
@@ -4996,10 +4996,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50d9",
+      "_id": "6af194f7e7c7e0b242c47fe0",
       "id": "df-happy47",
       "name": "Tri Data Happy 47 GB 28 Hari",
       "categoryId": "kuota",
@@ -5024,10 +5024,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50da",
+      "_id": "6af194f7e7c7e0b242c47fe1",
       "id": "df-happy50",
       "name": "Tri Data Happy 50 GB 28 Hari",
       "categoryId": "kuota",
@@ -5052,10 +5052,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50db",
+      "_id": "6af194f7e7c7e0b242c47fe2",
       "id": "df-happy60",
       "name": "Tri Data Happy Spesial 60 GB 28 Hari",
       "categoryId": "kuota",
@@ -5080,10 +5080,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50dc",
+      "_id": "6af194f7e7c7e0b242c47fe3",
       "id": "df-happy65",
       "name": "Tri Data Happy 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -5108,10 +5108,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50dd",
+      "_id": "6af194f7e7c7e0b242c47fe4",
       "id": "df-happy65gb",
       "name": "Tri Data Happy 65 GB 28 Hari",
       "categoryId": "kuota",
@@ -5136,10 +5136,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50de",
+      "_id": "6af194f7e7c7e0b242c47fe5",
       "id": "df-happy75",
       "name": "Tri Data Happy 75 GB 28 Hari",
       "categoryId": "kuota",
@@ -5164,10 +5164,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50df",
+      "_id": "6af194f7e7c7e0b242c47fe6",
       "id": "df-home60gb",
       "name": "Tri Data Home 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -5192,10 +5192,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e0",
+      "_id": "6af194f7e7c7e0b242c47fe7",
       "id": "df-hotrod3g10d",
       "name": "Aktivasi Voucher XL XTRA HotRod Special 3 GB 10 Hari",
       "categoryId": "aktivasi voucher",
@@ -5220,10 +5220,10 @@
       "endCutOff": "23:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e1",
+      "_id": "6af194f7e7c7e0b242c47fe8",
       "id": "df-hppy150",
       "name": "Tri Data Happy Spesial 150 GB 30 Hari",
       "categoryId": "kuota",
@@ -5248,10 +5248,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e2",
+      "_id": "6af194f7e7c7e0b242c47fe9",
       "id": "df-hppy30gb",
       "name": "Tri Data Happy 30 GB 28 Hari",
       "categoryId": "kuota",
@@ -5276,10 +5276,10 @@
       "endCutOff": "0:5",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e3",
+      "_id": "6af194f7e7c7e0b242c47fea",
       "id": "df-hppy70",
       "name": "Tri Data Happy 70 GB 28 Hari",
       "categoryId": "kuota",
@@ -5304,10 +5304,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e4",
+      "_id": "6af194f7e7c7e0b242c47feb",
       "id": "df-i10",
       "name": "Indosat 10.000",
       "categoryId": "pulsa",
@@ -5332,10 +5332,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e5",
+      "_id": "6af194f7e7c7e0b242c47fec",
       "id": "df-i20",
       "name": "Indosat 20.000",
       "categoryId": "pulsa",
@@ -5360,10 +5360,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e6",
+      "_id": "6af194f7e7c7e0b242c47fed",
       "id": "df-i25",
       "name": "Indosat 25.000",
       "categoryId": "pulsa",
@@ -5388,10 +5388,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e7",
+      "_id": "6af194f7e7c7e0b242c47fee",
       "id": "df-i5",
       "name": "Indosat 5.000",
       "categoryId": "pulsa",
@@ -5416,10 +5416,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e8",
+      "_id": "6af194f7e7c7e0b242c47fef",
       "id": "df-i50",
       "name": "Indosat 50.000",
       "categoryId": "pulsa",
@@ -5444,10 +5444,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50e9",
+      "_id": "6af194f7e7c7e0b242c47ff0",
       "id": "df-iactive90",
       "name": "Indosat Tambah Masa Aktif Kartu 90 Hari",
       "categoryId": "pulsa",
@@ -5472,10 +5472,10 @@
       "endCutOff": "0:5",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ea",
+      "_id": "6af194f7e7c7e0b242c47ff1",
       "id": "df-if2",
       "name": "Indosat Freedom Internet 2.5 GB 5 Hari",
       "categoryId": "kuota",
@@ -5500,10 +5500,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50eb",
+      "_id": "6af194f7e7c7e0b242c47ff2",
       "id": "df-if3g30d",
       "name": "Indosat Freedom Internet 3 GB 28 Hari",
       "categoryId": "kuota",
@@ -5528,10 +5528,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ec",
+      "_id": "6af194f7e7c7e0b242c47ff3",
       "id": "df-if3g3d",
       "name": "Indosat Freedom Internet 3 GB 3 Hari",
       "categoryId": "kuota",
@@ -5556,10 +5556,10 @@
       "endCutOff": "0:20",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ed",
+      "_id": "6af194f7e7c7e0b242c47ff4",
       "id": "df-jabo80gb",
       "name": "Telkomsel Data 80 GB 30 Hari (Jabodetabek)",
       "categoryId": "kuota",
@@ -5584,10 +5584,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ee",
+      "_id": "6af194f7e7c7e0b242c47ff5",
       "id": "df-kvision180d",
       "name": "K-Vision & GOL Paket CLING (CL06)  180 Hari",
       "categoryId": "tv",
@@ -5612,10 +5612,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ef",
+      "_id": "6af194f7e7c7e0b242c47ff6",
       "id": "df-kvision30d",
       "name": "K-Vision & GOL Paket CLING (CL01)  30 Hari",
       "categoryId": "tv",
@@ -5640,10 +5640,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f0",
+      "_id": "6af194f7e7c7e0b242c47ff7",
       "id": "df-ma30",
       "name": "Telkomsel Tambah Masa Aktif Kartu 30 Hari",
       "categoryId": "pulsa",
@@ -5668,10 +5668,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f1",
+      "_id": "6af194f7e7c7e0b242c47ff8",
       "id": "df-max80gb",
       "name": "XL Data FlexMax 80 GB 28 Hari",
       "categoryId": "kuota",
@@ -5696,10 +5696,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f2",
+      "_id": "6af194f7e7c7e0b242c47ff9",
       "id": "df-ml10",
       "name": "MOBILE LEGENDS 10 Diamond",
       "categoryId": "game",
@@ -5724,10 +5724,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f3",
+      "_id": "6af194f7e7c7e0b242c47ffa",
       "id": "df-ml12",
       "name": "MOBILE LEGENDS 12 Diamond",
       "categoryId": "game",
@@ -5752,10 +5752,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f4",
+      "_id": "6af194f7e7c7e0b242c47ffb",
       "id": "df-ml365",
       "name": "MOBILE LEGENDS 565 Diamond",
       "categoryId": "game",
@@ -5780,10 +5780,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f5",
+      "_id": "6af194f7e7c7e0b242c47ffc",
       "id": "df-ml370",
       "name": "MOBILE LEGENDS 570 Diamond",
       "categoryId": "game",
@@ -5808,10 +5808,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f6",
+      "_id": "6af194f7e7c7e0b242c47ffd",
       "id": "df-ml5",
       "name": "MOBILE LEGENDS 5 Diamond",
       "categoryId": "game",
@@ -5836,10 +5836,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f7",
+      "_id": "6af194f7e7c7e0b242c47ffe",
       "id": "df-ml600",
       "name": "MOBILE LEGENDS 600 Diamond",
       "categoryId": "game",
@@ -5864,10 +5864,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f8",
+      "_id": "6af194f7e7c7e0b242c47fff",
       "id": "df-mlb100",
       "name": "MOBILE LEGENDS 100 Diamond",
       "categoryId": "game",
@@ -5892,10 +5892,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50f9",
+      "_id": "6af194f7e7c7e0b242c48000",
       "id": "df-mlb1050",
       "name": "MOBILE LEGENDS 1050 Diamond",
       "categoryId": "game",
@@ -5920,10 +5920,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50fa",
+      "_id": "6af194f7e7c7e0b242c48001",
       "id": "df-mlb1065",
       "name": "MOBILE LEGENDS 1065 Diamond",
       "categoryId": "game",
@@ -5948,10 +5948,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50fb",
+      "_id": "6af194f7e7c7e0b242c48002",
       "id": "df-mlb110",
       "name": "MOBILE LEGENDS 110 Diamond",
       "categoryId": "game",
@@ -5976,10 +5976,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50fc",
+      "_id": "6af194f7e7c7e0b242c48003",
       "id": "df-mlb20",
       "name": "MOBILE LEGENDS 20 Diamond",
       "categoryId": "game",
@@ -6004,10 +6004,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50fd",
+      "_id": "6af194f7e7c7e0b242c48004",
       "id": "df-mlb224",
       "name": "MOBILE LEGENDS 224 Diamond",
       "categoryId": "game",
@@ -6032,10 +6032,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50fe",
+      "_id": "6af194f7e7c7e0b242c48005",
       "id": "df-mlb250",
       "name": "MOBILE LEGENDS 250 Diamond",
       "categoryId": "game",
@@ -6060,10 +6060,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a50ff",
+      "_id": "6af194f7e7c7e0b242c48006",
       "id": "df-mlb257",
       "name": "MOBILE LEGENDS 257 Diamond",
       "categoryId": "game",
@@ -6088,10 +6088,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5100",
+      "_id": "6af194f7e7c7e0b242c48007",
       "id": "df-mlb3",
       "name": "MOBILE LEGENDS 3 Diamond",
       "categoryId": "game",
@@ -6116,10 +6116,10 @@
       "endCutOff": "0:5",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5101",
+      "_id": "6af194f7e7c7e0b242c48008",
       "id": "df-mlb344",
       "name": "MOBILE LEGENDS 344 Diamond",
       "categoryId": "game",
@@ -6144,10 +6144,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5102",
+      "_id": "6af194f7e7c7e0b242c48009",
       "id": "df-mlb345",
       "name": "MOBILE LEGENDS 345 Diamond",
       "categoryId": "game",
@@ -6172,10 +6172,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.328Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5103",
+      "_id": "6af194f7e7c7e0b242c4800a",
       "id": "df-mlb350",
       "name": "MOBILE LEGENDS 350 Diamond",
       "categoryId": "game",
@@ -6200,10 +6200,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5104",
+      "_id": "6af194f7e7c7e0b242c4800b",
       "id": "df-mlb355",
       "name": "MOBILE LEGENDS 355 Diamond",
       "categoryId": "game",
@@ -6228,10 +6228,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5105",
+      "_id": "6af194f7e7c7e0b242c4800c",
       "id": "df-mlb370",
       "name": "MOBILE LEGENDS 370 Diamond",
       "categoryId": "game",
@@ -6256,10 +6256,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5106",
+      "_id": "6af194f7e7c7e0b242c4800d",
       "id": "df-mlb384",
       "name": "MOBILE LEGENDS 384 Diamond",
       "categoryId": "game",
@@ -6284,10 +6284,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5107",
+      "_id": "6af194f7e7c7e0b242c4800e",
       "id": "df-mlb448",
       "name": "MOBILE LEGENDS 448 Diamond",
       "categoryId": "game",
@@ -6312,10 +6312,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5108",
+      "_id": "6af194f7e7c7e0b242c4800f",
       "id": "df-mlb460",
       "name": "MOBILE LEGENDS 460 Diamond",
       "categoryId": "game",
@@ -6340,10 +6340,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5109",
+      "_id": "6af194f7e7c7e0b242c48010",
       "id": "df-mlb500",
       "name": "MOBILE LEGENDS 500 Diamond",
       "categoryId": "game",
@@ -6368,10 +6368,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510a",
+      "_id": "6af194f7e7c7e0b242c48011",
       "id": "df-mlb530",
       "name": "MOBILE LEGENDS 530 Diamond",
       "categoryId": "game",
@@ -6396,10 +6396,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510b",
+      "_id": "6af194f7e7c7e0b242c48012",
       "id": "df-mlb568",
       "name": "MOBILE LEGENDS 568 Diamond",
       "categoryId": "game",
@@ -6424,10 +6424,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510c",
+      "_id": "6af194f7e7c7e0b242c48013",
       "id": "df-mlb570",
       "name": "MOBILE LEGENDS 570 Diamond",
       "categoryId": "game",
@@ -6452,10 +6452,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510d",
+      "_id": "6af194f7e7c7e0b242c48014",
       "id": "df-mlb60",
       "name": "MOBILE LEGENDS 60 Diamond",
       "categoryId": "game",
@@ -6480,10 +6480,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510e",
+      "_id": "6af194f7e7c7e0b242c48015",
       "id": "df-mlb600",
       "name": "MOBILE LEGENDS 600 Diamond",
       "categoryId": "game",
@@ -6508,10 +6508,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a510f",
+      "_id": "6af194f7e7c7e0b242c48016",
       "id": "df-mlb635",
       "name": "MOBILE LEGENDS 635 Diamond",
       "categoryId": "game",
@@ -6536,10 +6536,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5110",
+      "_id": "6af194f7e7c7e0b242c48017",
       "id": "df-mlb642",
       "name": "MOBILE LEGENDS 642 Diamond",
       "categoryId": "game",
@@ -6564,10 +6564,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5111",
+      "_id": "6af194f7e7c7e0b242c48018",
       "id": "df-mlb666",
       "name": "MOBILE LEGENDS 666 Diamond",
       "categoryId": "game",
@@ -6592,10 +6592,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5112",
+      "_id": "6af194f7e7c7e0b242c48019",
       "id": "df-mlb760",
       "name": "MOBILE LEGENDS 760 Diamond",
       "categoryId": "game",
@@ -6620,10 +6620,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5113",
+      "_id": "6af194f7e7c7e0b242c4801a",
       "id": "df-mlbn240",
       "name": "MOBILE LEGENDS 240 Diamond",
       "categoryId": "game",
@@ -6648,10 +6648,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5114",
+      "_id": "6af194f7e7c7e0b242c4801b",
       "id": "df-mlweek",
       "name": "MOBILE LEGENDS Weekly Diamond Pass",
       "categoryId": "game",
@@ -6676,10 +6676,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5115",
+      "_id": "6af194f7e7c7e0b242c4801c",
       "id": "df-nonpum25gb",
       "name": "Telkomsel Data Non Puma 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -6704,10 +6704,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5116",
+      "_id": "6af194f7e7c7e0b242c4801d",
       "id": "df-paket",
       "name": "Telkomsel Cek Paket Data Super Seru",
       "categoryId": "kuota",
@@ -6732,10 +6732,10 @@
       "endCutOff": "0:0",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5117",
+      "_id": "6af194f7e7c7e0b242c4801e",
       "id": "df-pas10",
       "name": "Telkomsel Telepon Pas 10.000",
       "categoryId": "pulsa",
@@ -6760,10 +6760,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5118",
+      "_id": "6af194f7e7c7e0b242c4801f",
       "id": "df-pas20",
       "name": "Telkomsel Telepon Pas 20.000",
       "categoryId": "pulsa",
@@ -6788,10 +6788,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5119",
+      "_id": "6af194f7e7c7e0b242c48020",
       "id": "df-pas50",
       "name": "Telkomsel Telepon Pas 50.000",
       "categoryId": "pulsa",
@@ -6816,10 +6816,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511a",
+      "_id": "6af194f7e7c7e0b242c48021",
       "id": "df-pertagas20",
       "name": "Pertagas 20.000",
       "categoryId": "gas",
@@ -6844,10 +6844,10 @@
       "endCutOff": "0:20",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511b",
+      "_id": "6af194f7e7c7e0b242c48022",
       "id": "df-pln100",
       "name": "PLN 100.000",
       "categoryId": "pln",
@@ -6872,10 +6872,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511c",
+      "_id": "6af194f7e7c7e0b242c48023",
       "id": "df-pln1000",
       "name": "PLN 1.000.000",
       "categoryId": "pln",
@@ -6900,10 +6900,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511d",
+      "_id": "6af194f7e7c7e0b242c48024",
       "id": "df-pln20",
       "name": "PLN 20.000",
       "categoryId": "pln",
@@ -6928,10 +6928,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.299Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511e",
+      "_id": "6af194f7e7c7e0b242c48025",
       "id": "df-pln50",
       "name": "PLN 50.000",
       "categoryId": "pln",
@@ -6956,10 +6956,10 @@
       "endCutOff": "5:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a511f",
+      "_id": "6af194f7e7c7e0b242c48026",
       "id": "df-puma60gb",
       "name": "Telkomsel Data Non Puma 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -6984,10 +6984,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5120",
+      "_id": "6af194f7e7c7e0b242c48027",
       "id": "df-s10",
       "name": "Telkomsel 10.000",
       "categoryId": "pulsa",
@@ -7012,10 +7012,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5121",
+      "_id": "6af194f7e7c7e0b242c48028",
       "id": "df-s100",
       "name": "Telkomsel 100.000",
       "categoryId": "pulsa",
@@ -7040,10 +7040,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5122",
+      "_id": "6af194f7e7c7e0b242c48029",
       "id": "df-s15",
       "name": "Telkomsel 15.000",
       "categoryId": "pulsa",
@@ -7068,10 +7068,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5123",
+      "_id": "6af194f7e7c7e0b242c4802a",
       "id": "df-s20",
       "name": "Telkomsel 20.000",
       "categoryId": "pulsa",
@@ -7096,10 +7096,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5124",
+      "_id": "6af194f7e7c7e0b242c4802b",
       "id": "df-s25",
       "name": "Telkomsel 25.000",
       "categoryId": "pulsa",
@@ -7124,10 +7124,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5125",
+      "_id": "6af194f7e7c7e0b242c4802c",
       "id": "df-s30",
       "name": "Telkomsel 30.000",
       "categoryId": "pulsa",
@@ -7152,10 +7152,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5126",
+      "_id": "6af194f7e7c7e0b242c4802d",
       "id": "df-s5",
       "name": "Telkomsel 5.000",
       "categoryId": "pulsa",
@@ -7180,10 +7180,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5127",
+      "_id": "6af194f7e7c7e0b242c4802e",
       "id": "df-s50",
       "name": "Telkomsel 50.000",
       "categoryId": "pulsa",
@@ -7208,10 +7208,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5128",
+      "_id": "6af194f7e7c7e0b242c4802f",
       "id": "df-s90",
       "name": "Telkomsel 90.000",
       "categoryId": "pulsa",
@@ -7236,10 +7236,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5129",
+      "_id": "6af194f7e7c7e0b242c48030",
       "id": "df-sm10",
       "name": "Smartfren 10.000",
       "categoryId": "pulsa",
@@ -7264,10 +7264,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512a",
+      "_id": "6af194f7e7c7e0b242c48031",
       "id": "df-smdu1",
       "name": "Smartfren Data Unlimited Harian 1 GB Berlaku 7 Hari",
       "categoryId": "kuota",
@@ -7292,10 +7292,10 @@
       "endCutOff": "1:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512b",
+      "_id": "6af194f7e7c7e0b242c48032",
       "id": "df-smdu2",
       "name": "Smartfren Data Unlimited Harian 2 GB Berlaku 28 Hari",
       "categoryId": "kuota",
@@ -7320,10 +7320,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512c",
+      "_id": "6af194f7e7c7e0b242c48033",
       "id": "df-supp85gb",
       "name": "Telkomsel Data Surprise Deal 85 GB 30 Hari",
       "categoryId": "kuota",
@@ -7348,10 +7348,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512d",
+      "_id": "6af194f7e7c7e0b242c48034",
       "id": "df-t10",
       "name": "Three 10.000",
       "categoryId": "pulsa",
@@ -7376,10 +7376,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512e",
+      "_id": "6af194f7e7c7e0b242c48035",
       "id": "df-t20",
       "name": "Three 20.000",
       "categoryId": "pulsa",
@@ -7404,10 +7404,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a512f",
+      "_id": "6af194f7e7c7e0b242c48036",
       "id": "df-t5",
       "name": "Three 5.000",
       "categoryId": "pulsa",
@@ -7432,10 +7432,10 @@
       "endCutOff": "0:15",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5130",
+      "_id": "6af194f7e7c7e0b242c48037",
       "id": "df-telko180",
       "name": "Telkomsel 180.000",
       "categoryId": "pulsa",
@@ -7460,10 +7460,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5131",
+      "_id": "6af194f7e7c7e0b242c48038",
       "id": "df-tlkm25gb",
       "name": "Telkomsel Data 25 GB 30 Hari",
       "categoryId": "kuota",
@@ -7488,10 +7488,10 @@
       "endCutOff": "0:15",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5132",
+      "_id": "6af194f7e7c7e0b242c48039",
       "id": "df-tlkm30gb",
       "name": "Telkomsel Data 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -7516,10 +7516,10 @@
       "endCutOff": "0:15",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5133",
+      "_id": "6af194f7e7c7e0b242c4803a",
       "id": "df-ts6",
       "name": "Indosat Freedom Combo 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -7544,10 +7544,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5134",
+      "_id": "6af194f7e7c7e0b242c4803b",
       "id": "df-tst10",
       "name": "Indosat 10 GB 30 Hari",
       "categoryId": "kuota",
@@ -7572,10 +7572,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5135",
+      "_id": "6af194f7e7c7e0b242c4803c",
       "id": "df-tst11",
       "name": "Indosat 11 GB 30 Hari",
       "categoryId": "kuota",
@@ -7600,10 +7600,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5136",
+      "_id": "6af194f7e7c7e0b242c4803d",
       "id": "df-tst12",
       "name": "Indosat 12 GB 30 Hari",
       "categoryId": "kuota",
@@ -7628,10 +7628,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5137",
+      "_id": "6af194f7e7c7e0b242c4803e",
       "id": "df-tst30",
       "name": "Indosat Freedom Combo 30 GB 30 Hari",
       "categoryId": "kuota",
@@ -7656,10 +7656,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5138",
+      "_id": "6af194f7e7c7e0b242c4803f",
       "id": "df-tst6",
       "name": "Indosat Freedom Combo 6 GB 30 Hari",
       "categoryId": "kuota",
@@ -7684,10 +7684,10 @@
       "endCutOff": "0:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5139",
+      "_id": "6af194f7e7c7e0b242c48040",
       "id": "df-ulti30",
       "name": "Voucher Vidio Ultimate Mobile 30 Hari",
       "categoryId": "voucher",
@@ -7712,10 +7712,10 @@
       "endCutOff": "17:8",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513a",
+      "_id": "6af194f7e7c7e0b242c48041",
       "id": "df-ultimat30",
       "name": "Voucher Vidio Ultimate All Screen 30 Hari",
       "categoryId": "voucher",
@@ -7740,10 +7740,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513b",
+      "_id": "6af194f7e7c7e0b242c48042",
       "id": "df-ultimate30d",
       "name": "Vidio Ultimate Mobile 30 Hari",
       "categoryId": "streaming",
@@ -7768,10 +7768,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513c",
+      "_id": "6af194f7e7c7e0b242c48043",
       "id": "df-umum60gb",
       "name": "Indosat 60 GB 30 Hari",
       "categoryId": "kuota",
@@ -7796,10 +7796,10 @@
       "endCutOff": "22:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513d",
+      "_id": "6af194f7e7c7e0b242c48044",
       "id": "df-vax1",
       "name": "Aktivasi Voucher Axis 1 GB 1 Hari",
       "categoryId": "aktivasi voucher",
@@ -7824,10 +7824,10 @@
       "endCutOff": "23:30",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513e",
+      "_id": "6af194f7e7c7e0b242c48045",
       "id": "df-vidioplat",
       "name": "Voucher Vidio Platinum 30 Hari",
       "categoryId": "voucher",
@@ -7852,10 +7852,10 @@
       "endCutOff": "0:1",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a513f",
+      "_id": "6af194f7e7c7e0b242c48046",
       "id": "df-vidioplat1thun",
       "name": "Voucher Vidio Platinum 1 Tahun",
       "categoryId": "voucher",
@@ -7880,10 +7880,10 @@
       "endCutOff": "0:1",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5140",
+      "_id": "6af194f7e7c7e0b242c48047",
       "id": "df-vidioultimate",
       "name": "Voucher Vidio Ultimate Mobile 1 Tahun",
       "categoryId": "voucher",
@@ -7908,10 +7908,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5141",
+      "_id": "6af194f7e7c7e0b242c48048",
       "id": "df-visionbein",
       "name": "Voucher Vision+ BEIN Sport 30 Hari",
       "categoryId": "voucher",
@@ -7936,10 +7936,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5142",
+      "_id": "6af194f7e7c7e0b242c48049",
       "id": "df-visionultimate",
       "name": "Voucher Vision+ Paket Premium Ultimate 30 Hari",
       "categoryId": "voucher",
@@ -7964,10 +7964,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5143",
+      "_id": "6af194f7e7c7e0b242c4804a",
       "id": "df-visiultimate1thn",
       "name": "Voucher Vision+ Paket Premium Ultimate 1 Tahun",
       "categoryId": "voucher",
@@ -7992,10 +7992,10 @@
       "endCutOff": "0:0",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5144",
+      "_id": "6af194f7e7c7e0b242c4804b",
       "id": "df-vs2g5d",
       "name": "Voucher Telkomsel 2.5 GB 5 Hari (Jawa Barat)",
       "categoryId": "voucher",
@@ -8020,10 +8020,10 @@
       "endCutOff": "0:0",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5145",
+      "_id": "6af194f7e7c7e0b242c4804c",
       "id": "df-wdtsl70",
       "name": "Telkomsel Data Flash 70 GB 30 Hari",
       "categoryId": "kuota",
@@ -8048,10 +8048,10 @@
       "endCutOff": "0:1",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5146",
+      "_id": "6af194f7e7c7e0b242c4804d",
       "id": "df-wdxlumplus5gb",
       "name": "XL Data Umroh Plus 5 GB 10 Hari",
       "categoryId": "kuota",
@@ -8076,10 +8076,10 @@
       "endCutOff": "0:15",
       "statusNote": "Nonaktif oleh Digiflazz",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5147",
+      "_id": "6af194f7e7c7e0b242c4804e",
       "id": "df-wdxlumroh",
       "name": "XL Internet Umroh Haji 40 Hari",
       "categoryId": "kuota",
@@ -8104,10 +8104,10 @@
       "endCutOff": "17:42",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5148",
+      "_id": "6af194f7e7c7e0b242c4804f",
       "id": "df-wdxlumroh2-5gb",
       "name": "XL Internet Umroh Haji 20 Hari",
       "categoryId": "kuota",
@@ -8132,10 +8132,10 @@
       "endCutOff": "17:41",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a5149",
+      "_id": "6af194f7e7c7e0b242c48050",
       "id": "df-wstsl40",
       "name": "Telkomsel Data Flash 40 GB 30 Hari",
       "categoryId": "kuota",
@@ -8160,10 +8160,10 @@
       "endCutOff": "0:30",
       "statusNote": "Gangguan / Cut-off Seller",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.301Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a514a",
+      "_id": "6af194f7e7c7e0b242c48051",
       "id": "df-x10",
       "name": "Xl 10.000",
       "categoryId": "pulsa",
@@ -8188,10 +8188,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.302Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a514b",
+      "_id": "6af194f7e7c7e0b242c48052",
       "id": "df-xl100k",
       "name": "Xl 100.000",
       "categoryId": "pulsa",
@@ -8216,10 +8216,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.302Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a514c",
+      "_id": "6af194f7e7c7e0b242c48053",
       "id": "df-xl50",
       "name": "Xl 50.000",
       "categoryId": "pulsa",
@@ -8244,10 +8244,10 @@
       "endCutOff": "0:15",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.302Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     },
     {
-      "_id": "6af191f45c8ac4a0066a514d",
+      "_id": "6af194f7e7c7e0b242c48054",
       "id": "df-yellow1",
       "name": "Indosat Yellow 1 GB 1 Hari",
       "categoryId": "kuota",
@@ -8272,11 +8272,70 @@
       "endCutOff": "0:5",
       "statusNote": "Tersedia",
       "isDigiflazzSynced": true,
-      "lastSyncedAt": "2026-11-09T09:27:16.302Z"
+      "lastSyncedAt": "2026-11-09T09:40:07.329Z"
     }
   ],
   "manualInventoryRevision": 17,
   "orders": [
+    {
+      "_id": "6af194d5e7c7e0b242c47f2b",
+      "id": "ord_1794217173060_9o1r9",
+      "invoiceNumber": "INV/20261109/WD/3896",
+      "userId": "usr_01de2ab5-e2b6-4935-b3fd-ebf56762e781",
+      "guestAccessToken": "gst_4a51476efddd3ac860995a3a37b16f0aa3c0a3e9a3194fff",
+      "productId": "df-2k",
+      "variantId": null,
+      "variantName": null,
+      "targetDestination": "081211124761",
+      "customerName": "ibnu",
+      "customerPhone": "085731900882",
+      "customerEmail": "ibnu@gmail.com",
+      "category": "pulsa",
+      "subtotal": 3300,
+      "adminFee": 0,
+      "discount": 0,
+      "totalAmount": 3302,
+      "promoCode": "",
+      "deliveryMethod": "AUTOMATIC",
+      "paymentStatus": "PENDING",
+      "fulfillmentStatus": "NOT_STARTED",
+      "createdAt": "2026-11-09T09:39:33.570Z",
+      "updatedAt": "2026-11-09T09:39:33.570Z",
+      "buyerSkuCode": "2k",
+      "expiredAt": null,
+      "fee": 0,
+      "gatewayRefId": "QP-INV20261109WD3896",
+      "isDynamic": true,
+      "isSandbox": null,
+      "items": [
+        {
+          "productId": "df-2k",
+          "variantId": null,
+          "variantName": null,
+          "productName": "Telkomsel 2.000",
+          "category": "pulsa",
+          "price": 3300,
+          "sellingPrice": 3300,
+          "provider": "TELKOMSEL",
+          "deliveryMethod": "AUTOMATIC",
+          "iconUrl": null,
+          "supplierSku": "2k",
+          "sku": "2k",
+          "targetNumberOrAccount": "081211124761"
+        }
+      ],
+      "paymentLink": null,
+      "paymentMethod": "QRIS",
+      "productName": "Telkomsel 2.000",
+      "qrString": "00020101021226670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI520458175303360540433025802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A016304EC0F",
+      "sku": "2k",
+      "supplierSku": "2k",
+      "totalPayment": 3302,
+      "vaBankCode": null,
+      "vaBankName": null,
+      "vaNumber": null,
+      "vaPartnerReff": null
+    },
     {
       "_id": "6af193edff90ebcd5accafc9",
       "id": "ord_tg_1794216941597_2q1h",
@@ -10755,7 +10814,7 @@
     "qiospayApiKey": "612c7478b56bc90b2e46edcc74c03743320168ae6bdc9e8f6cadcf9b1b673b2b",
     "qiospaySecretKey": "312d3971811869d9f3a6c740b944f9bf841369d17479bdcaaa9080d1658ba4cb",
     "qiospayNmid": "ID1026524496431",
-    "qiospayMerchantName": "Waroeng Digital QP048797",
+    "qiospayMerchantName": "Waroeng Digital",
     "qiospayQrString": "00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF",
     "staticQrisString": "00020101021126670016COM.NOBUBANK.WWW01189360050300000907180214260525000007320303UMI51440014ID.CO.QRIS.WWW0215ID10265244964310303UMI5204581753033605802ID5923Waroeng Digital QP487976008SIDOARJO61056121162070703A01630472AF",
     "pakasirBaseUrl": "https://app.pakasir.com",

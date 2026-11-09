@@ -101,7 +101,6 @@ function isQiospayActive(): boolean {
 export function detectActiveGateway(): ActiveGateway {
   const envGateway = (process.env.ACTIVE_GATEWAY || process.env.PAYMENT_GATEWAY_PROVIDER || '').trim().toUpperCase();
   if (envGateway === 'QIOSPAY' && isQiospayActive()) return 'QIOSPAY';
-
   if (isQiospayActive()) return 'QIOSPAY';
   return 'QRIS';
 }
@@ -174,6 +173,7 @@ export async function createPaymentSession(params: {
   // 1. Jalur Qiospay QRIS Dinamis
   const depositId = `QP-${params.orderId.replace(/[^a-zA-Z0-9]/g, '')}`;
   const savedSettings = await mongoDbService.getSettingsFromDatabase();
+  const qiospayFromDb = Boolean(savedSettings?.qiospayMerchantCode && savedSettings?.qiospayApiKey);
   const staticQrString = String(savedSettings.qiospayQrString || savedSettings.staticQrisString || '').trim();
   if (!staticQrString) throw new Error('QRIS Qiospay asli belum tersimpan di dashboard admin.');
   const qrisRes = qiospayService.createPaymentQris({
@@ -181,7 +181,7 @@ export async function createPaymentSession(params: {
   });
 
   return {
-    gateway: gateway === 'QIOSPAY' || isQiospayActive() ? 'QIOSPAY' : 'QRIS',
+    gateway: qiospayFromDb || isQiospayActive() ? 'QIOSPAY' : 'QRIS',
     token: depositId,
     qrString: qrisRes.qrString,
     qrImage: qrisRes.qrImage,
