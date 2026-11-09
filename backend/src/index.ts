@@ -2318,6 +2318,11 @@ app.post('/api/settings/save', requireAdmin, async (req: Request, res: Response)
       alertsEnabled: settings.telegramAlertsEnabled !== false,
     };
     try { telegramBotService.refreshConfig(bundle); } catch (_) {}
+    // Pastikan perintah bot (start, saldo, katalog, status, dll.) terdaftar di Telegram
+    // terlepas mode polling atau webhook, agar tombol perintah selalu muncul di bawah chat.
+    if (bundle.telegramBotToken) {
+      try { await telegramBotService.registerCommands(); } catch (_) {}
+    }
     if (bundle.storeMode === 'polling' && bundle.storeEnabled !== false && bundle.telegramBotToken) {
       try { await telegramBotService.registerCommands(); await telegramBotService.startPolling(); } catch (_) {}
     } else {
