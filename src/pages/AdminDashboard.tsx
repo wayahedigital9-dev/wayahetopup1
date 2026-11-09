@@ -80,9 +80,8 @@ import {
   Layers,
   Hash,
   SlidersHorizontal,
-  Loader2,
-  Api
-  } from 'lucide-react';
+  Loader2
+} from 'lucide-react';
 import { Product, ProductVariant, Order, WifiVoucherBatch, AppSettings, PaymentStatus, FulfillmentStatus, AdminAuthSession, PromoBanner, StoreCatalog, DiscountPopupConfig, PromoCode, HeroPromoSlide, HeroPromoCardItem } from '../types';
 import { formatRupiah, formatDateWIB } from '../utils/operator';
 import { PaymentStatusBadge, FulfillmentStatusBadge } from '../components/StatusBadge';
@@ -127,7 +126,7 @@ export function AdminDashboard({
   onShowToast,
 }: AdminDashboardProps) {
   type AdminTab = 'OVERVIEW' | 'TRANSACTIONS' | 'USERS' | 'PRODUCTS' | 'PRODUK_PREMIUM' | 'PRODUK_SMM' | 'PRODUK_GAME' | 'PRODUK_GATEWAY_TAMBAHAN' | 'PREMIUM' | 'DIGIFLAZZ' | 'VOUCHERS' | 'BANNERS' | 'PROMOS' | 'RECONCILIATION' | 'SETTINGS' | 'NOTIFICATIONS';
-  type SettingsSubTab = 'API_PROVIDERS' | 'BOT_API' | 'PAYMENT_GATEWAY' | 'DIGIFLAZZ_H2H' | 'API_CONSOLE' | 'ADMIN_AUTH' | 'STORE_INFO' | 'PROMO_POPUP' | 'SECURITY' | 'MONGODB_SETTINGS';
+  type SettingsSubTab = 'API_PROVIDERS' | 'BOT_API' | 'PAYMENT_GATEWAY' | 'DIGIFLAZZ_H2H' | 'API_CONSOLE' | 'ADMIN_AUTH' | 'STORE_INFO' | 'PROMO_POPUP' | 'SECURITY' | 'MONGODB_SETTINGS' | 'AYOSEL_API';
 
   const [activeTab, setActiveTabState] = useState<AdminTab>(() => {
     try {
@@ -7107,6 +7106,19 @@ const playDoneSound = () => {
 
                       <button
                         type="button"
+                        onClick={() => setSettingsSubTab('AYOSEL_API')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          settingsSubTab === 'AYOSEL_API'
+                            ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <ExternalLink size={13} className="text-indigo-400" />
+                        <span>Ayosel API</span>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setSettingsSubTab('PAYMENT_GATEWAY')}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                           settingsSubTab === 'PAYMENT_GATEWAY'
@@ -8449,7 +8461,7 @@ ping - Cek Kecepatan Respon Bot`}</pre>
                   )}
 
                   {/* === SUB-TAB: AYOSEL RESELLER API SETTINGS === */}
-                  {settingsSubTab === 'MONGODB_SETTINGS' && (
+                  {settingsSubTab === 'AYOSEL_API' && (
                     <div className="space-y-6">
                       <div className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-mono text-xs font-bold w-max flex items-center gap-2">
                         <ExternalLink size={14} className="text-indigo-400" />
