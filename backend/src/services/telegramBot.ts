@@ -360,7 +360,12 @@ export class TelegramBotService {
     }
 
     if (data === 'nav_cat_pulsa') {
-      await this.sendPulsaOperatorSelection(chatId, messageId);
+      await this.sendPulsaOperatorSelection(chatId, messageId, 'pulsa');
+      return;
+    }
+
+    if (data === 'nav_cat_kuota') {
+      await this.sendPulsaOperatorSelection(chatId, messageId, 'kuota');
       return;
     }
 
@@ -466,10 +471,11 @@ export class TelegramBotService {
       },
     ]);
 
-    // Row 2: Game & Pulsa
+    // Row 2: Game & Pulsa & Kuota
     keyboard.push([
       { text: '🎮 Top Up Game', callback_data: 'nav_cat_game' },
-      { text: '📱 Pulsa & Data', callback_data: 'nav_cat_pulsa' },
+      { text: '📱 Pulsa', callback_data: 'nav_cat_pulsa' },
+      { text: '📶 Kuota', callback_data: 'nav_cat_kuota' },
     ]);
 
     // Row 3: Akun Premium & PLN
@@ -544,10 +550,11 @@ export class TelegramBotService {
   // ─────────────────────────────────────────────────────────────
   // MENU OPERATOR PULSA & DATA
   // ─────────────────────────────────────────────────────────────
-  private async sendPulsaOperatorSelection(chatId: string | number, messageId?: number) {
+  private async sendPulsaOperatorSelection(chatId: string | number, messageId?: number, category: 'pulsa' | 'kuota' = 'pulsa') {
+    const isKuota = category === 'kuota';
     const text =
-      `📱 <b>Pulsa & Paket Data Internet</b>\n\n` +
-      `Pilih operator seluler Anda untuk melihat daftar pulsa & kuota hemat:`;
+      `📶 <b>${isKuota ? 'Paket Kuota Internet' : 'Pulsa & Paket Data'}</b>\n\n` +
+      `Pilih operator seluler Anda untuk melihat daftar ${isKuota ? 'paket data kuota' : 'pulsa & kuota'} hemat:`;
 
     const keyboard = [
       [
@@ -695,7 +702,12 @@ export class TelegramBotService {
   private async sendProductListByProvider(chatId: string | number, messageId: number, category: string, provider: string) {
     const products = await this.getWebsiteProducts();
     const filtered = products.filter((p: any) => {
-      const matchCat = category === 'game' ? p.categoryId === 'game' : p.categoryId === 'pulsa' || p.categoryId === 'kuota';
+      const cat = String(p.categoryId || '').toLowerCase();
+      let matchCat: boolean;
+      if (category === 'game') matchCat = cat === 'game';
+      else if (category === 'pulsa') matchCat = cat === 'pulsa';
+      else if (category === 'kuota') matchCat = cat === 'kuota';
+      else matchCat = cat === 'pulsa' || cat === 'kuota';
       const matchProv = (p.provider || '').toLowerCase().includes(provider.toLowerCase()) || (p.name || '').toLowerCase().includes(provider.toLowerCase());
       return matchCat && matchProv;
     });
@@ -722,7 +734,7 @@ export class TelegramBotService {
       }
     }
 
-    keyboard.push([{ text: '◀️ Kembali', callback_data: category === 'game' ? 'nav_cat_game' : 'nav_cat_pulsa' }]);
+    keyboard.push([{ text: '◀️ Kembali', callback_data: category === 'game' ? 'nav_cat_game' : (category === 'kuota' ? 'nav_cat_kuota' : 'nav_cat_pulsa') }]);
 
     await this.editMessageText(chatId, messageId, text, { reply_markup: { inline_keyboard: keyboard } });
   }

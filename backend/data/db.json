@@ -8292,16 +8292,24 @@
       "totalAmount": 3300,
       "promoCode": "",
       "deliveryMethod": "AUTOMATIC",
-      "paymentStatus": "UNPAID",
-      "fulfillmentStatus": "NOT_STARTED",
+      "paymentStatus": "PAID",
+      "fulfillmentStatus": "FAILED",
       "createdAt": "2026-11-09T12:00:49.799Z",
-      "updatedAt": "2026-11-09T12:00:49.799Z",
+      "updatedAt": "2026-11-09T12:01:21.240Z",
       "metadata": {
         "source": "telegram_bot",
         "telegramChatId": "7234040728",
         "telegramUsername": "@Digitalspace31",
         "buyerName": "Wayahe"
-      }
+      },
+      "paidAt": "2026-11-09T12:01:17.056Z",
+      "paymentMethod": "QRIS",
+      "qiospayIssuer": "JAGO",
+      "qiospayNmid": "ID1026524496431",
+      "qiospayPaidAt": "2026-11-09T12:01:17.056Z",
+      "qiospayRefid": "1u0402c66220",
+      "errorReason": "Harga seller lebih besar dari ketentuan harga Buyer",
+      "supplierRefId": "WD-20261109-1906-CUSLXR"
     },
     {
       "_id": "6af1a239044a8049cc613320",
@@ -10839,6 +10847,13 @@
   ],
   "promos": [],
   "auditLogs": [
+    {
+      "id": "log-1794225677068",
+      "action": "PAYMENT_AUTO_RECONCILED",
+      "performedBy": "Qiospay Reconcile Engine",
+      "details": "Invoice INV/20261109/WD/1906 berhasil diverifikasi lunas via QRIS (Rp 3.300, Ref: 1u0402c66220)",
+      "timestamp": "2026-11-09T12:01:17.068Z"
+    },
     {
       "id": "log-1791535464170",
       "action": "PAYMENT_AUTO_RECONCILED",
