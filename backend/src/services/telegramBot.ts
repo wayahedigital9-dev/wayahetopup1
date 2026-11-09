@@ -417,7 +417,18 @@ export class TelegramBotService {
       return;
     }
 
-    // Pemilihan Provider Operator Pulsa (misal op_Telkomsel)
+    // Pemilihan Provider Operator Pulsa/Kuota (misal opulsa_Telkomsel / opkuota_Telkomsel)
+    if (data.startsWith('opulsa_')) {
+      const provider = data.replace('opulsa_', '');
+      await this.sendProductListByProvider(chatId, messageId, 'pulsa', provider);
+      return;
+    }
+    if (data.startsWith('opkuota_')) {
+      const provider = data.replace('opkuota_', '');
+      await this.sendProductListByProvider(chatId, messageId, 'kuota', provider);
+      return;
+    }
+    // Pemilihan Provider Operator Pulsa (logika lama op_ — kompatibilitas mundur)
     if (data.startsWith('op_')) {
       const provider = data.replace('op_', '');
       await this.sendProductListByProvider(chatId, messageId, 'pulsa', provider);
@@ -573,16 +584,16 @@ export class TelegramBotService {
 
     const keyboard = [
       [
-        { text: '🔴 Telkomsel', callback_data: 'op_Telkomsel' },
-        { text: '🟡 Indosat Ooredoo', callback_data: 'op_Indosat' },
+        { text: '🔴 Telkomsel', callback_data: isKuota ? 'opkuota_Telkomsel' : 'opulsa_Telkomsel' },
+        { text: '🟡 Indosat Ooredoo', callback_data: isKuota ? 'opkuota_Indosat' : 'opulsa_Indosat' },
       ],
       [
-        { text: '🔵 XL Axiata', callback_data: 'op_XL' },
-        { text: '🟣 AXIS', callback_data: 'op_Axis' },
+        { text: '🔵 XL Axiata', callback_data: isKuota ? 'opkuota_XL' : 'opulsa_XL' },
+        { text: '🟣 AXIS', callback_data: isKuota ? 'opkuota_Axis' : 'opulsa_Axis' },
       ],
       [
-        { text: '🟠 Tri (3)', callback_data: 'op_Tri' },
-        { text: '🔴 Smartfren', callback_data: 'op_Smartfren' },
+        { text: '🟠 Tri (3)', callback_data: isKuota ? 'opkuota_Tri' : 'opulsa_Tri' },
+        { text: '🔴 Smartfren', callback_data: isKuota ? 'opkuota_Smartfren' : 'opulsa_Smartfren' },
       ],
       [{ text: '◀️ Kembali ke Menu Utama', callback_data: 'nav_home' }],
     ];
@@ -727,22 +738,25 @@ export class TelegramBotService {
       return matchCat && matchProv;
     });
 
+    const emojiCat = category === 'kuota' ? '📶' : category === 'pulsa' ? '💰' : '🎮';
     const text =
-      `📦 <b>Pilihan Nominal & Paket ${provider}</b>\n\n` +
-      `Pilih paket yang ingin dibeli:`;
+      `${emojiCat} <b>Pilihan Paket ${provider}</b>\n\n` +
+      `Pilih paket yang ingin dibeli:\n\n`;
 
     const keyboard: any[][] = [];
 
-    // Tampilkan hingga 12 produk teratas
-    const displayItems = filtered.slice(0, 12);
+    // Tampilkan hingga 10 produk teratas, satu per baris agar rapi
+    const displayItems = filtered.slice(0, 10);
 
     if (displayItems.length === 0) {
-      keyboard.push([{ text: '❌ Produk sedang kosong/maintenance', callback_data: 'nav_home' }]);
+      keyboard.push([{ text: '❌ Paket sedang kosong/maintenance', callback_data: category === 'kuota' ? 'nav_cat_kuota' : 'nav_cat_pulsa' }]);
     } else {
       for (const item of displayItems) {
+        const nama = (item.name || 'Paket').replace(/\s{2,}/g, ' ').trim();
+        const harga = formatRupiah(item.sellingPrice);
         keyboard.push([
           {
-            text: `${item.name} • ${formatRupiah(item.sellingPrice)}`,
+            text: `${nama} • ${harga}`,
             callback_data: `prod_${item.id}`,
           },
         ]);
