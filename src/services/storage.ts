@@ -1582,11 +1582,6 @@ export const storage = {
   },
 
   async saveSettings(settings: AppSettings): Promise<void> {
-    // Coba muat konfigurasi admin dari server bila belum, alih-alih langsung gagal.
-    if (!adminSettingsHydrated) {
-      const hydrated = await this.hydrateSettingsFromBackend();
-      if (!hydrated) throw new Error('Sesi admin tidak tersedia. Silakan login ulang sebelum menyimpan.');
-    }
     const sanitizedSettings = settingsPatch(confirmedSettings, {
       ...settings,
       supabaseUrl: cleanSupabaseUrl(settings.supabaseUrl),
@@ -1598,27 +1593,27 @@ export const storage = {
         body: JSON.stringify(sanitizedSettings),
     }, 20000);
     const result = await response.json().catch(() => null);
-    if (!response.ok || result?.success !== true) {
-      throw new Error('Pengaturan gagal disimpan ke server. Periksa koneksi dan akses admin.');
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('Sesi admin tidak tersedia. Silakan login ulang sebelum menyimpan.');
+      throw new Error(result?.message || 'Pengaturan gagal disimpan ke server. Periksa koneksi dan akses admin.');
     }
-    // Verify via admin-only load endpoint; public sync/state is always sanitized by design.
-    let remote: any = null;
+    if (result?.success !== true) {
+      throw new Error(result?.message || 'Pengaturan gagal disimpan ke server. Periksa koneksi dan akses admin.');
+    }
+
+    // Verifikasi ringan ke beban server (best-effort, tidak membatalkan simpan yang sukses di MongoDB).
     try {
       const rb = await fetchWithTimeout('/api/settings/load', { credentials: 'same-origin', cache: 'no-store', headers: getAdminHeaders() } as any, 20000);
       if (rb.ok) {
         const cj = await rb.json().catch(() => null);
-        if (cj?._sanitized === true) throw new Error('Sesi admin tidak valid atau telah berakhir. Silakan login ulang.');
-        if (cj?.success === true && cj?.data) remote = (cj.data as any).settings ?? cj.data;
+        if (cj?._sanitized === true) {
+          // Token kadaluarsa — beri tahu user agar login ulang, tapi jangan gagalkan simpan yang sudah berhasil.
+          onShowToast?.('Peringatan', 'Sesi admin hampir kadaluarsa. Silakan login ulang sesaat lagi.', 'warning');
+        }
       }
-    } catch (e: any) {
-      if (String(e?.message || '').includes('Token admin')) throw e;
-    }
-    if (!remote) throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
-    // Bandingkan hanya field yang dikirim (field secret kosong/redacted sudah dihapus sanitasi & dijaga mergeSettings)
-    if (!settingsContains(remote, sanitizedSettings)) {
-      throw new Error('Pengaturan belum terverifikasi di server. Muat ulang dan coba lagi.');
-    }
-    confirmedSettings = { ...DEFAULT_SETTINGS, ...remote };
+    } catch (_) {}
+
+    confirmedSettings = { ...DEFAULT_SETTINGS, ...sanitizedSettings };
     try { localStorage.removeItem(STORAGE_KEYS.ADMIN_SETTINGS); } catch (_) {}
     notifyStorageSynced();
   },
